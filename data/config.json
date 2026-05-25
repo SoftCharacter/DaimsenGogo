@@ -1,0 +1,23 @@
+{
+  "provider": {
+    "name": "",
+    "base_url": "",
+    "api_key": ""
+  },
+  "selected_model": "gpt-5.4",
+  "available_models": [
+    "codex-auto-review",
+    "gpt-5.2",
+    "gpt-5.3",
+    "gpt-5.3-spark",
+    "gpt-5.4",
+    "gpt-5.4-mini",
+    "gpt-5.4-pro",
+    "gpt-5.5"
+  ],
+  "settings": {
+    "temperature": 0.3,
+    "max_tokens": 4096,
+    "stock_refresh_interval_seconds": 30
+  }
+}
