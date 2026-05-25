@@ -8,10 +8,14 @@ echo ""
 
 # 获取项目根目录
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+PYTHON_BIN="$ROOT/.venv/bin/python"
+if [ ! -x "$PYTHON_BIN" ]; then
+    PYTHON_BIN="python3"
+fi
 
 # 启动后端
 echo "[1/2] 正在启动后端服务 (端口 8000)..."
-cd "$ROOT" && python -m uvicorn backend.main:app --reload --port 8000 --host 0.0.0.0 &
+cd "$ROOT" && "$PYTHON_BIN" -m uvicorn backend.main:app --reload --port 8000 --host 0.0.0.0 &
 BACKEND_PID=$!
 
 # 等待后端启动
