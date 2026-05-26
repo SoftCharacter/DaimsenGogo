@@ -27,7 +27,7 @@ ENV_PATH = ROOT_DIR / ".env"
 
 def _load_local_env() -> None:
     """加载项目根目录.env，支持任意OpenAI兼容大模型供应商。"""
-    load_dotenv(ENV_PATH, override=False)
+    load_dotenv(ENV_PATH, override=True)
 
 
 def _env_value(*names: str) -> str:
