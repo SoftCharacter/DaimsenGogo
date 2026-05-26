@@ -51,12 +51,14 @@ function linePath<T>(
   getValue: (item: T) => number,
   min: number,
   max: number,
+  leftPad = PAD_X,
+  rightPad = PAD_X,
 ): string {
   if (data.length === 0) return ''
-  const innerWidth = CHART_WIDTH - PAD_X * 2
+  const innerWidth = CHART_WIDTH - leftPad - rightPad
   return data
     .map((item, index) => {
-      const x = PAD_X + (data.length === 1 ? innerWidth / 2 : (index / (data.length - 1)) * innerWidth)
+      const x = leftPad + (data.length === 1 ? innerWidth / 2 : (index / (data.length - 1)) * innerWidth)
       const y = scaleY(getValue(item), min, max)
       return `${index === 0 ? 'M' : 'L'} ${x.toFixed(2)} ${y.toFixed(2)}`
     })
@@ -74,6 +76,19 @@ function EmptyChart({ label }: { label: string }) {
     <div className="h-[220px] flex items-center justify-center text-sm text-[#64748b]">
       {label}
     </div>
+  )
+}
+
+function LegendDot({ color, label, shape = 'line' }: { color: string; label: string; shape?: 'line' | 'bar' }) {
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      {shape === 'bar' ? (
+        <span className="inline-block h-3 w-2 rounded-sm" style={{ backgroundColor: color }} />
+      ) : (
+        <span className="inline-block h-0.5 w-4 rounded-full" style={{ backgroundColor: color }} />
+      )}
+      <span>{label}</span>
+    </span>
   )
 }
 
@@ -153,50 +168,80 @@ function ShareholderChart({ data }: { data: ShareholderPoint[] }) {
 function NetProfitChart({ data }: { data: NetProfitPoint[] }) {
   if (data.length === 0) return <EmptyChart label="暂无近五年归母净利润数据" />
 
+  const leftPad = 58
+  const rightPad = 58
   const profitValues = data.map((item) => item.net_profit_atsopc)
-  const yoyValues = data.map((item) => item.yoy_percent ?? 0)
+  const yoyData = data.filter((item) => item.yoy_percent !== null)
+  const yoyValues = yoyData.map((item) => item.yoy_percent as number)
   const [profitMin, profitMax] = range([0, ...profitValues])
   const [yoyMin, yoyMax] = range([0, ...yoyValues])
-  const innerWidth = CHART_WIDTH - PAD_X * 2
+  const innerWidth = CHART_WIDTH - leftPad - rightPad
   const groupWidth = innerWidth / data.length
-  const barWidth = Math.min(34, groupWidth * 0.26)
+  const barWidth = Math.min(46, groupWidth * 0.42)
   const profitZero = scaleY(0, profitMin, profitMax)
-  const yoyZero = scaleY(0, yoyMin, yoyMax)
+  const profitTicks = [profitMin, (profitMin + profitMax) / 2, profitMax]
+  const yoyTicks = [yoyMin, (yoyMin + yoyMax) / 2, yoyMax]
+  const yoyPath = linePath(
+    yoyData,
+    (item) => item.yoy_percent as number,
+    yoyMin,
+    yoyMax,
+    leftPad,
+    rightPad,
+  )
 
   return (
     <svg viewBox={`0 0 ${CHART_WIDTH} ${CHART_HEIGHT}`} className="w-full h-[220px]">
-      <line x1={PAD_X} y1={profitZero} x2={CHART_WIDTH - PAD_X} y2={profitZero} stroke="#334155" />
+      <line x1={leftPad} y1={PAD_TOP} x2={leftPad} y2={CHART_HEIGHT - PAD_BOTTOM} stroke="#334155" />
+      <line x1={CHART_WIDTH - rightPad} y1={PAD_TOP} x2={CHART_WIDTH - rightPad} y2={CHART_HEIGHT - PAD_BOTTOM} stroke="#334155" />
+      <line x1={leftPad} y1={profitZero} x2={CHART_WIDTH - rightPad} y2={profitZero} stroke="#334155" strokeDasharray="4 4" />
+      {profitTicks.map((tick) => (
+        <g key={`profit-${tick}`}>
+          <line x1={leftPad - 4} y1={scaleY(tick, profitMin, profitMax)} x2={leftPad} y2={scaleY(tick, profitMin, profitMax)} stroke="#334155" />
+          <text x={leftPad - 8} y={scaleY(tick, profitMin, profitMax) + 4} textAnchor="end" fill="#94a3b8" fontSize="10">
+            {(tick / 1e8).toFixed(0)}亿
+          </text>
+        </g>
+      ))}
+      {yoyTicks.map((tick) => (
+        <g key={`yoy-${tick}`}>
+          <line x1={CHART_WIDTH - rightPad} y1={scaleY(tick, yoyMin, yoyMax)} x2={CHART_WIDTH - rightPad + 4} y2={scaleY(tick, yoyMin, yoyMax)} stroke="#334155" />
+          <text x={CHART_WIDTH - rightPad + 8} y={scaleY(tick, yoyMin, yoyMax) + 4} textAnchor="start" fill="#94a3b8" fontSize="10">
+            {tick.toFixed(0)}%
+          </text>
+        </g>
+      ))}
       {data.map((item, index) => {
-        const centerX = PAD_X + groupWidth * index + groupWidth / 2
+        const centerX = leftPad + groupWidth * index + groupWidth / 2
         const profitY = scaleY(item.net_profit_atsopc, profitMin, profitMax)
-        const yoy = item.yoy_percent ?? 0
-        const yoyY = scaleY(yoy, yoyMin, yoyMax)
         return (
           <g key={item.report_name}>
             <rect
-              x={centerX - barWidth - 3}
+              x={centerX - barWidth / 2}
               y={Math.min(profitY, profitZero)}
               width={barWidth}
               height={Math.max(1, Math.abs(profitZero - profitY))}
               fill="#ef4444"
               opacity={0.78}
             />
-            <rect
-              x={centerX + 3}
-              y={Math.min(yoyY, yoyZero)}
-              width={barWidth}
-              height={Math.max(1, Math.abs(yoyZero - yoyY))}
-              fill="#38bdf8"
-              opacity={0.78}
-            />
-            <text x={centerX - barWidth / 2 - 3} y={Math.min(profitY, profitZero) - 6} textAnchor="middle" fill="#fecaca" fontSize="11">
+            <text x={centerX} y={Math.min(profitY, profitZero) - 6} textAnchor="middle" fill="#fecaca" fontSize="11">
               {formatYi(item.net_profit_atsopc)}
-            </text>
-            <text x={centerX + barWidth / 2 + 3} y={Math.min(yoyY, yoyZero) - 6} textAnchor="middle" fill="#bae6fd" fontSize="11">
-              {item.yoy_percent === null ? '--' : `${item.yoy_percent.toFixed(1)}%`}
             </text>
             <text x={centerX} y={CHART_HEIGHT - 10} textAnchor="middle" fill="#64748b" fontSize="11">
               {item.report_name.replace('年报', '')}
+            </text>
+          </g>
+        )
+      })}
+      {yoyPath && <path d={yoyPath} fill="none" stroke="#38bdf8" strokeWidth="2.2" />}
+      {yoyData.map((item, index) => {
+        const centerX = leftPad + groupWidth * index + groupWidth / 2
+        const y = scaleY(item.yoy_percent as number, yoyMin, yoyMax)
+        return (
+          <g key={`${item.report_name}-yoy`}>
+            <circle cx={centerX} cy={y} r="3.5" fill="#38bdf8" />
+            <text x={centerX} y={y - 8} textAnchor="middle" fill="#bae6fd" fontSize="11">
+              {(item.yoy_percent as number).toFixed(1)}%
             </text>
           </g>
         )
@@ -213,7 +258,7 @@ function ChartSection({
 }: {
   title: string
   subtitle: string
-  legend?: string
+  legend?: ReactNode
   children: ReactNode
 }) {
   return (
@@ -224,7 +269,7 @@ function ChartSection({
           <p className="text-xs text-[#64748b] mt-1">{subtitle}</p>
         </div>
         {legend && (
-          <span className="text-xs text-[#94a3b8] shrink-0">
+          <span className="flex items-center gap-3 text-xs text-[#94a3b8] shrink-0">
             {legend}
           </span>
         )}
@@ -242,10 +287,10 @@ export default function StockDiagnosisPanel({
   onClose,
 }: StockDiagnosisPanelProps) {
   const llmStatusText = diagnosis?.llm_status === 'ok'
-    ? '大模型已生成'
-    : diagnosis?.llm_status === 'error'
-      ? '大模型调用失败，显示本地摘要'
-      : '未配置大模型，显示本地摘要'
+    ? ''
+    : diagnosis?.llm_status === 'error' || diagnosis?.llm_status === 'missing_config'
+      ? '大模型调用失败，请配置 API'
+      : ''
 
   return (
     <div className="fixed inset-x-4 top-20 bottom-4 z-50 rounded-lg border border-[#334155] bg-[#0a0e17] shadow-2xl overflow-hidden">
@@ -259,7 +304,7 @@ export default function StockDiagnosisPanel({
               <span className="text-xs font-mono text-[#64748b]">{stock.code}</span>
             </div>
             <p className="text-xs text-[#94a3b8] mt-1">
-              点击触发实时取数，生成时间：{diagnosis?.generated_at || '等待生成'}
+              生成时间：{diagnosis?.generated_at || '等待生成'}
             </p>
           </div>
           <button
@@ -286,13 +331,33 @@ export default function StockDiagnosisPanel({
           ) : diagnosis ? (
             <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.35fr)_minmax(360px,0.65fr)] gap-5">
               <div className="space-y-4">
-                <ChartSection title="DIF / DEA / MACD" subtitle="近一年日线收盘价本地计算，参数 12 / 26 / 9" legend="橙 DIF · 蓝 DEA · 红绿 MACD">
+                <ChartSection
+                  title="指标看板"
+                  subtitle="近一年日线收盘价本地计算"
+                  legend={(
+                    <>
+                      <LegendDot color="#f97316" label="DIF" />
+                      <LegendDot color="#38bdf8" label="DEA" />
+                      <LegendDot color="#ef4444" label="MACD" shape="bar" />
+                      <LegendDot color="#22c55e" label="MACD" shape="bar" />
+                    </>
+                  )}
+                >
                   <MacdChart data={diagnosis.macd} />
                 </ChartSection>
                 <ChartSection title="股东人数变化" subtitle="近三年股东户数，反映筹码集中或分散趋势">
                   <ShareholderChart data={diagnosis.shareholders} />
                 </ChartSection>
-                <ChartSection title="归母净利润与同比" subtitle="近五年年报，红柱为归母净利润，蓝柱为同比增速" legend="红 净利润 · 蓝 同比">
+                <ChartSection
+                  title="归母净利润与同比"
+                  subtitle="近五年年报，左轴为归母净利润，右轴为同比增速"
+                  legend={(
+                    <>
+                      <LegendDot color="#ef4444" label="归母净利润" shape="bar" />
+                      <LegendDot color="#38bdf8" label="同比" />
+                    </>
+                  )}
+                >
                   <NetProfitChart data={diagnosis.net_profit} />
                 </ChartSection>
               </div>
@@ -300,26 +365,9 @@ export default function StockDiagnosisPanel({
               <aside className="rounded-lg border border-[#1e293b] bg-[#111827] p-4 h-fit">
                 <div className="flex items-center justify-between gap-3 mb-4">
                   <h4 className="text-sm font-semibold text-[#e2e8f0]">诊断报告</h4>
-                  <span className="text-xs text-[#64748b]">{llmStatusText}</span>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2 mb-4">
-                  <div className="border border-[#1e293b] rounded p-2">
-                    <div className="text-xs text-[#64748b]">MACD点数</div>
-                    <div className="text-sm text-[#e2e8f0] mt-1">{diagnosis.macd.length}</div>
-                  </div>
-                  <div className="border border-[#1e293b] rounded p-2">
-                    <div className="text-xs text-[#64748b]">大事提醒</div>
-                    <div className="text-sm text-[#e2e8f0] mt-1">{diagnosis.events.length}</div>
-                  </div>
-                  <div className="border border-[#1e293b] rounded p-2">
-                    <div className="text-xs text-[#64748b]">股东样本</div>
-                    <div className="text-sm text-[#e2e8f0] mt-1">{diagnosis.shareholders.length}</div>
-                  </div>
-                  <div className="border border-[#1e293b] rounded p-2">
-                    <div className="text-xs text-[#64748b]">财报样本</div>
-                    <div className="text-sm text-[#e2e8f0] mt-1">{diagnosis.net_profit.length}</div>
-                  </div>
+                  {llmStatusText && (
+                    <span className="text-xs text-[#ef4444]">{llmStatusText}</span>
+                  )}
                 </div>
 
                 <div className="mb-4">
