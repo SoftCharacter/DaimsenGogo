@@ -29,6 +29,9 @@ _TASK_CACHE_DIR = _DATA_DIR / "task_cache"
 _SHARED_TASK_ID = "_shared"
 _XQ_QUOTE_URL = "https://stock.xueqiu.com/v5/stock/quote.json"
 _XQ_KLINE_URL = "https://stock.xueqiu.com/v5/stock/chart/kline.json"
+_XQ_FINANCE_INDICATOR_URL = "https://stock.xueqiu.com/v5/stock/finance/cn/indicator.json"
+_XQ_HOLDERS_URL = "https://stock.xueqiu.com/v5/stock/f10/cn/holders.json"
+_XQ_EVENT_URL = "https://stock.xueqiu.com/v5/stock/screener/event/list.json"
 _XQ_HEADERS = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 "
     "(KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1",
@@ -380,6 +383,22 @@ def _fetch_xq_quote(symbol: str) -> dict:
     return _run_without_proxy(request_quote)
 
 
+def _fetch_xq_json_sync(symbol: str, url: str, params: dict, timeout: int = 20) -> dict:
+    """请求雪球JSON接口，自动预热cookie。"""
+    def request_json() -> dict:
+        session = requests.Session()
+        headers = {**_XQ_HEADERS, "Referer": f"https://xueqiu.com/S/{symbol}"}
+        session.get(f"https://xueqiu.com/S/{symbol}", headers=headers, timeout=10)
+        resp = session.get(url, params=params, headers=headers, timeout=timeout)
+        resp.raise_for_status()
+        return resp.json()
+
+    payload = _run_without_proxy(request_json)
+    if isinstance(payload, dict) and payload.get("error_code", 0) not in (0, None):
+        raise RuntimeError(f"雪球接口返回错误: {str(payload)[:300]}")
+    return payload
+
+
 def fetch_close_history_xq_sync(code: str, count: int = 250) -> list[dict]:
     """
     使用雪球原生日K接口获取历史收盘价。
@@ -430,6 +449,44 @@ def fetch_close_history_xq_sync(code: str, count: int = 250) -> list[dict]:
             "close": close,
         })
     return points
+
+
+def fetch_shareholders_xq_sync(code: str) -> list[dict]:
+    """获取雪球F10股东人数变化。"""
+    symbol = _to_xq_symbol(code)
+    payload = _fetch_xq_json_sync(symbol, _XQ_HOLDERS_URL, {"symbol": symbol})
+    return payload.get("data", {}).get("items") or []
+
+
+def fetch_finance_indicator_xq_sync(code: str, report_type: str = "Q4", count: int = 5) -> list[dict]:
+    """获取雪球财务主要指标，report_type=Q4为年报，all为全部报告期。"""
+    symbol = _to_xq_symbol(code)
+    payload = _fetch_xq_json_sync(
+        symbol,
+        _XQ_FINANCE_INDICATOR_URL,
+        {
+            "symbol": symbol,
+            "type": report_type,
+            "is_detail": "true",
+            "count": count,
+        },
+    )
+    return payload.get("data", {}).get("list") or []
+
+
+def fetch_stock_events_xq_sync(code: str, size: int = 200) -> list[dict]:
+    """获取雪球公司大事提醒。"""
+    symbol = _to_xq_symbol(code)
+    payload = _fetch_xq_json_sync(
+        symbol,
+        _XQ_EVENT_URL,
+        {
+            "symbol": symbol,
+            "page": 1,
+            "size": size,
+        },
+    )
+    return payload.get("data", {}).get("items") or []
 
 
 def fetch_quote_xq_sync(code: str, task_id: str | None = None) -> StockQuote | None:

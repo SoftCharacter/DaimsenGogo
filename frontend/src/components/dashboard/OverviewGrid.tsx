@@ -13,6 +13,8 @@ interface OverviewGridProps {
   quotes: Record<string, StockQuote>
   /** 来源分析任务ID，用于隔离K线缓存 */
   taskId?: string
+  /** 点击股票时触发诊断 */
+  onStockClick?: (stock: StockItem) => void
 }
 
 /**
@@ -39,7 +41,7 @@ function getChangeColor(changePercent: number): string {
  * - 中屏（768px~1024px）：2列
  * - 大屏（>1024px）：3列
  */
-export default function OverviewGrid({ stocks, quotes, taskId }: OverviewGridProps) {
+export default function OverviewGrid({ stocks, quotes, taskId, onStockClick }: OverviewGridProps) {
   /* 无数据时展示空状态 */
   if (stocks.length === 0) {
     return (
@@ -59,11 +61,13 @@ export default function OverviewGrid({ stocks, quotes, taskId }: OverviewGridPro
         const color = hasQuote ? getChangeColor(quote.change_percent) : '#94a3b8'
 
         return (
-          <div
+          <button
+            type="button"
             key={stock.code}
-            className="rounded-lg border bg-[#151c2c] border-[#1e293b]
-                       hover:border-[#6366f1]/50 transition-colors
-                       overflow-hidden"
+            onClick={() => onStockClick?.(stock)}
+            className="text-left rounded-lg border bg-[#151c2c] border-[#1e293b]
+                       hover:border-[#6366f1]/50 focus:outline-none focus:border-[#818cf8]
+                       transition-colors overflow-hidden"
           >
             {/* 上半部分：股票信息 */}
             <div className="p-4 pb-2">
@@ -92,7 +96,7 @@ export default function OverviewGrid({ stocks, quotes, taskId }: OverviewGridPro
             <div className="px-1">
               <MiniChart code={stock.code} height={100} taskId={taskId} />
             </div>
-          </div>
+          </button>
         )
       })}
     </div>
