@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useThemeStore } from '../stores/themeStore'
 import { useStockStore } from '../stores/stockStore'
@@ -7,6 +7,10 @@ import Sidebar from '../components/dashboard/Sidebar'
 import CategoryTabs from '../components/dashboard/CategoryTabs'
 import StockGrid from '../components/dashboard/StockGrid'
 import OverviewGrid from '../components/dashboard/OverviewGrid'
+import StockDiagnosisPanel from '../components/dashboard/StockDiagnosisPanel'
+import { fetchStockDiagnosis } from '../api/stockApi'
+import type { StockDiagnosis } from '../types/stock'
+import type { StockItem } from '../types/theme'
 
 /**
  * 大屏展示页面
@@ -25,12 +29,16 @@ export default function DashboardPage() {
 
   /* ---------- 分类切换状态 ---------- */
   const [activeCategoryId, setActiveCategoryId] = useState<string | null>(null)
+  const [diagnosisStock, setDiagnosisStock] = useState<StockItem | null>(null)
+  const [diagnosis, setDiagnosis] = useState<StockDiagnosis | null>(null)
+  const [diagnosisLoading, setDiagnosisLoading] = useState(false)
+  const [diagnosisError, setDiagnosisError] = useState('')
+  const diagnosisRequestId = useRef(0)
 
   /** 路由ID变化时加载对应主题 */
   useEffect(() => {
     if (id) {
       fetchTheme(id)
-      setActiveCategoryId(null)
     }
   }, [id, fetchTheme])
 
@@ -49,8 +57,41 @@ export default function DashboardPage() {
 
   /** 侧栏主题切换 */
   const handleThemeSelect = useCallback((themeId: string) => {
+    setActiveCategoryId(null)
     navigate(`/dashboard/${themeId}`)
   }, [navigate])
+
+  const handleStockClick = useCallback((stock: StockItem) => {
+    const requestId = diagnosisRequestId.current + 1
+    diagnosisRequestId.current = requestId
+    setDiagnosisStock(stock)
+    setDiagnosis(null)
+    setDiagnosisError('')
+    setDiagnosisLoading(true)
+
+    fetchStockDiagnosis(stock.code, stock.name)
+      .then((result) => {
+        if (diagnosisRequestId.current !== requestId) return
+        setDiagnosis(result)
+      })
+      .catch((err) => {
+        if (diagnosisRequestId.current !== requestId) return
+        const message = err?.response?.data?.detail || err?.message || '个股诊断生成失败'
+        setDiagnosisError(message)
+      })
+      .finally(() => {
+        if (diagnosisRequestId.current !== requestId) return
+        setDiagnosisLoading(false)
+      })
+  }, [])
+
+  const handleCloseDiagnosis = useCallback(() => {
+    diagnosisRequestId.current += 1
+    setDiagnosisStock(null)
+    setDiagnosis(null)
+    setDiagnosisError('')
+    setDiagnosisLoading(false)
+  }, [])
 
   /** 当前选中的分类对象 */
   const activeCategory = useMemo(() => {
@@ -105,6 +146,7 @@ export default function DashboardPage() {
                 stocks={activeCategory.stocks}
                 quotes={quotes}
                 showPercentageBar
+                onStockClick={handleStockClick}
               />
             ) : (
               /* "全部"模式：K线总览网格，合并所有分类的股票 */
@@ -112,11 +154,22 @@ export default function DashboardPage() {
                 stocks={displayTheme.categories.flatMap((c) => c.stocks)}
                 quotes={quotes}
                 taskId={displayTheme.source_task_id || undefined}
+                onStockClick={handleStockClick}
               />
             )}
           </div>
         )}
       </div>
+
+      {diagnosisStock && (
+        <StockDiagnosisPanel
+          stock={diagnosisStock}
+          diagnosis={diagnosis}
+          loading={diagnosisLoading}
+          error={diagnosisError}
+          onClose={handleCloseDiagnosis}
+        />
+      )}
     </div>
   )
 }

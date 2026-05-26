@@ -28,6 +28,57 @@ export interface KLinePoint {
   volume: number; // 成交量
 }
 
+export interface MacdPoint {
+  date: string;
+  timestamp: number;
+  close: number;
+  dif: number;
+  dea: number;
+  macd: number;
+}
+
+export interface ShareholderPoint {
+  date: string;
+  timestamp: number;
+  ashare_holder: number;
+  change_percent: number | null;
+  price: number | null;
+  per_amount: number | null;
+  top_holder_ratio: number | null;
+}
+
+export interface NetProfitPoint {
+  report_name: string;
+  report_date: string;
+  timestamp: number;
+  net_profit_atsopc: number;
+  yoy_percent: number | null;
+}
+
+export interface StockEventPoint {
+  date: string;
+  timestamp: number;
+  title: string;
+  message: string;
+  subtype: number | null;
+  sentiment: string | null;
+}
+
+export interface StockDiagnosis {
+  code: string;
+  name: string;
+  generated_at: string;
+  source: string;
+  timings_ms: Record<string, number>;
+  macd: MacdPoint[];
+  shareholders: ShareholderPoint[];
+  net_profit: NetProfitPoint[];
+  events: StockEventPoint[];
+  event_summary: string;
+  diagnosis_report: string;
+  llm_status: string;
+}
+
 /**
  * SSE事件类型 - 分析执行流
  * 与后端 _make_event() 生成的事件结构一一对应

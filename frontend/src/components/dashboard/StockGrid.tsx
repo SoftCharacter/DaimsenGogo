@@ -13,6 +13,8 @@ interface StockGridProps {
   quotes: Record<string, StockQuote>
   /** 是否显示占比条形图（默认true） */
   showPercentageBar?: boolean
+  /** 点击股票时触发诊断 */
+  onStockClick?: (stock: StockItem) => void
 }
 
 /**
@@ -24,6 +26,7 @@ export default function StockGrid({
   stocks,
   quotes,
   showPercentageBar = true,
+  onStockClick,
 }: StockGridProps) {
   /* 无股票数据时显示空状态 */
   if (stocks.length === 0) {
@@ -46,6 +49,7 @@ export default function StockGrid({
             key={stock.code}
             stock={stock}
             quote={quotes[stock.code]}
+            onClick={onStockClick}
           />
         ))}
       </div>

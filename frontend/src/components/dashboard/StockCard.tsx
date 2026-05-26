@@ -10,6 +10,8 @@ interface StockCardProps {
   stock: StockItem
   /** 实时行情数据（可能尚未加载） */
   quote?: StockQuote
+  /** 点击股票时触发诊断 */
+  onClick?: (stock: StockItem) => void
 }
 
 /**
@@ -27,15 +29,20 @@ function changeColor(changePercent: number): string {
  * 深色风格卡片，展示单只股票的基础信息和实时行情
  * 包含：名称代码、当前价格、涨跌幅、业务描述、占比标签
  */
-export default function StockCard({ stock, quote }: StockCardProps) {
+export default function StockCard({ stock, quote, onClick }: StockCardProps) {
   /** 判断行情数据是否已加载 */
   const hasQuote = Boolean(quote)
   /** 涨跌幅颜色 */
   const color = hasQuote ? changeColor(quote!.change_percent) : '#94a3b8'
 
   return (
-    <div className="rounded-lg border p-4 bg-[#151c2c] border-[#1e293b]
-                    hover:border-[#6366f1]/50 transition-colors">
+    <button
+      type="button"
+      onClick={() => onClick?.(stock)}
+      className="w-full text-left rounded-lg border p-4 bg-[#151c2c] border-[#1e293b]
+                    hover:border-[#6366f1]/50 focus:outline-none focus:border-[#818cf8]
+                    transition-colors"
+    >
       {/* 上方：股票名称 + 代码 */}
       <div className="flex items-center justify-between mb-3">
         <h4 className="text-sm font-medium text-[#e2e8f0] truncate">
@@ -73,6 +80,6 @@ export default function StockCard({ stock, quote }: StockCardProps) {
           {stock.percentage}%
         </span>
       </div>
-    </div>
+    </button>
   )
 }
