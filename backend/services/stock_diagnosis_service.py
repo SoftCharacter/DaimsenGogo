@@ -205,7 +205,7 @@ def _fallback_diagnosis(
         profit_text = f"最近年报 {latest_profit.report_name} 归母净利润 {latest_profit.net_profit_atsopc / 1e8:.2f} 亿元，{yoy}。"
 
     return (
-        f"{name or code} 个股诊断已完成。当前未配置可用大模型，以下为本地规则摘要：\n\n"
+        f"{name or code} 个股诊断已完成。当前未取得大模型诊断，以下为本地规则摘要：\n\n"
         f"1. 技术面：{macd_text}\n"
         f"2. 股东结构：{holder_text}\n"
         f"3. 盈利趋势：{profit_text}\n"
@@ -242,7 +242,8 @@ async def _try_llm_summaries(
     diagnosis_report = _fallback_diagnosis(name, code, macd, shareholders, net_profit, event_summary)
 
     config = load_config()
-    if not (config.provider.api_key and config.provider.base_url and config.selected_model):
+    model = config.selected_model or (config.available_models[0] if config.available_models else "")
+    if not (config.provider.api_key and config.provider.base_url and model):
         return event_summary, diagnosis_report, "missing_config"
 
     client = create_client(config)
@@ -250,7 +251,7 @@ async def _try_llm_summaries(
     try:
         event_summary = await chat_complete(
             client,
-            config.selected_model,
+            model,
             [
                 {"role": "system", "content": "你是A股上市公司事件分析助手，只基于输入数据总结，不做虚构。"},
                 {
@@ -267,13 +268,20 @@ async def _try_llm_summaries(
         payload["event_summary"] = event_summary
         diagnosis_report = await chat_complete(
             client,
-            config.selected_model,
+            model,
             [
-                {"role": "system", "content": "你是谨慎的A股个股诊断分析师。输出要有结论、依据、风险和后续跟踪指标，不构成投资建议。"},
+                {
+                    "role": "system",
+                    "content": (
+                        "你是谨慎的A股个股诊断分析师。输出要有结论、依据、风险和后续跟踪指标，不构成投资建议。"
+                        "技术面必须主要结合DIF、DEA、MACD柱判断趋势、箱体震荡、突破或背离状态。"
+                    ),
+                },
                 {
                     "role": "user",
                     "content": (
                         f"请基于以下数据生成{name or code}({code})个股诊断报告，重点评估长期是否值得进入观察/买入候选池。\n"
+                        "技术面请结合最近60个交易日DIF/DEA/MACD变化，判断是否仍在箱体、是否有放量突破或短线过热风险。\n"
                         f"{json.dumps(payload, ensure_ascii=False)}"
                     ),
                 },
