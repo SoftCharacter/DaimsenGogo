@@ -8,6 +8,7 @@ from fastapi import APIRouter, Query, HTTPException
 from backend.services.stock_service import (
     fetch_quotes,
     fetch_kline,
+    fetch_close_history,
     search_stocks,
 )
 
@@ -72,6 +73,34 @@ async def get_kline(
     # 调用行情服务获取K线
     points = await fetch_kline(code, period, count, task_id=task_id)
     return {"data": [p.model_dump() for p in points]}
+
+
+@router.get("/close-history")
+async def get_close_history(
+    code: str = Query(
+        ...,
+        description="股票代码，如 SZ:000725 或 000725",
+    ),
+    count: int = Query(
+        250,
+        ge=1,
+        le=500,
+        description="交易日数量，默认250个交易日，近似1年",
+    ),
+):
+    """
+    获取历史收盘价。
+    当前用于功能测试：为后续MACD/DIF/DEA本地计算准备收盘价序列。
+    """
+    formatted_code, points, elapsed_ms = await fetch_close_history(code, count=count)
+    return {
+        "code": formatted_code,
+        "source": "xueqiu",
+        "period": "day",
+        "count": len(points),
+        "elapsed_ms": elapsed_ms,
+        "data": [point.model_dump() for point in points],
+    }
 
 
 @router.get("/search")

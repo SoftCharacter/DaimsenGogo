@@ -28,6 +28,7 @@ _DATA_DIR = Path(__file__).resolve().parents[2] / "data"
 _TASK_CACHE_DIR = _DATA_DIR / "task_cache"
 _SHARED_TASK_ID = "_shared"
 _XQ_QUOTE_URL = "https://stock.xueqiu.com/v5/stock/quote.json"
+_XQ_KLINE_URL = "https://stock.xueqiu.com/v5/stock/chart/kline.json"
 _XQ_HEADERS = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 "
     "(KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1",
@@ -377,6 +378,58 @@ def _fetch_xq_quote(symbol: str) -> dict:
         return quote
 
     return _run_without_proxy(request_quote)
+
+
+def fetch_close_history_xq_sync(code: str, count: int = 250) -> list[dict]:
+    """
+    使用雪球原生日K接口获取历史收盘价。
+
+    count 按交易日数量理解；1年A股交易日近似为250个交易日。
+    """
+    symbol = _to_xq_symbol(code)
+
+    def request_kline() -> dict:
+        session = requests.Session()
+        headers = {**_XQ_HEADERS, "Referer": f"https://xueqiu.com/S/{symbol}"}
+        session.get(f"https://xueqiu.com/S/{symbol}", headers=headers, timeout=10)
+        resp = session.get(
+            _XQ_KLINE_URL,
+            params={
+                "symbol": symbol,
+                "begin": int(time.time() * 1000),
+                "period": "day",
+                "type": "before",
+                "count": -abs(int(count)),
+                "indicator": "kline",
+            },
+            headers=headers,
+            timeout=20,
+        )
+        resp.raise_for_status()
+        return resp.json()
+
+    payload = _run_without_proxy(request_kline)
+    data = payload.get("data") or {}
+    columns = data.get("column") or []
+    items = data.get("item") or []
+    if not columns or not items:
+        raise RuntimeError(f"雪球K线响应为空: {str(payload)[:300]}")
+    try:
+        timestamp_index = columns.index("timestamp")
+        close_index = columns.index("close")
+    except ValueError as exc:
+        raise RuntimeError(f"雪球K线响应缺少必要字段: {columns}") from exc
+
+    points: list[dict] = []
+    for item in items:
+        timestamp = int(item[timestamp_index])
+        close = _safe_float(item[close_index])
+        points.append({
+            "date": datetime.fromtimestamp(timestamp / 1000).strftime("%Y-%m-%d"),
+            "timestamp": timestamp,
+            "close": close,
+        })
+    return points
 
 
 def fetch_quote_xq_sync(code: str, task_id: str | None = None) -> StockQuote | None:

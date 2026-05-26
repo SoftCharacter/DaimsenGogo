@@ -29,3 +29,10 @@ class KLinePoint(BaseModel):
     low: float         # 最低价
     close: float       # 收盘价
     volume: float      # 成交量
+
+
+class ClosePricePoint(BaseModel):
+    """历史收盘价数据点"""
+    date: str
+    timestamp: int
+    close: float
