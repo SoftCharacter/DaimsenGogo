@@ -1,7 +1,7 @@
 """
 个股诊断数据模型
 """
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class MacdPoint(BaseModel):
@@ -58,3 +58,4 @@ class StockDiagnosisResponse(BaseModel):
     event_summary: str
     diagnosis_report: str
     llm_status: str
+    data_errors: dict[str, str] = Field(default_factory=dict)

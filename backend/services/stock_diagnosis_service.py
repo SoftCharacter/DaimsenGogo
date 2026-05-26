@@ -299,12 +299,19 @@ async def build_stock_diagnosis(code: str, name: str = "") -> StockDiagnosisResp
     """按需构建个股诊断结果。"""
     formatted_code = format_stock_code(extract_numeric_code(code))
     timings: dict[str, float] = {}
+    data_errors: dict[str, str] = {}
 
-    async def timed(label: str, func, *args):
+    async def timed(label: str, func, *args, default=None):
         start = time.perf_counter()
-        result = await asyncio.to_thread(func, *args)
-        timings[label] = round((time.perf_counter() - start) * 1000, 2)
-        return result
+        try:
+            result = await asyncio.to_thread(func, *args)
+            timings[label] = round((time.perf_counter() - start) * 1000, 2)
+            return result
+        except Exception as exc:
+            timings[label] = round((time.perf_counter() - start) * 1000, 2)
+            data_errors[label] = str(exc)[:300]
+            logger.warning("个股诊断数据源失败 [%s][%s]: %s", formatted_code, label, exc)
+            return [] if default is None else default
 
     close_task = timed("close_history", fetch_close_history_xq_sync, formatted_code, MACD_WARMUP_DAYS)
     holders_task = timed("shareholders", fetch_shareholders_xq_sync, formatted_code)
@@ -346,4 +353,5 @@ async def build_stock_diagnosis(code: str, name: str = "") -> StockDiagnosisResp
         event_summary=event_summary,
         diagnosis_report=diagnosis_report,
         llm_status=llm_status,
+        data_errors=data_errors,
     )
