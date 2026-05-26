@@ -57,7 +57,7 @@ export async function fetchStockDiagnosis(
 ): Promise<StockDiagnosis> {
   const res = await client.get<StockDiagnosis>('/stocks/diagnosis', {
     params: { code, name: name || undefined },
-    timeout: 120000,
+    timeout: 180000,
   })
   return res.data
 }

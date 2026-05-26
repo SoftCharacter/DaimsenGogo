@@ -20,6 +20,7 @@ BACKEND_HOST = "127.0.0.1"
 BACKEND_PORT = 8000
 FRONTEND_HOST = "127.0.0.1"
 FRONTEND_PORT = 5173
+BACKEND_PROXY_TIMEOUT_SECONDS = 180
 
 
 class PreviewHandler(BaseHTTPRequestHandler):
@@ -36,7 +37,7 @@ class PreviewHandler(BaseHTTPRequestHandler):
         if body is not None:
             headers["Content-Length"] = str(len(body))
 
-        conn = http.client.HTTPConnection(BACKEND_HOST, BACKEND_PORT, timeout=60)
+        conn = http.client.HTTPConnection(BACKEND_HOST, BACKEND_PORT, timeout=BACKEND_PROXY_TIMEOUT_SECONDS)
         try:
             conn.request(self.command, self.path, body=body, headers=headers)
             resp = conn.getresponse()
