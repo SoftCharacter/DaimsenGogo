@@ -14,12 +14,25 @@ export default function ConfigPage() {
   /* ---------- 从Store获取状态和方法 ---------- */
   const { loadConfig, loading, error } = useConfigStore()
 
-  /**
-   * 页面挂载时加载远程配置
-   * 仅在首次渲染时触发
-   */
   useEffect(() => {
     loadConfig()
+    const syncConfig = () => {
+      void loadConfig()
+    }
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        syncConfig()
+      }
+    }
+    const intervalId = window.setInterval(syncConfig, 5000)
+    window.addEventListener('focus', syncConfig)
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
+    return () => {
+      window.clearInterval(intervalId)
+      window.removeEventListener('focus', syncConfig)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
   }, [loadConfig])
 
   /* ---------- 加载中占位 ---------- */

@@ -58,10 +58,45 @@ export interface NetProfitPoint {
 export interface StockEventPoint {
   date: string;
   timestamp: number;
+  category: string | null;
   title: string;
   message: string;
   subtype: number | null;
   sentiment: string | null;
+}
+
+export interface ChipHistogramBin {
+  price: number;
+  percent: number;
+  profitable: boolean;
+}
+
+export interface ChipDistributionSnapshot {
+  date: string;
+  timestamp: number;
+  close: number;
+  benefit_ratio: number;
+  avg_cost: number;
+  cost_90_low: number;
+  cost_90_high: number;
+  cost_90_concentration: number;
+  cost_70_low: number;
+  cost_70_high: number;
+  cost_70_concentration: number;
+  support_price: number | null;
+  pressure_price: number | null;
+  relative_price_trend: string;
+  concentration_trend: string;
+  interpretation: string;
+}
+
+export interface ChipDistribution {
+  source: string;
+  params: Record<string, number>;
+  snapshots: ChipDistributionSnapshot[];
+  latest: ChipDistributionSnapshot | null;
+  histogram: ChipHistogramBin[];
+  histograms: Record<string, ChipHistogramBin[]>;
 }
 
 export interface StockDiagnosis {
@@ -74,9 +109,11 @@ export interface StockDiagnosis {
   shareholders: ShareholderPoint[];
   net_profit: NetProfitPoint[];
   events: StockEventPoint[];
+  chip_distribution: ChipDistribution | null;
   event_summary: string;
   diagnosis_report: string;
   llm_status: string;
+  data_errors: Record<string, string>;
 }
 
 /**

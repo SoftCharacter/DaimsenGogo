@@ -62,6 +62,17 @@ export async function fetchStockDiagnosis(
   return res.data
 }
 
+export async function fetchEnhancedStockDiagnosis(
+  code: string,
+  name?: string,
+): Promise<StockDiagnosis> {
+  const res = await client.post<StockDiagnosis>('/stocks/diagnosis/enhance', null, {
+    params: { code, name: name || undefined },
+    timeout: 180000,
+  })
+  return res.data
+}
+
 /**
  * 根据关键词搜索股票
  * 支持按名称或代码模糊搜索

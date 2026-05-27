@@ -8,7 +8,7 @@ import CategoryTabs from '../components/dashboard/CategoryTabs'
 import StockGrid from '../components/dashboard/StockGrid'
 import OverviewGrid from '../components/dashboard/OverviewGrid'
 import StockDiagnosisPanel from '../components/dashboard/StockDiagnosisPanel'
-import { fetchStockDiagnosis } from '../api/stockApi'
+import { fetchEnhancedStockDiagnosis, fetchStockDiagnosis } from '../api/stockApi'
 import type { StockDiagnosis } from '../types/stock'
 import type { StockItem } from '../types/theme'
 
@@ -32,8 +32,10 @@ export default function DashboardPage() {
   const [diagnosisStock, setDiagnosisStock] = useState<StockItem | null>(null)
   const [diagnosis, setDiagnosis] = useState<StockDiagnosis | null>(null)
   const [diagnosisLoading, setDiagnosisLoading] = useState(false)
+  const [diagnosisEnhancing, setDiagnosisEnhancing] = useState(false)
   const [diagnosisError, setDiagnosisError] = useState('')
   const diagnosisRequestId = useRef(0)
+  const enhanceRequestId = useRef(0)
 
   /** 路由ID变化时加载对应主题 */
   useEffect(() => {
@@ -64,10 +66,12 @@ export default function DashboardPage() {
   const handleStockClick = useCallback((stock: StockItem) => {
     const requestId = diagnosisRequestId.current + 1
     diagnosisRequestId.current = requestId
+    enhanceRequestId.current += 1
     setDiagnosisStock(stock)
     setDiagnosis(null)
     setDiagnosisError('')
     setDiagnosisLoading(true)
+    setDiagnosisEnhancing(false)
 
     fetchStockDiagnosis(stock.code, stock.name)
       .then((result) => {
@@ -87,10 +91,34 @@ export default function DashboardPage() {
 
   const handleCloseDiagnosis = useCallback(() => {
     diagnosisRequestId.current += 1
+    enhanceRequestId.current += 1
     setDiagnosisStock(null)
     setDiagnosis(null)
     setDiagnosisError('')
     setDiagnosisLoading(false)
+    setDiagnosisEnhancing(false)
+  }, [])
+
+  const handleEnhanceDiagnosis = useCallback((stock: StockItem) => {
+    const requestId = enhanceRequestId.current + 1
+    enhanceRequestId.current = requestId
+    setDiagnosisEnhancing(true)
+
+    fetchEnhancedStockDiagnosis(stock.code, stock.name)
+      .then((result) => {
+        if (enhanceRequestId.current !== requestId) return
+        setDiagnosis(result)
+      })
+      .catch(() => {
+        if (enhanceRequestId.current !== requestId) return
+        setDiagnosis((current) => current
+          ? { ...current, llm_status: 'error' }
+          : current)
+      })
+      .finally(() => {
+        if (enhanceRequestId.current !== requestId) return
+        setDiagnosisEnhancing(false)
+      })
   }, [])
 
   /** 当前选中的分类对象 */
@@ -166,7 +194,9 @@ export default function DashboardPage() {
           stock={diagnosisStock}
           diagnosis={diagnosis}
           loading={diagnosisLoading}
+          enhancing={diagnosisEnhancing}
           error={diagnosisError}
+          onEnhance={handleEnhanceDiagnosis}
           onClose={handleCloseDiagnosis}
         />
       )}

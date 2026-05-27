@@ -45,14 +45,17 @@ def _apply_env_config(config: AppConfig) -> AppConfig:
     base_url = _env_value("LLM_BASE_URL", "MODEL_BASE_URL", "OPENAI_BASE_URL", "BASE_URL")
     api_key = _env_value("LLM_API_KEY", "MODEL_API_KEY", "OPENAI_API_KEY", "API_KEY")
     model = _env_value("LLM_MODEL", "MODEL_NAME", "OPENAI_MODEL")
+    normalized_base_url = base_url.rstrip("/") if base_url else ""
 
     if provider_name:
         config.provider.name = provider_name
     if base_url:
-        config.provider.base_url = base_url.rstrip("/")
+        config.provider.base_url = normalized_base_url
     if api_key:
         config.provider.api_key = api_key
     if model:
+        if "xiaomimimo.com" in (normalized_base_url or config.provider.base_url):
+            model = model.lower()
         config.selected_model = model
         if model not in config.available_models:
             config.available_models = [*config.available_models, model]
