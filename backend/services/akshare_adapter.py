@@ -451,10 +451,10 @@ def fetch_close_history_xq_sync(code: str, count: int = 250) -> list[dict]:
     return points
 
 
-def fetch_shareholders_xq_sync(code: str) -> list[dict]:
+def fetch_shareholders_xq_sync(code: str, count: int = 20) -> list[dict]:
     """获取雪球F10股东人数变化。"""
     symbol = _to_xq_symbol(code)
-    payload = _fetch_xq_json_sync(symbol, _XQ_HOLDERS_URL, {"symbol": symbol})
+    payload = _fetch_xq_json_sync(symbol, _XQ_HOLDERS_URL, {"symbol": symbol, "count": count})
     return payload.get("data", {}).get("items") or []
 
 

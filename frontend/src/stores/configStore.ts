@@ -40,7 +40,7 @@ export const useConfigStore = create<ConfigState>((set, get) => ({
    * 设置loading状态，失败时记录错误信息
    */
   loadConfig: async () => {
-    set({ loading: true, error: null })
+    set({ loading: !get().config, error: null })
     try {
       const config = await configApi.getConfig()
       set({ config, loading: false })
