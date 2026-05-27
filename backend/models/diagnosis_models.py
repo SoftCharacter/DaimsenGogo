@@ -14,6 +14,17 @@ class MacdPoint(BaseModel):
     macd: float
 
 
+class MovingAveragePoint(BaseModel):
+    """日线收盘价与均线"""
+    date: str
+    timestamp: int
+    close: float
+    ma5: float | None = None
+    ma20: float | None = None
+    ma120: float | None = None
+    ma240: float | None = None
+
+
 class ShareholderPoint(BaseModel):
     """股东人数变化点"""
     date: str
@@ -89,6 +100,7 @@ class StockDiagnosisResponse(BaseModel):
     generated_at: str
     source: str = "xueqiu"
     timings_ms: dict[str, float]
+    moving_averages: list[MovingAveragePoint]
     macd: list[MacdPoint]
     shareholders: list[ShareholderPoint]
     net_profit: list[NetProfitPoint]

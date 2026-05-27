@@ -31,8 +31,11 @@ export default function DashboardPage() {
   const [activeCategoryId, setActiveCategoryId] = useState<string | null>(null)
   const [diagnosisStock, setDiagnosisStock] = useState<StockItem | null>(null)
   const [diagnosis, setDiagnosis] = useState<StockDiagnosis | null>(null)
+  const [baseDiagnosis, setBaseDiagnosis] = useState<StockDiagnosis | null>(null)
+  const [enhancedDiagnosis, setEnhancedDiagnosis] = useState<StockDiagnosis | null>(null)
   const [diagnosisLoading, setDiagnosisLoading] = useState(false)
   const [diagnosisEnhancing, setDiagnosisEnhancing] = useState(false)
+  const [diagnosisEnhanced, setDiagnosisEnhanced] = useState(false)
   const [diagnosisError, setDiagnosisError] = useState('')
   const diagnosisRequestId = useRef(0)
   const enhanceRequestId = useRef(0)
@@ -69,14 +72,18 @@ export default function DashboardPage() {
     enhanceRequestId.current += 1
     setDiagnosisStock(stock)
     setDiagnosis(null)
+    setBaseDiagnosis(null)
+    setEnhancedDiagnosis(null)
     setDiagnosisError('')
     setDiagnosisLoading(true)
     setDiagnosisEnhancing(false)
+    setDiagnosisEnhanced(false)
 
     fetchStockDiagnosis(stock.code, stock.name)
       .then((result) => {
         if (diagnosisRequestId.current !== requestId) return
         setDiagnosis(result)
+        setBaseDiagnosis(result)
       })
       .catch((err) => {
         if (diagnosisRequestId.current !== requestId) return
@@ -94,23 +101,46 @@ export default function DashboardPage() {
     enhanceRequestId.current += 1
     setDiagnosisStock(null)
     setDiagnosis(null)
+    setBaseDiagnosis(null)
+    setEnhancedDiagnosis(null)
     setDiagnosisError('')
     setDiagnosisLoading(false)
     setDiagnosisEnhancing(false)
+    setDiagnosisEnhanced(false)
   }, [])
 
   const handleEnhanceDiagnosis = useCallback((stock: StockItem) => {
+    if (diagnosisEnhanced) {
+      if (baseDiagnosis) {
+        setDiagnosis(baseDiagnosis)
+      }
+      setDiagnosisEnhanced(false)
+      setDiagnosisEnhancing(false)
+      return
+    }
+
+    if (enhancedDiagnosis) {
+      setDiagnosis(enhancedDiagnosis)
+      setDiagnosisEnhanced(true)
+      setDiagnosisEnhancing(false)
+      return
+    }
+
     const requestId = enhanceRequestId.current + 1
     enhanceRequestId.current = requestId
+    setBaseDiagnosis((current) => current || diagnosis)
     setDiagnosisEnhancing(true)
 
     fetchEnhancedStockDiagnosis(stock.code, stock.name)
       .then((result) => {
         if (enhanceRequestId.current !== requestId) return
         setDiagnosis(result)
+        setEnhancedDiagnosis(result)
+        setDiagnosisEnhanced(true)
       })
       .catch(() => {
         if (enhanceRequestId.current !== requestId) return
+        setDiagnosisEnhanced(false)
         setDiagnosis((current) => current
           ? { ...current, llm_status: 'error' }
           : current)
@@ -119,7 +149,7 @@ export default function DashboardPage() {
         if (enhanceRequestId.current !== requestId) return
         setDiagnosisEnhancing(false)
       })
-  }, [])
+  }, [baseDiagnosis, diagnosis, diagnosisEnhanced, enhancedDiagnosis])
 
   /** 当前选中的分类对象 */
   const activeCategory = useMemo(() => {
@@ -195,6 +225,7 @@ export default function DashboardPage() {
           diagnosis={diagnosis}
           loading={diagnosisLoading}
           enhancing={diagnosisEnhancing}
+          enhanced={diagnosisEnhanced}
           error={diagnosisError}
           onEnhance={handleEnhanceDiagnosis}
           onClose={handleCloseDiagnosis}

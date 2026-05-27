@@ -11,6 +11,7 @@ from datetime import datetime, timedelta
 from backend.models.diagnosis_models import (
     ChipDistributionResponse,
     MacdPoint,
+    MovingAveragePoint,
     NetProfitPoint,
     ShareholderPoint,
     StockDiagnosisResponse,
@@ -393,6 +394,40 @@ def _calculate_macd(points: list[dict]) -> list[MacdPoint]:
     return result[-ONE_YEAR_TRADING_DAYS:]
 
 
+def _moving_average(values: list[float], window: int) -> list[float | None]:
+    result: list[float | None] = []
+    total = 0.0
+    for index, value in enumerate(values):
+        total += value
+        if index >= window:
+            total -= values[index - window]
+        result.append(round(total / window, 4) if index >= window - 1 else None)
+    return result
+
+
+def _calculate_moving_averages(points: list[dict]) -> list[MovingAveragePoint]:
+    if not points:
+        return []
+    closes = [float(item["close"]) for item in points]
+    ma5 = _moving_average(closes, 5)
+    ma20 = _moving_average(closes, 20)
+    ma120 = _moving_average(closes, 120)
+    ma240 = _moving_average(closes, 240)
+    result = [
+        MovingAveragePoint(
+            date=str(point["date"]),
+            timestamp=int(point["timestamp"]),
+            close=round(float(point["close"]), 4),
+            ma5=ma5[index],
+            ma20=ma20[index],
+            ma120=ma120[index],
+            ma240=ma240[index],
+        )
+        for index, point in enumerate(points)
+    ]
+    return result[-ONE_YEAR_TRADING_DAYS:]
+
+
 def _normalize_shareholders(items: list[dict]) -> list[ShareholderPoint]:
     cutoff = datetime.now() - timedelta(days=365 * 3 + 10)
     points: list[ShareholderPoint] = []
@@ -535,8 +570,7 @@ def _fallback_diagnosis(
         f"2. 筹码分布：{chip_text}\n"
         f"3. 股东结构：{holder_text}\n"
         f"4. 盈利趋势：{profit_text}\n"
-        f"5. 大事提醒：{event_summary}\n\n"
-        "点击“强化诊断”后，会把这些结构化数据发送给已配置的大模型生成综合报告。"
+        f"5. 大事提醒：{event_summary}"
     )
 
 
@@ -890,6 +924,7 @@ async def build_stock_diagnosis(code: str, name: str = "", include_llm: bool = F
     )
 
     macd = _calculate_macd(close_points)
+    moving_averages = _calculate_moving_averages(close_points)
     shareholders = _normalize_shareholders(holder_items)
     net_profit = _normalize_net_profit(finance_items)
     events = _normalize_events(event_items)
@@ -925,6 +960,7 @@ async def build_stock_diagnosis(code: str, name: str = "", include_llm: bool = F
         name=name,
         generated_at=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         timings_ms=timings,
+        moving_averages=moving_averages,
         macd=macd,
         shareholders=shareholders,
         net_profit=net_profit,

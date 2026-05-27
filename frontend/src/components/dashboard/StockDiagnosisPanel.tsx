@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import type {
   ChipDistribution,
   MacdPoint,
+  MovingAveragePoint,
   NetProfitPoint,
   ShareholderPoint,
   StockDiagnosis,
@@ -19,6 +20,7 @@ interface StockDiagnosisPanelProps {
   diagnosis: StockDiagnosis | null
   loading: boolean
   enhancing: boolean
+  enhanced: boolean
   error: string
   onEnhance: (stock: StockItem) => void
   onClose: () => void
@@ -34,6 +36,10 @@ function formatWan(value: number): string {
 
 function formatPercent(value: number): string {
   return `${(value * 100).toFixed(2)}%`
+}
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, value))
 }
 
 function range(values: number[]): [number, number] {
@@ -69,6 +75,54 @@ function linePath<T>(
       const y = scaleY(getValue(item), min, max)
       return `${index === 0 ? 'M' : 'L'} ${x.toFixed(2)} ${y.toFixed(2)}`
     })
+    .join(' ')
+}
+
+function smoothLinePath<T>(
+  data: T[],
+  getValue: (item: T) => number,
+  min: number,
+  max: number,
+  leftPad = PAD_X,
+  rightPad = PAD_X,
+): string {
+  if (data.length === 0) return ''
+  const innerWidth = CHART_WIDTH - leftPad - rightPad
+  const points = data.map((item, index) => ({
+    x: leftPad + (data.length === 1 ? innerWidth / 2 : (index / (data.length - 1)) * innerWidth),
+    y: scaleY(getValue(item), min, max),
+  }))
+  if (points.length === 1) return `M ${points[0].x.toFixed(2)} ${points[0].y.toFixed(2)}`
+  const parts = [`M ${points[0].x.toFixed(2)} ${points[0].y.toFixed(2)}`]
+  for (let index = 0; index < points.length - 1; index += 1) {
+    const p0 = points[Math.max(0, index - 1)]
+    const p1 = points[index]
+    const p2 = points[index + 1]
+    const p3 = points[Math.min(points.length - 1, index + 2)]
+    const cp1x = p1.x + (p2.x - p0.x) / 6
+    const cp1y = p1.y + (p2.y - p0.y) / 6
+    const cp2x = p2.x - (p3.x - p1.x) / 6
+    const cp2y = p2.y - (p3.y - p1.y) / 6
+    parts.push(`C ${cp1x.toFixed(2)} ${cp1y.toFixed(2)}, ${cp2x.toFixed(2)} ${cp2y.toFixed(2)}, ${p2.x.toFixed(2)} ${p2.y.toFixed(2)}`)
+  }
+  return parts.join(' ')
+}
+
+function sparseLinePath<T>(
+  data: T[],
+  getValue: (item: T) => number | null,
+  min: number,
+  max: number,
+): string {
+  const innerWidth = CHART_WIDTH - PAD_X * 2
+  return data
+    .map((item, index) => {
+      const value = getValue(item)
+      if (value === null) return ''
+      const x = PAD_X + (data.length === 1 ? innerWidth / 2 : (index / (data.length - 1)) * innerWidth)
+      return `${index === 0 || data.slice(0, index).every((point) => getValue(point) === null) ? 'M' : 'L'} ${x.toFixed(2)} ${scaleY(value, min, max).toFixed(2)}`
+    })
+    .filter(Boolean)
     .join(' ')
 }
 
@@ -136,6 +190,48 @@ function MacdChart({ data }: { data: MacdPoint[] }) {
       {ticks.map((index) => (
         <text key={index} x={PAD_X + (index / Math.max(1, data.length - 1)) * innerWidth} y={CHART_HEIGHT - 10} textAnchor="middle" fill="#64748b" fontSize="11">
           {axisLabel(data, index)}
+        </text>
+      ))}
+    </svg>
+  )
+}
+
+function MovingAverageChart({ data }: { data: MovingAveragePoint[] }) {
+  if (data.length === 0) return <EmptyChart label="暂无日线均线数据" />
+
+  const values = data.flatMap((item) => [
+    item.close,
+    item.ma5,
+    item.ma20,
+    item.ma120,
+    item.ma240,
+  ]).filter((item): item is number => item !== null)
+  const [min, max] = range(values)
+  const innerWidth = CHART_WIDTH - PAD_X * 2
+  const ticks = [0, Math.floor(data.length / 2), data.length - 1]
+  const maPath = (key: 'ma5' | 'ma20' | 'ma120' | 'ma240') => sparseLinePath(data, (item) => item[key], min, max)
+
+  return (
+    <svg viewBox={`0 0 ${CHART_WIDTH} ${CHART_HEIGHT}`} className="w-full h-[220px]">
+      {[0, 0.5, 1].map((ratio) => {
+        const y = PAD_TOP + ratio * (CHART_HEIGHT - PAD_TOP - PAD_BOTTOM)
+        return (
+          <line key={ratio} x1={PAD_X} y1={y} x2={CHART_WIDTH - PAD_X} y2={y} stroke="#1f2937" />
+        )
+      })}
+      <path d={smoothLinePath(data, (item) => item.close, min, max)} fill="none" stroke="#e5e7eb" strokeWidth="2.2" />
+      <path d={maPath('ma5')} fill="none" stroke="#f97316" strokeWidth="1.5" />
+      <path d={maPath('ma20')} fill="none" stroke="#38bdf8" strokeWidth="1.5" />
+      <path d={maPath('ma120')} fill="none" stroke="#a78bfa" strokeWidth="1.5" />
+      <path d={maPath('ma240')} fill="none" stroke="#22c55e" strokeWidth="1.5" />
+      {ticks.map((index) => (
+        <text key={index} x={PAD_X + (index / Math.max(1, data.length - 1)) * innerWidth} y={CHART_HEIGHT - 10} textAnchor="middle" fill="#64748b" fontSize="11">
+          {axisLabel(data, index)}
+        </text>
+      ))}
+      {[min, (min + max) / 2, max].map((value) => (
+        <text key={value} x={PAD_X - 8} y={scaleY(value, min, max) + 4} textAnchor="end" fill="#94a3b8" fontSize="10">
+          {value.toFixed(2)}
         </text>
       ))}
     </svg>
@@ -328,6 +424,9 @@ function NetProfitChart({ data }: { data: NetProfitPoint[] }) {
   const profitZero = scaleY(0, profitMin, profitMax)
   const profitTicks = [profitMin, (profitMin + profitMax) / 2, profitMax]
   const yoyTicks = [yoyMin, (yoyMin + yoyMax) / 2, yoyMax]
+  const plotBottom = CHART_HEIGHT - PAD_BOTTOM
+  const labelTop = PAD_TOP + 10
+  const labelBottom = plotBottom - 8
   const yoyPath = linePath(
     yoyData,
     (item) => item.yoy_percent as number,
@@ -361,6 +460,19 @@ function NetProfitChart({ data }: { data: NetProfitPoint[] }) {
       {data.map((item, index) => {
         const centerX = leftPad + groupWidth * index + groupWidth / 2
         const profitY = scaleY(item.net_profit_atsopc, profitMin, profitMax)
+        const yoyY = item.yoy_percent === null
+          ? null
+          : scaleY(item.yoy_percent as number, yoyMin, yoyMax)
+        const baseProfitLabelY = item.net_profit_atsopc >= 0
+          ? Math.min(profitY, profitZero) - 8
+          : Math.max(profitY, profitZero) + 14
+        const profitLabelY = clamp(
+          yoyY !== null && Math.abs(baseProfitLabelY - (yoyY - 10)) < 18
+            ? baseProfitLabelY - 18
+            : baseProfitLabelY,
+          labelTop,
+          labelBottom,
+        )
         return (
           <g key={item.report_name}>
             <rect
@@ -371,7 +483,7 @@ function NetProfitChart({ data }: { data: NetProfitPoint[] }) {
               fill="#ef4444"
               opacity={0.78}
             />
-            <text x={centerX} y={Math.min(profitY, profitZero) - 6} textAnchor="middle" fill="#fecaca" fontSize="11">
+            <text x={centerX} y={profitLabelY} textAnchor="middle" fill="#fecaca" fontSize="11">
               {formatYi(item.net_profit_atsopc)}
             </text>
             <text x={centerX} y={CHART_HEIGHT - 10} textAnchor="middle" fill="#64748b" fontSize="11">
@@ -381,13 +493,29 @@ function NetProfitChart({ data }: { data: NetProfitPoint[] }) {
         )
       })}
       {yoyPath && <path d={yoyPath} fill="none" stroke="#38bdf8" strokeWidth="2.2" />}
-      {yoyData.map((item, index) => {
-        const centerX = leftPad + groupWidth * index + groupWidth / 2
+      {yoyData.map((item) => {
+        const dataIndex = data.findIndex((point) => point.timestamp === item.timestamp)
+        const centerX = leftPad + groupWidth * dataIndex + groupWidth / 2
         const y = scaleY(item.yoy_percent as number, yoyMin, yoyMax)
+        const profitY = scaleY(item.net_profit_atsopc, profitMin, profitMax)
+        const profitLabelY = clamp(
+          item.net_profit_atsopc >= 0
+            ? Math.min(profitY, profitZero) - 8
+            : Math.max(profitY, profitZero) + 14,
+          labelTop,
+          labelBottom,
+        )
+        const aboveY = y - 10
+        const belowY = y + 18
+        const textY = clamp(
+          Math.abs(aboveY - profitLabelY) < 18 ? belowY : aboveY,
+          labelTop,
+          labelBottom,
+        )
         return (
           <g key={`${item.report_name}-yoy`}>
             <circle cx={centerX} cy={y} r="3.5" fill="#38bdf8" />
-            <text x={centerX} y={y - 8} textAnchor="middle" fill="#bae6fd" fontSize="11">
+            <text x={centerX} y={textY} textAnchor="middle" fill="#bae6fd" fontSize="11">
               {(item.yoy_percent as number).toFixed(1)}%
             </text>
           </g>
@@ -445,6 +573,28 @@ function parseTable(lines: string[], startIndex: number): { rows: string[][]; ne
   return { rows, nextIndex: index }
 }
 
+function renderInlineMarkdown(text: string): ReactNode[] {
+  const nodes: ReactNode[] = []
+  const pattern = /\*\*([^*]+)\*\*/g
+  let lastIndex = 0
+  let match: RegExpExecArray | null
+  while ((match = pattern.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      nodes.push(text.slice(lastIndex, match.index))
+    }
+    nodes.push(
+      <strong key={`${match.index}-${match[1]}`} className="font-semibold text-[#e2e8f0]">
+        {match[1]}
+      </strong>,
+    )
+    lastIndex = match.index + match[0].length
+  }
+  if (lastIndex < text.length) {
+    nodes.push(text.slice(lastIndex))
+  }
+  return nodes
+}
+
 function MarkdownReport({ content }: { content: string }) {
   const lines = content.replace(/\r\n/g, '\n').split('\n')
   const blocks: ReactNode[] = []
@@ -461,7 +611,7 @@ function MarkdownReport({ content }: { content: string }) {
     if (line.startsWith('## ')) {
       blocks.push(
         <h2 key={key} className="text-sm font-semibold text-[#e2e8f0] mt-5 first:mt-0 mb-2">
-          {line.replace(/^##\s+/, '')}
+          {renderInlineMarkdown(line.replace(/^##\s+/, ''))}
         </h2>,
       )
       key += 1
@@ -480,7 +630,7 @@ function MarkdownReport({ content }: { content: string }) {
                 <tr className="bg-[#0f172a]">
                   {head.map((cell) => (
                     <th key={cell} className="px-3 py-2 text-left font-semibold text-[#cbd5e1] border-b border-[#263244]">
-                      {cell}
+                      {renderInlineMarkdown(cell)}
                     </th>
                   ))}
                 </tr>
@@ -490,7 +640,7 @@ function MarkdownReport({ content }: { content: string }) {
                   <tr key={`${row.join('-')}-${rowIndex}`} className="odd:bg-[#111827] even:bg-[#0f172a]">
                     {row.map((cell, cellIndex) => (
                       <td key={`${cell}-${cellIndex}`} className="px-3 py-2 align-top text-[#94a3b8] border-t border-[#1e293b] leading-5">
-                        {cell}
+                        {renderInlineMarkdown(cell)}
                       </td>
                     ))}
                   </tr>
@@ -514,7 +664,7 @@ function MarkdownReport({ content }: { content: string }) {
       blocks.push(
         <ul key={key} className="list-disc pl-5 my-2 space-y-1 text-sm text-[#cbd5e1] leading-6">
           {items.map((item) => (
-            <li key={item}>{item}</li>
+            <li key={item}>{renderInlineMarkdown(item)}</li>
           ))}
         </ul>,
       )
@@ -536,7 +686,7 @@ function MarkdownReport({ content }: { content: string }) {
     }
     blocks.push(
       <p key={key} className="text-sm text-[#cbd5e1] leading-6 my-2">
-        {paragraph.join(' ')}
+        {renderInlineMarkdown(paragraph.join(' '))}
       </p>,
     )
     key += 1
@@ -550,6 +700,7 @@ export default function StockDiagnosisPanel({
   diagnosis,
   loading,
   enhancing,
+  enhanced,
   error,
   onEnhance,
   onClose,
@@ -600,6 +751,21 @@ export default function StockDiagnosisPanel({
             <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.35fr)_minmax(360px,0.65fr)] gap-5">
               <div className="space-y-4">
                 <ChartSection
+                  title="日线均线"
+                  subtitle="收盘价日线 / MA5 / MA20 / MA120 / MA240"
+                  legend={(
+                    <>
+                      <LegendDot color="#e5e7eb" label="收盘价" />
+                      <LegendDot color="#f97316" label="MA5" />
+                      <LegendDot color="#38bdf8" label="MA20" />
+                      <LegendDot color="#a78bfa" label="MA120" />
+                      <LegendDot color="#22c55e" label="MA240" />
+                    </>
+                  )}
+                >
+                  <MovingAverageChart data={diagnosis.moving_averages} />
+                </ChartSection>
+                <ChartSection
                   title="指标看板"
                   subtitle="近一年日线收盘价本地计算"
                   legend={(
@@ -649,7 +815,7 @@ export default function StockDiagnosisPanel({
                       disabled={enhancing || loading}
                       className="h-8 px-3 rounded border border-[#475569] text-xs font-medium text-[#e2e8f0] hover:border-[#38bdf8] hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
                     >
-                      {enhancing ? '诊断中...' : '强化诊断'}
+                      {enhancing ? '诊断中...' : enhanced ? '返回' : '强化诊断'}
                     </button>
                   </div>
                 </div>

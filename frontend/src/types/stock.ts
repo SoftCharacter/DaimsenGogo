@@ -37,6 +37,16 @@ export interface MacdPoint {
   macd: number;
 }
 
+export interface MovingAveragePoint {
+  date: string;
+  timestamp: number;
+  close: number;
+  ma5: number | null;
+  ma20: number | null;
+  ma120: number | null;
+  ma240: number | null;
+}
+
 export interface ShareholderPoint {
   date: string;
   timestamp: number;
@@ -105,6 +115,7 @@ export interface StockDiagnosis {
   generated_at: string;
   source: string;
   timings_ms: Record<string, number>;
+  moving_averages: MovingAveragePoint[];
   macd: MacdPoint[];
   shareholders: ShareholderPoint[];
   net_profit: NetProfitPoint[];
