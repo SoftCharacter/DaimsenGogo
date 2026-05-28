@@ -718,7 +718,7 @@ export default function StockDiagnosisPanel({
           <div className="min-w-0">
             <div className="flex items-center gap-3">
               <h3 className="text-lg font-bold text-[#e2e8f0] truncate">
-                {stock.name} 个股诊断
+                {stock.name} 盘面洞察
               </h3>
               <span className="text-xs font-mono text-[#64748b]">{stock.code}</span>
             </div>
@@ -804,7 +804,7 @@ export default function StockDiagnosisPanel({
 
               <aside className="rounded-lg border border-[#1e293b] bg-[#111827] p-4 h-fit">
                 <div className="flex items-center justify-between gap-3 mb-4">
-                  <h4 className="text-sm font-semibold text-[#e2e8f0]">诊断报告</h4>
+                  <h4 className="text-sm font-semibold text-[#e2e8f0]">结构解读</h4>
                   <div className="flex items-center gap-2">
                     {llmStatusText && (
                       <span className="text-xs text-[#ef4444]">{llmStatusText}</span>
@@ -815,20 +815,20 @@ export default function StockDiagnosisPanel({
                       disabled={enhancing || loading}
                       className="h-8 px-3 rounded border border-[#475569] text-xs font-medium text-[#e2e8f0] hover:border-[#38bdf8] hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
                     >
-                      {enhancing ? '诊断中...' : enhanced ? '返回' : '强化诊断'}
+                      {enhancing ? '解盘中...' : enhanced ? '返回' : '智能解盘'}
                     </button>
                   </div>
                 </div>
 
                 <div className="mb-4">
-                  <h5 className="text-xs font-semibold text-[#cbd5e1] mb-2">大事提醒摘要</h5>
+                  <h5 className="text-xs font-semibold text-[#cbd5e1] mb-2">大事提醒</h5>
                   <p className="text-sm text-[#94a3b8] leading-6 whitespace-pre-wrap">
                     {diagnosis.event_summary}
                   </p>
                 </div>
 
                 <div>
-                  <h5 className="text-xs font-semibold text-[#cbd5e1] mb-2">综合诊断</h5>
+                  <h5 className="text-xs font-semibold text-[#cbd5e1] mb-2">综合解读</h5>
                   <MarkdownReport content={diagnosis.diagnosis_report} />
                 </div>
               </aside>
