@@ -5,6 +5,7 @@
 import asyncio
 import json
 import logging
+import re
 import time
 from datetime import datetime, timedelta
 
@@ -525,19 +526,17 @@ def _fallback_event_summary(events: list[StockEventPoint]) -> str:
     top_titles = "、".join(f"{title} {count}次" for title, count in list(title_counts.items())[:5])
     latest = events[0]
     latest_message = latest.message.rstrip("。.!！?？")
-    impact_events = [event for event in events if _event_impact(event)[0] in {"风险", "机会"}]
-    focused_event = next((event for event in impact_events if event.timestamp != latest.timestamp or event.title != latest.title), None)
-    if focused_event is None and impact_events:
-        focused_event = impact_events[0]
-    focused_text = ""
-    if focused_event:
-        impact_type, _ = _event_impact(focused_event)
-        focused_message = focused_event.message.rstrip("。.!！?？")
-        focused_text = f"最新风险/机会事件为 {focused_event.date} 的“{focused_event.title}”（{impact_type}）：{focused_message}"
+    risk_event = next((event for event in events if _event_impact(event)[0] == "风险"), None)
+    risk_text = ""
+    if risk_event:
+        risk_text = (
+            f"最近风险事件为 {risk_event.date} 的“{risk_event.title}”："
+            f"{_compact_event_message(risk_event)}"
+        )
     return (
         f"近五年关键大事提醒 {len(events)} 条，覆盖 {categories}，主要类型包括 {top_titles}。"
         f"最新事件为 {latest.date} 的“{latest.title}”：{latest_message}"
-        f"{'。' + focused_text if focused_text else ''}"
+        f"{'。' + risk_text if risk_text else ''}"
     )
 
 
@@ -550,6 +549,7 @@ def _normalize_report_labels(report: str) -> str:
         "“糖”和“刀”都在这了": "事件扫描",
         "糖和刀都在这了": "事件扫描",
         "已取得近五年": "近五年",
+        "最新风险/机会事件": "最近风险事件",
     }
     normalized = report
     for old, new in replacements.items():
@@ -596,11 +596,11 @@ def _fallback_diagnosis(
 
     return _normalize_report_labels(
         f"{name or code} 盘面洞察已完成，以下为纯数据本地规则摘要：\n\n"
-        f"1. 技术面：{macd_text}\n"
-        f"2. 筹码分布：{chip_text}\n"
-        f"3. 股东结构：{holder_text}\n"
-        f"4. 盈利趋势：{profit_text}\n"
-        f"5. 大事提醒：{event_summary}"
+        f"1. 技术面：\n{macd_text}\n\n"
+        f"2. 筹码分布：\n{chip_text}\n\n"
+        f"3. 股东结构：\n{holder_text}\n\n"
+        f"4. 盈利趋势：\n{profit_text}\n\n"
+        f"5. 大事提醒：\n{event_summary}"
     )
 
 
@@ -777,11 +777,20 @@ def _event_impact(event: StockEventPoint) -> tuple[str, str]:
     text = f"{event.title} {event.message}"
     if event.category == "风险提示":
         return "风险", "可能影响短期情绪或增加股价波动，后续仍需结合实际进展观察。"
-    if any(keyword in text for keyword in ("限售解禁", "减持", "质押")):
-        return "风险", "可能对资金偏好造成扰动，或形成阶段性筹码供给压力。"
     if any(keyword in text for keyword in ("回购", "增持", "解除质押")):
         return "机会", "可能对市场预期形成支撑，但仍需观察实际执行进度。"
+    if any(keyword in text for keyword in ("限售解禁", "解禁", "减持", "质押", "对外担保", "担保")):
+        return "风险", "可能对资金偏好造成扰动，或形成阶段性筹码供给压力。"
     return "机会", "可能影响市场预期，仍需结合事项落地进展观察。"
+
+
+def _compact_event_message(event: StockEventPoint) -> str:
+    text = " ".join(event.message.replace("\n", " ").split()).strip("。.!！?？")
+    if not text:
+        return event.category or "风险事项"
+    fragments = [item.strip() for item in re.split(r"[，,；;。.!！?？]", text) if item.strip()]
+    compact = "，".join(fragments[:2]) if fragments else text
+    return compact if len(compact) <= 32 else f"{compact[:32]}..."
 
 
 def _events_payload(events: list[StockEventPoint]) -> list[dict]:
