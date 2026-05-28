@@ -246,7 +246,7 @@ STOCK_DIAGNOSIS_PROMPT = """
 如果有底背离，应说明下行动能可能减弱，但仍需价格和成交量确认。
 如果没有背离，不要强行解读。
 
-## “糖”和“刀”都在这了
+## 事件扫描
 
 仅在存在有效大事提醒数据时输出。
 必须先写风险，再写机会。
@@ -524,7 +524,37 @@ def _fallback_event_summary(events: list[StockEventPoint]) -> str:
     categories = "、".join(f"{category} {count}条" for category, count in category_counts.items())
     top_titles = "、".join(f"{title} {count}次" for title, count in list(title_counts.items())[:5])
     latest = events[0]
-    return f"已取得近五年关键大事提醒 {len(events)} 条，覆盖 {categories}，主要类型包括 {top_titles}。最新事件为 {latest.date} 的“{latest.title}”：{latest.message}"
+    latest_message = latest.message.rstrip("。.!！?？")
+    impact_events = [event for event in events if _event_impact(event)[0] in {"风险", "机会"}]
+    focused_event = next((event for event in impact_events if event.timestamp != latest.timestamp or event.title != latest.title), None)
+    if focused_event is None and impact_events:
+        focused_event = impact_events[0]
+    focused_text = ""
+    if focused_event:
+        impact_type, _ = _event_impact(focused_event)
+        focused_message = focused_event.message.rstrip("。.!！?？")
+        focused_text = f"最新风险/机会事件为 {focused_event.date} 的“{focused_event.title}”（{impact_type}）：{focused_message}"
+    return (
+        f"近五年关键大事提醒 {len(events)} 条，覆盖 {categories}，主要类型包括 {top_titles}。"
+        f"最新事件为 {latest.date} 的“{latest.title}”：{latest_message}"
+        f"{'。' + focused_text if focused_text else ''}"
+    )
+
+
+def _normalize_report_labels(report: str) -> str:
+    replacements = {
+        "大事提醒摘要": "大事提醒",
+        "综合诊断": "综合解读",
+        "## “糖”和“刀”都在这了": "## 事件扫描",
+        "## 糖和刀都在这了": "## 事件扫描",
+        "“糖”和“刀”都在这了": "事件扫描",
+        "糖和刀都在这了": "事件扫描",
+        "已取得近五年": "近五年",
+    }
+    normalized = report
+    for old, new in replacements.items():
+        normalized = normalized.replace(old, new)
+    return normalized
 
 
 def _fallback_diagnosis(
@@ -564,8 +594,8 @@ def _fallback_diagnosis(
             f"支撑位 {support}，压力位 {pressure}，{chip.interpretation}。"
         )
 
-    return (
-        f"{name or code} 个股诊断已完成，以下为纯数据本地规则摘要：\n\n"
+    return _normalize_report_labels(
+        f"{name or code} 盘面洞察已完成，以下为纯数据本地规则摘要：\n\n"
         f"1. 技术面：{macd_text}\n"
         f"2. 筹码分布：{chip_text}\n"
         f"3. 股东结构：{holder_text}\n"
@@ -885,7 +915,7 @@ async def _try_llm_summaries(
             temperature=config.settings.temperature,
             max_tokens=config.settings.max_tokens,
         )
-        return event_summary, diagnosis_report, "ok"
+        return event_summary, _normalize_report_labels(diagnosis_report), "ok"
     except Exception as exc:
         logger.warning("个股诊断LLM调用失败 [%s]: %s", code, exc)
         return event_summary, diagnosis_report, "error"

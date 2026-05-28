@@ -9,7 +9,7 @@ import re
 import shutil
 from pathlib import Path
 from typing import Optional
-from dotenv import load_dotenv
+from dotenv import dotenv_values, load_dotenv, set_key
 from backend.models.config_models import AppConfig
 from backend.models.theme_models import Theme, ThemeSummary
 
@@ -23,6 +23,10 @@ THEMES_DIR = DATA_DIR / "themes"
 TASK_CACHE_DIR = DATA_DIR / "task_cache"
 _SAFE_ID_PATTERN = re.compile(r"^[A-Za-z0-9_-]{1,80}$")
 ENV_PATH = ROOT_DIR / ".env"
+ENV_PROVIDER_NAME_KEYS = ("LLM_PROVIDER_NAME", "MODEL_PROVIDER_NAME", "OPENAI_PROVIDER_NAME")
+ENV_BASE_URL_KEYS = ("LLM_BASE_URL", "MODEL_BASE_URL", "OPENAI_BASE_URL", "BASE_URL")
+ENV_API_KEY_KEYS = ("LLM_API_KEY", "MODEL_API_KEY", "OPENAI_API_KEY", "API_KEY")
+ENV_MODEL_KEYS = ("LLM_MODEL", "MODEL_NAME", "OPENAI_MODEL")
 
 
 def _load_local_env() -> None:
@@ -31,6 +35,11 @@ def _load_local_env() -> None:
 
 
 def _env_value(*names: str) -> str:
+    file_values = dotenv_values(ENV_PATH) if ENV_PATH.exists() else {}
+    for name in names:
+        file_value = file_values.get(name)
+        if file_value is not None and str(file_value).strip():
+            return str(file_value).strip()
     for name in names:
         value = os.getenv(name)
         if value is not None and value.strip():
@@ -41,10 +50,10 @@ def _env_value(*names: str) -> str:
 def _apply_env_config(config: AppConfig) -> AppConfig:
     """用.env覆盖本地JSON配置，兼容多种大模型环境变量命名。"""
     _load_local_env()
-    provider_name = _env_value("LLM_PROVIDER_NAME", "MODEL_PROVIDER_NAME", "OPENAI_PROVIDER_NAME")
-    base_url = _env_value("LLM_BASE_URL", "MODEL_BASE_URL", "OPENAI_BASE_URL", "BASE_URL")
-    api_key = _env_value("LLM_API_KEY", "MODEL_API_KEY", "OPENAI_API_KEY", "API_KEY")
-    model = _env_value("LLM_MODEL", "MODEL_NAME", "OPENAI_MODEL")
+    provider_name = _env_value(*ENV_PROVIDER_NAME_KEYS)
+    base_url = _env_value(*ENV_BASE_URL_KEYS)
+    api_key = _env_value(*ENV_API_KEY_KEYS)
+    model = _env_value(*ENV_MODEL_KEYS)
     normalized_base_url = base_url.rstrip("/") if base_url else ""
 
     if provider_name:
@@ -60,6 +69,20 @@ def _apply_env_config(config: AppConfig) -> AppConfig:
         if model not in config.available_models:
             config.available_models = [*config.available_models, model]
     return config
+
+
+def _write_env_value(key: str, value: str) -> None:
+    ENV_PATH.touch(exist_ok=True)
+    set_key(str(ENV_PATH), key, value, quote_mode="always")
+
+
+def sync_config_to_env(config: AppConfig, *, update_api_key: bool = True) -> None:
+    """把模型配置同步写回.env，保留.env中的其他变量。"""
+    _write_env_value("LLM_PROVIDER_NAME", config.provider.name.strip())
+    _write_env_value("LLM_BASE_URL", config.provider.base_url.strip().rstrip("/"))
+    if update_api_key and config.provider.api_key:
+        _write_env_value("LLM_API_KEY", config.provider.api_key.strip())
+    _write_env_value("LLM_MODEL", config.selected_model.strip())
 
 
 def _safe_json_path(base_dir: Path, item_id: str) -> Path:
@@ -104,8 +127,9 @@ def load_config() -> AppConfig:
 def save_config(config: AppConfig) -> None:
     """保存应用配置到config.json"""
     ensure_dirs()
+    sync_config_to_env(config, update_api_key=bool(config.provider.api_key))
     persisted = config.model_copy(deep=True)
-    if _env_value("LLM_API_KEY", "MODEL_API_KEY", "OPENAI_API_KEY", "API_KEY"):
+    if _env_value(*ENV_API_KEY_KEYS):
         persisted.provider.api_key = ""
     CONFIG_PATH.write_text(
         persisted.model_dump_json(indent=2),
