@@ -1,0 +1,239 @@
+{
+  "id": "dadf45a2a58a",
+  "name": "苹果Vision Pro产业链",
+  "description": "围绕苹果Vision Pro及后续空间计算终端的A股供应链映射，覆盖显示与硅基显示配套、Pancake光学与视觉器件、3D感知与环境追踪、声学与整机组装、SiP与先进封装、FPC/PCB、连接器线束、电池供电、散热材料、结构件以及AR/VR自动化设备等环节。入选公司以苹果供应链适配能力、头显相关器件技术相关性、精密制造能力及向空间计算终端迁移的潜在弹性为核心依据，区分直接受益环节与具备技术映射能力的间接受益环节。",
+  "source_task_id": "analysis_d07642b4b98c",
+  "created_at": "2026-05-28T20:06:49.195046+00:00",
+  "updated_at": "2026-05-28T20:06:49.195046+00:00",
+  "categories": [
+    {
+      "id": "micro_oled_display",
+      "name": "Micro OLED显示面板与硅基显示配套",
+      "order": 1,
+      "stocks": [
+        {
+          "code": "SZ:000725",
+          "name": "京东方A",
+          "name_en": "BOE A",
+          "percentage": 69,
+          "description": "国内显示龙头，具备近眼显示与新型显示技术储备，是Vision Pro相关硅基显示及后续空间计算终端显示环节的重要映射标的。",
+          "category_tag": "Micro OLED显示面板与硅基显示配套"
+        },
+        {
+          "code": "SZ:000050",
+          "name": "深天马A",
+          "name_en": "Tianma Microelectronics",
+          "percentage": 58,
+          "description": "在中小尺寸高端显示领域具备技术基础，受益于头显近眼显示升级趋势，属于Micro OLED及相关显示配套的潜在受益方。",
+          "category_tag": "Micro OLED显示面板与硅基显示配套"
+        }
+      ]
+    },
+    {
+      "id": "pancake_optics",
+      "name": "Pancake光学模组与视觉光学器件",
+      "order": 2,
+      "stocks": [
+        {
+          "code": "SZ:002273",
+          "name": "水晶光电",
+          "name_en": "Crystal-Optech",
+          "percentage": 76,
+          "description": "公司在精密光学元件、滤光片与光学薄膜等方向具备较强能力，适配头显Pancake光学链条中的核心光学器件配套需求。",
+          "category_tag": "Pancake光学模组与视觉光学器件"
+        },
+        {
+          "code": "SZ:002456",
+          "name": "欧菲光",
+          "name_en": "O-Film",
+          "percentage": 63,
+          "description": "具备镜头、摄像模组及光学系统集成能力，可映射至头显光学模组与视觉感知器件环节，但实际订单关系仍偏间接。",
+          "category_tag": "Pancake光学模组与视觉光学器件"
+        }
+      ]
+    },
+    {
+      "id": "vision_tracking_modules",
+      "name": "3D感知摄像头与环境追踪视觉模组",
+      "order": 3,
+      "stocks": [
+        {
+          "code": "SZ:002241",
+          "name": "歌尔股份",
+          "name_en": "Goertek",
+          "percentage": 83,
+          "description": "公司在VR/AR整机、声学与精密光学模组方面积累深厚，具备头显多摄像头、感知模组及环境追踪相关制造能力，是Vision Pro链条高相关标的。",
+          "category_tag": "3D感知摄像头与环境追踪视觉模组"
+        }
+      ]
+    },
+    {
+      "id": "acoustic_assembly",
+      "name": "空间音频声学器件与整机组装",
+      "order": 4,
+      "stocks": [
+        {
+          "code": "SZ:002475",
+          "name": "立讯精密",
+          "name_en": "Luxshare Precision",
+          "percentage": 88,
+          "description": "苹果核心精密制造供应商，覆盖连接、声学、模组及系统组装能力，在头显整机制造、声学器件及复杂精密装配环节具备较强导入可能。",
+          "category_tag": "空间音频声学器件与整机组装"
+        }
+      ]
+    },
+    {
+      "id": "sip_advanced_packaging",
+      "name": "主控SoC相关SiP模组与先进封装配套",
+      "order": 5,
+      "stocks": [
+        {
+          "code": "SH:600584",
+          "name": "长电科技",
+          "name_en": "JCET",
+          "percentage": 72,
+          "description": "国内先进封装龙头，具备高端SiP、倒装及先进封装能力，可映射Vision Pro主控、协处理器及高速芯片封装需求。",
+          "category_tag": "主控SoC相关SiP模组与先进封装配套"
+        },
+        {
+          "code": "SH:601231",
+          "name": "环旭电子",
+          "name_en": "USI",
+          "percentage": 74,
+          "description": "公司在SiP模组、系统级封装与电子制造服务领域能力突出，适合切入头显主板模组、无线连接模组及高集成度系统封装环节。",
+          "category_tag": "主控SoC相关SiP模组与先进封装配套"
+        },
+        {
+          "code": "SZ:002156",
+          "name": "通富微电",
+          "name_en": "TFME",
+          "percentage": 61,
+          "description": "公司具备先进封装与测试能力，可受益于空间计算终端对高算力芯片封测需求提升，但与苹果头显链条的对应关系相对偏间接。",
+          "category_tag": "主控SoC相关SiP模组与先进封装配套"
+        }
+      ]
+    },
+    {
+      "id": "fpc_pcb_hdi_slp",
+      "name": "FPC软板、高多层HDI与SLP主板",
+      "order": 6,
+      "stocks": [
+        {
+          "code": "SZ:002938",
+          "name": "鹏鼎控股",
+          "name_en": "Avary Holding",
+          "percentage": 87,
+          "description": "苹果PCB核心供应链标的，在FPC、HDI及高端主板领域优势明显，契合Vision Pro高密度互连与轻薄化主板需求。",
+          "category_tag": "FPC软板、高多层HDI与SLP主板"
+        },
+        {
+          "code": "SZ:002384",
+          "name": "东山精密",
+          "name_en": "DSBJ",
+          "percentage": 72,
+          "description": "公司覆盖FPC及电子电路制造，具备向高端消费电子精密互连场景供货能力，是头显FPC环节的重要候选。",
+          "category_tag": "FPC软板、高多层HDI与SLP主板"
+        },
+        {
+          "code": "SZ:002916",
+          "name": "深南电路",
+          "name_en": "SCC",
+          "percentage": 64,
+          "description": "公司在高端PCB、高多层板及封装基板领域技术领先，适配头显高算力主板与高速信号传输需求。",
+          "category_tag": "FPC软板、高多层HDI与SLP主板"
+        },
+        {
+          "code": "SZ:002463",
+          "name": "沪电股份",
+          "name_en": "Wus Printed Circuit",
+          "percentage": 57,
+          "description": "公司在高端PCB制造方面具备竞争力，可受益于空间计算终端对高频高速和高层数电路板的需求扩张。",
+          "category_tag": "FPC软板、高多层HDI与SLP主板"
+        }
+      ]
+    },
+    {
+      "id": "connectors_harness",
+      "name": "高速连接器、天线与精密线束",
+      "order": 7,
+      "stocks": [
+        {
+          "code": "SZ:002897",
+          "name": "意华股份",
+          "name_en": "Yihua Shares",
+          "percentage": 55,
+          "description": "公司具备连接器产品能力，可映射头显内部高速互连、外接电源及信号传输等精密连接场景。",
+          "category_tag": "高速连接器、天线与精密线束"
+        }
+      ]
+    },
+    {
+      "id": "battery_power",
+      "name": "电池Pack、BMS与外接供电组件",
+      "order": 8,
+      "stocks": [
+        {
+          "code": "SZ:300207",
+          "name": "欣旺达",
+          "name_en": "Sunwoda",
+          "percentage": 73,
+          "description": "公司在消费电池Pack与电源管理方面积累深厚，符合Vision Pro外接电池包、BMS及轻量化供电方案的产业链映射逻辑。",
+          "category_tag": "电池Pack、BMS与外接供电组件"
+        }
+      ]
+    },
+    {
+      "id": "thermal_management",
+      "name": "散热材料、均热板、石墨与结构导热件",
+      "order": 9,
+      "stocks": [
+        {
+          "code": "SZ:300684",
+          "name": "中石科技",
+          "name_en": "Sinomag Technology",
+          "percentage": 71,
+          "description": "公司在导热材料、石墨散热及热管理解决方案方面具备优势，可受益于头显高算力、小体积下的复杂散热需求。",
+          "category_tag": "散热材料、均热板、石墨与结构导热件"
+        }
+      ]
+    },
+    {
+      "id": "structure_materials",
+      "name": "金属中框、玻璃盖板与精密结构件",
+      "order": 10,
+      "stocks": [
+        {
+          "code": "SZ:300433",
+          "name": "蓝思科技",
+          "name_en": "Lens Technology",
+          "percentage": 78,
+          "description": "苹果产业链核心结构件与玻璃加工厂商，在3D玻璃、外观件及精密结构件方面优势突出，契合Vision Pro高端外观与结构件需求。",
+          "category_tag": "金属中框、玻璃盖板与精密结构件"
+        }
+      ]
+    },
+    {
+      "id": "automation_equipment",
+      "name": "AR/VR贴合、检测、组装自动化设备",
+      "order": 11,
+      "stocks": [
+        {
+          "code": "SZ:301312",
+          "name": "智立方",
+          "name_en": "Zhilibang",
+          "percentage": 66,
+          "description": "公司聚焦消费电子自动化测试与装配设备，适合切入头显精密贴合、检测与组装工艺升级环节。",
+          "category_tag": "AR/VR贴合、检测、组装自动化设备"
+        },
+        {
+          "code": "SZ:300567",
+          "name": "精测电子",
+          "name_en": "Jingce Electronic",
+          "percentage": 62,
+          "description": "公司在显示检测与高端测试设备领域具备能力，可映射近眼显示模组、光学模组及整机检测设备需求。",
+          "category_tag": "AR/VR贴合、检测、组装自动化设备"
+        }
+      ]
+    }
+  ]
+}

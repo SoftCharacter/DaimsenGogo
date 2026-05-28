@@ -1,0 +1,2975 @@
+{
+  "id": "analysis_d07642b4b98c",
+  "query": "苹果Vision Pro产业链",
+  "status": "completed",
+  "created_at": "2026-05-28T20:00:56.065429+00:00",
+  "updated_at": "2026-05-28T20:06:49.199077+00:00",
+  "started_at": "2026-05-28T20:00:56.069935+00:00",
+  "finished_at": "2026-05-28T20:06:32.897656+00:00",
+  "current_step": 7,
+  "max_steps": 6,
+  "events": [
+    {
+      "seq": 1,
+      "type": "thinking",
+      "data": {
+        "content": "正在生成全局执行计划，SOP步骤将由系统固定控制。",
+        "step": 0,
+        "task_id": "analysis_d07642b4b98c"
+      },
+      "created_at": "2026-05-28T20:00:56.103953+00:00"
+    },
+    {
+      "seq": 2,
+      "type": "thinking",
+      "data": {
+        "content": "已生成全局SOP计划：候选发现 → 业务确认 → 候选补全 → 结果分组 → 代码校验 → 最终组装。",
+        "step": 0,
+        "task_id": "analysis_d07642b4b98c"
+      },
+      "created_at": "2026-05-28T20:01:12.014571+00:00"
+    },
+    {
+      "seq": 3,
+      "type": "progress",
+      "data": {
+        "step": 1,
+        "max_steps": 6,
+        "task_id": "analysis_d07642b4b98c",
+        "phase": "execute",
+        "plan_step": "候选发现",
+        "attempt": 1
+      },
+      "created_at": "2026-05-28T20:01:12.018139+00:00"
+    },
+    {
+      "seq": 4,
+      "type": "thinking",
+      "data": {
+        "content": "开始执行计划步骤 1/6：候选发现（第1/3次尝试）。",
+        "step": 1,
+        "task_id": "analysis_d07642b4b98c",
+        "plan_step": "候选发现",
+        "attempt": 1
+      },
+      "created_at": "2026-05-28T20:01:12.024139+00:00"
+    },
+    {
+      "seq": 5,
+      "type": "thinking",
+      "data": {
+        "content": "优先从规划提示中覆盖组装、PCB/FPC、封装、光学、结构件、电池与散热等不同环节逐个搜索，先检索首个候选。",
+        "step": 1,
+        "task_id": "analysis_d07642b4b98c",
+        "plan_step": "候选发现",
+        "attempt": 1
+      },
+      "created_at": "2026-05-28T20:01:35.654389+00:00"
+    },
+    {
+      "seq": 6,
+      "type": "tool_call",
+      "data": {
+        "tool": "search_stocks",
+        "input": "立讯精密Thought:",
+        "step": 1,
+        "task_id": "analysis_d07642b4b98c",
+        "plan_step": "候选发现",
+        "attempt": 1
+      },
+      "created_at": "2026-05-28T20:01:35.661887+00:00"
+    },
+    {
+      "seq": 7,
+      "type": "tool_result",
+      "data": {
+        "tool": "search_stocks",
+        "output": "{\"keyword\": \"立讯精密Thought:\", \"count\": 0, \"results\": []}",
+        "step": 1,
+        "task_id": "analysis_d07642b4b98c",
+        "plan_step": "候选发现",
+        "attempt": 1
+      },
+      "created_at": "2026-05-28T20:01:35.683907+00:00"
+    },
+    {
+      "seq": 8,
+      "type": "tool_call",
+      "data": {
+        "tool": "search_stocks",
+        "input": "继续覆盖声学/整机组装环节",
+        "step": 1,
+        "task_id": "analysis_d07642b4b98c",
+        "plan_step": "候选发现",
+        "attempt": 1
+      },
+      "created_at": "2026-05-28T20:01:35.687913+00:00"
+    },
+    {
+      "seq": 9,
+      "type": "tool_result",
+      "data": {
+        "tool": "search_stocks",
+        "output": "{\"keyword\": \"继续覆盖声学/整机组装环节\", \"count\": 0, \"results\": []}",
+        "step": 1,
+        "task_id": "analysis_d07642b4b98c",
+        "plan_step": "候选发现",
+        "attempt": 1
+      },
+      "created_at": "2026-05-28T20:01:35.699628+00:00"
+    },
+    {
+      "seq": 10,
+      "type": "tool_call",
+      "data": {
+        "tool": "search_stocks",
+        "input": "检索下一家候选。",
+        "step": 1,
+        "task_id": "analysis_d07642b4b98c",
+        "plan_step": "候选发现",
+        "attempt": 1
+      },
+      "created_at": "2026-05-28T20:01:35.702112+00:00"
+    },
+    {
+      "seq": 11,
+      "type": "tool_result",
+      "data": {
+        "tool": "search_stocks",
+        "output": "{\"keyword\": \"检索下一家候选。\", \"count\": 0, \"results\": []}",
+        "step": 1,
+        "task_id": "analysis_d07642b4b98c",
+        "plan_step": "候选发现",
+        "attempt": 1
+      },
+      "created_at": "2026-05-28T20:01:35.712616+00:00"
+    },
+    {
+      "seq": 12,
+      "type": "tool_call",
+      "data": {
+        "tool": "search_stocks",
+        "input": "歌尔股份Thought:",
+        "step": 1,
+        "task_id": "analysis_d07642b4b98c",
+        "plan_step": "候选发现",
+        "attempt": 1
+      },
+      "created_at": "2026-05-28T20:01:35.714616+00:00"
+    },
+    {
+      "seq": 13,
+      "type": "tool_result",
+      "data": {
+        "tool": "search_stocks",
+        "output": "{\"keyword\": \"歌尔股份Thought:\", \"count\": 0, \"results\": []}",
+        "step": 1,
+        "task_id": "analysis_d07642b4b98c",
+        "plan_step": "候选发现",
+        "attempt": 1
+      },
+      "created_at": "2026-05-28T20:01:35.724120+00:00"
+    },
+    {
+      "seq": 14,
+      "type": "tool_call",
+      "data": {
+        "tool": "search_stocks",
+        "input": "继续覆盖FPC/PCB环节",
+        "step": 1,
+        "task_id": "analysis_d07642b4b98c",
+        "plan_step": "候选发现",
+        "attempt": 1
+      },
+      "created_at": "2026-05-28T20:01:35.727138+00:00"
+    },
+    {
+      "seq": 15,
+      "type": "tool_result",
+      "data": {
+        "tool": "search_stocks",
+        "output": "{\"keyword\": \"继续覆盖FPC/PCB环节\", \"count\": 0, \"results\": []}",
+        "step": 1,
+        "task_id": "analysis_d07642b4b98c",
+        "plan_step": "候选发现",
+        "attempt": 1
+      },
+      "created_at": "2026-05-28T20:01:35.738202+00:00"
+    },
+    {
+      "seq": 16,
+      "type": "tool_call",
+      "data": {
+        "tool": "search_stocks",
+        "input": "检索下一家候选。",
+        "step": 1,
+        "task_id": "analysis_d07642b4b98c",
+        "plan_step": "候选发现",
+        "attempt": 1
+      },
+      "created_at": "2026-05-28T20:01:35.740202+00:00"
+    },
+    {
+      "seq": 17,
+      "type": "tool_result",
+      "data": {
+        "tool": "search_stocks",
+        "output": "{\"keyword\": \"检索下一家候选。\", \"count\": 0, \"results\": []}",
+        "step": 1,
+        "task_id": "analysis_d07642b4b98c",
+        "plan_step": "候选发现",
+        "attempt": 1
+      },
+      "created_at": "2026-05-28T20:01:35.750556+00:00"
+    },
+    {
+      "seq": 18,
+      "type": "tool_call",
+      "data": {
+        "tool": "search_stocks",
+        "input": "鹏鼎控股",
+        "step": 1,
+        "task_id": "analysis_d07642b4b98c",
+        "plan_step": "候选发现",
+        "attempt": 1
+      },
+      "created_at": "2026-05-28T20:01:35.752556+00:00"
+    },
+    {
+      "seq": 19,
+      "type": "tool_result",
+      "data": {
+        "tool": "search_stocks",
+        "output": "{\"keyword\": \"鹏鼎控股\", \"count\": 1, \"results\": [{\"code\": \"SZ:002938\", \"name\": \"鹏鼎控股\"}]}",
+        "step": 1,
+        "task_id": "analysis_d07642b4b98c",
+        "plan_step": "候选发现",
+        "attempt": 1
+      },
+      "created_at": "2026-05-28T20:01:35.763061+00:00"
+    },
+    {
+      "seq": 20,
+      "type": "thinking",
+      "data": {
+        "content": "前次工具输入被串扰，仅有“鹏鼎控股”成功返回；继续按单一公司简称逐个检索以补足候选覆盖。",
+        "step": 1,
+        "task_id": "analysis_d07642b4b98c",
+        "plan_step": "候选发现",
+        "attempt": 1
+      },
+      "created_at": "2026-05-28T20:01:59.038238+00:00"
+    },
+    {
+      "seq": 21,
+      "type": "tool_call",
+      "data": {
+        "tool": "search_stocks",
+        "input": "立讯精密",
+        "step": 1,
+        "task_id": "analysis_d07642b4b98c",
+        "plan_step": "候选发现",
+        "attempt": 1
+      },
+      "created_at": "2026-05-28T20:01:59.041744+00:00"
+    },
+    {
+      "seq": 22,
+      "type": "tool_result",
+      "data": {
+        "tool": "search_stocks",
+        "output": "{\"keyword\": \"立讯精密\", \"count\": 1, \"results\": [{\"code\": \"SZ:002475\", \"name\": \"立讯精密\"}]}",
+        "step": 1,
+        "task_id": "analysis_d07642b4b98c",
+        "plan_step": "候选发现",
+        "attempt": 1
+      },
+      "created_at": "2026-05-28T20:01:59.052253+00:00"
+    },
+    {
+      "seq": 23,
+      "type": "thinking",
+      "data": {
+        "content": "继续覆盖声学/整机组装环节，检索下一家候选。",
+        "step": 1,
+        "task_id": "analysis_d07642b4b98c",
+        "plan_step": "候选发现",
+        "attempt": 1
+      },
+      "created_at": "2026-05-28T20:02:23.815623+00:00"
+    },
+    {
+      "seq": 24,
+      "type": "tool_call",
+      "data": {
+        "tool": "search_stocks",
+        "input": "歌尔股份",
+        "step": 1,
+        "task_id": "analysis_d07642b4b98c",
+        "plan_step": "候选发现",
+        "attempt": 1
+      },
+      "created_at": "2026-05-28T20:02:23.818127+00:00"
+    },
+    {
+      "seq": 25,
+      "type": "tool_result",
+      "data": {
+        "tool": "search_stocks",
+        "output": "{\"keyword\": \"歌尔股份\", \"count\": 1, \"results\": [{\"code\": \"SZ:002241\", \"name\": \"歌尔股份\"}]}",
+        "step": 1,
+        "task_id": "analysis_d07642b4b98c",
+        "plan_step": "候选发现",
+        "attempt": 1
+      },
+      "created_at": "2026-05-28T20:02:23.829632+00:00"
+    },
+    {
+      "seq": 26,
+      "type": "thinking",
+      "data": {
+        "content": "继续覆盖封装测试环节，检索下一家候选。",
+        "step": 1,
+        "task_id": "analysis_d07642b4b98c",
+        "plan_step": "候选发现",
+        "attempt": 1
+      },
+      "created_at": "2026-05-28T20:02:43.761536+00:00"
+    },
+    {
+      "seq": 27,
+      "type": "tool_call",
+      "data": {
+        "tool": "search_stocks",
+        "input": "长电科技",
+        "step": 1,
+        "task_id": "analysis_d07642b4b98c",
+        "plan_step": "候选发现",
+        "attempt": 1
+      },
+      "created_at": "2026-05-28T20:02:43.765168+00:00"
+    },
+    {
+      "seq": 28,
+      "type": "tool_result",
+      "data": {
+        "tool": "search_stocks",
+        "output": "{\"keyword\": \"长电科技\", \"count\": 1, \"results\": [{\"code\": \"SH:600584\", \"name\": \"长电科技\"}]}",
+        "step": 1,
+        "task_id": "analysis_d07642b4b98c",
+        "plan_step": "候选发现",
+        "attempt": 1
+      },
+      "created_at": "2026-05-28T20:02:43.777039+00:00"
+    },
+    {
+      "seq": 29,
+      "type": "thinking",
+      "data": {
+        "content": "继续覆盖光学器件环节，检索下一家候选。",
+        "step": 1,
+        "task_id": "analysis_d07642b4b98c",
+        "plan_step": "候选发现",
+        "attempt": 1
+      },
+      "created_at": "2026-05-28T20:03:08.991265+00:00"
+    },
+    {
+      "seq": 30,
+      "type": "tool_call",
+      "data": {
+        "tool": "search_stocks",
+        "input": "水晶光电",
+        "step": 1,
+        "task_id": "analysis_d07642b4b98c",
+        "plan_step": "候选发现",
+        "attempt": 1
+      },
+      "created_at": "2026-05-28T20:03:08.995265+00:00"
+    },
+    {
+      "seq": 31,
+      "type": "tool_result",
+      "data": {
+        "tool": "search_stocks",
+        "output": "{\"keyword\": \"水晶光电\", \"count\": 1, \"results\": [{\"code\": \"SZ:002273\", \"name\": \"水晶光电\"}]}",
+        "step": 1,
+        "task_id": "analysis_d07642b4b98c",
+        "plan_step": "候选发现",
+        "attempt": 1
+      },
+      "created_at": "2026-05-28T20:03:09.053189+00:00"
+    },
+    {
+      "seq": 32,
+      "type": "thinking",
+      "data": {
+        "content": "继续覆盖结构件与玻璃环节，检索下一家候选。",
+        "step": 1,
+        "task_id": "analysis_d07642b4b98c",
+        "plan_step": "候选发现",
+        "attempt": 1
+      },
+      "created_at": "2026-05-28T20:03:40.497384+00:00"
+    },
+    {
+      "seq": 33,
+      "type": "tool_call",
+      "data": {
+        "tool": "search_stocks",
+        "input": "蓝思科技",
+        "step": 1,
+        "task_id": "analysis_d07642b4b98c",
+        "plan_step": "候选发现",
+        "attempt": 1
+      },
+      "created_at": "2026-05-28T20:03:40.499894+00:00"
+    },
+    {
+      "seq": 34,
+      "type": "tool_result",
+      "data": {
+        "tool": "search_stocks",
+        "output": "{\"keyword\": \"蓝思科技\", \"count\": 1, \"results\": [{\"code\": \"SZ:300433\", \"name\": \"蓝思科技\"}]}",
+        "step": 1,
+        "task_id": "analysis_d07642b4b98c",
+        "plan_step": "候选发现",
+        "attempt": 1
+      },
+      "created_at": "2026-05-28T20:03:40.507395+00:00"
+    },
+    {
+      "seq": 35,
+      "type": "thinking",
+      "data": {
+        "content": "继续覆盖电池Pack环节，检索下一家候选。",
+        "step": 1,
+        "task_id": "analysis_d07642b4b98c",
+        "plan_step": "候选发现",
+        "attempt": 1
+      },
+      "created_at": "2026-05-28T20:04:11.922201+00:00"
+    },
+    {
+      "seq": 36,
+      "type": "tool_call",
+      "data": {
+        "tool": "search_stocks",
+        "input": "欣旺达",
+        "step": 1,
+        "task_id": "analysis_d07642b4b98c",
+        "plan_step": "候选发现",
+        "attempt": 1
+      },
+      "created_at": "2026-05-28T20:04:11.926201+00:00"
+    },
+    {
+      "seq": 37,
+      "type": "tool_result",
+      "data": {
+        "tool": "search_stocks",
+        "output": "{\"keyword\": \"欣旺达\", \"count\": 1, \"results\": [{\"code\": \"SZ:300207\", \"name\": \"欣旺达\"}]}",
+        "step": 1,
+        "task_id": "analysis_d07642b4b98c",
+        "plan_step": "候选发现",
+        "attempt": 1
+      },
+      "created_at": "2026-05-28T20:04:11.937044+00:00"
+    },
+    {
+      "seq": 38,
+      "type": "thinking",
+      "data": {
+        "content": "继续覆盖散热材料环节，检索下一家候选。",
+        "step": 1,
+        "task_id": "analysis_d07642b4b98c",
+        "plan_step": "候选发现",
+        "attempt": 1
+      },
+      "created_at": "2026-05-28T20:04:13.855301+00:00"
+    },
+    {
+      "seq": 39,
+      "type": "tool_call",
+      "data": {
+        "tool": "search_stocks",
+        "input": "中石科技",
+        "step": 1,
+        "task_id": "analysis_d07642b4b98c",
+        "plan_step": "候选发现",
+        "attempt": 1
+      },
+      "created_at": "2026-05-28T20:04:13.862811+00:00"
+    },
+    {
+      "seq": 40,
+      "type": "tool_result",
+      "data": {
+        "tool": "search_stocks",
+        "output": "{\"keyword\": \"中石科技\", \"count\": 1, \"results\": [{\"code\": \"SZ:300684\", \"name\": \"中石科技\"}]}",
+        "step": 1,
+        "task_id": "analysis_d07642b4b98c",
+        "plan_step": "候选发现",
+        "attempt": 1
+      },
+      "created_at": "2026-05-28T20:04:13.875316+00:00"
+    },
+    {
+      "seq": 41,
+      "type": "thinking",
+      "data": {
+        "content": "已在本步骤中实际检索并覆盖组装、PCB/FPC、封测、光学、结构件、电池与散热等多个Vision Pro相关环节，形成首批A股候选标的。",
+        "step": 1,
+        "task_id": "analysis_d07642b4b98c",
+        "plan_step": "候选发现",
+        "attempt": 1
+      },
+      "created_at": "2026-05-28T20:04:21.038032+00:00"
+    },
+    {
+      "seq": 42,
+      "type": "thinking",
+      "data": {
+        "content": "计划步骤「候选发现」已完成：已完成首批候选发现，获取到7只覆盖不同供应链环节的A股候选标的。",
+        "step": 1,
+        "task_id": "analysis_d07642b4b98c",
+        "plan_step": "候选发现"
+      },
+      "created_at": "2026-05-28T20:04:21.044986+00:00"
+    },
+    {
+      "seq": 43,
+      "type": "progress",
+      "data": {
+        "step": 2,
+        "max_steps": 6,
+        "task_id": "analysis_d07642b4b98c",
+        "phase": "execute",
+        "plan_step": "业务确认",
+        "attempt": 1
+      },
+      "created_at": "2026-05-28T20:04:21.048128+00:00"
+    },
+    {
+      "seq": 44,
+      "type": "thinking",
+      "data": {
+        "content": "开始执行计划步骤 2/6：业务确认（第1/3次尝试）。",
+        "step": 2,
+        "task_id": "analysis_d07642b4b98c",
+        "plan_step": "业务确认",
+        "attempt": 1
+      },
+      "created_at": "2026-05-28T20:04:21.055179+00:00"
+    },
+    {
+      "seq": 45,
+      "type": "thinking",
+      "data": {
+        "content": "先对已发现候选按股票代码逐一确认主营业务，优先从首个候选开始。",
+        "step": 2,
+        "task_id": "analysis_d07642b4b98c",
+        "plan_step": "业务确认",
+        "attempt": 1
+      },
+      "created_at": "2026-05-28T20:04:24.289004+00:00"
+    },
+    {
+      "seq": 46,
+      "type": "tool_call",
+      "data": {
+        "tool": "get_company_info",
+        "input": "SZ:002475",
+        "step": 2,
+        "task_id": "analysis_d07642b4b98c",
+        "plan_step": "业务确认",
+        "attempt": 1
+      },
+      "created_at": "2026-05-28T20:04:24.296203+00:00"
+    },
+    {
+      "seq": 47,
+      "type": "tool_result",
+      "data": {
+        "tool": "get_company_info",
+        "output": "{\"code\": \"002475\", \"info\": {\"数据源\": \"akshare-cache-fallback\", \"股票代码\": \"002475\", \"股票简称\": \"立讯精密\"}}",
+        "step": 2,
+        "task_id": "analysis_d07642b4b98c",
+        "plan_step": "业务确认",
+        "attempt": 1
+      },
+      "created_at": "2026-05-28T20:04:25.208895+00:00"
+    },
+    {
+      "seq": 48,
+      "type": "thinking",
+      "data": {
+        "content": "已获取立讯精密基础信息，但当前返回内容不足以完成全部候选的业务确认，需要继续对下一只已发现候选按代码查询。",
+        "step": 2,
+        "task_id": "analysis_d07642b4b98c",
+        "plan_step": "业务确认",
+        "attempt": 1
+      },
+      "created_at": "2026-05-28T20:04:27.401865+00:00"
+    },
+    {
+      "seq": 49,
+      "type": "tool_call",
+      "data": {
+        "tool": "get_company_info",
+        "input": "SZ:002241",
+        "step": 2,
+        "task_id": "analysis_d07642b4b98c",
+        "plan_step": "业务确认",
+        "attempt": 1
+      },
+      "created_at": "2026-05-28T20:04:27.407105+00:00"
+    },
+    {
+      "seq": 50,
+      "type": "tool_result",
+      "data": {
+        "tool": "get_company_info",
+        "output": "{\"code\": \"002241\", \"info\": {\"数据源\": \"akshare-cache-fallback\", \"股票代码\": \"002241\", \"股票简称\": \"歌尔股份\"}}",
+        "step": 2,
+        "task_id": "analysis_d07642b4b98c",
+        "plan_step": "业务确认",
+        "attempt": 1
+      },
+      "created_at": "2026-05-28T20:04:27.545072+00:00"
+    },
+    {
+      "seq": 51,
+      "type": "thinking",
+      "data": {
+        "content": "当前工具返回仍仅含基础简称信息，需继续覆盖其余核心候选，尽可能完成本步骤的候选业务确认底稿。",
+        "step": 2,
+        "task_id": "analysis_d07642b4b98c",
+        "plan_step": "业务确认",
+        "attempt": 1
+      },
+      "created_at": "2026-05-28T20:04:29.753601+00:00"
+    },
+    {
+      "seq": 52,
+      "type": "tool_call",
+      "data": {
+        "tool": "get_company_info",
+        "input": "SZ:002938",
+        "step": 2,
+        "task_id": "analysis_d07642b4b98c",
+        "plan_step": "业务确认",
+        "attempt": 1
+      },
+      "created_at": "2026-05-28T20:04:29.757112+00:00"
+    },
+    {
+      "seq": 53,
+      "type": "tool_result",
+      "data": {
+        "tool": "get_company_info",
+        "output": "{\"code\": \"002938\", \"info\": {\"数据源\": \"akshare-cache-fallback\", \"股票代码\": \"002938\", \"股票简称\": \"鹏鼎控股\"}}",
+        "step": 2,
+        "task_id": "analysis_d07642b4b98c",
+        "plan_step": "业务确认",
+        "attempt": 1
+      },
+      "created_at": "2026-05-28T20:04:29.885599+00:00"
+    },
+    {
+      "seq": 54,
+      "type": "thinking",
+      "data": {
+        "content": "已对3只核心候选完成工具查询，但工具返回均仅含简称与代码，无法进一步从工具结果中确认主营业务细项；结合本步骤尝试上限与当前可得信息，可先形成已确认候选清单并注明信息粒度受限。",
+        "step": 2,
+        "task_id": "analysis_d07642b4b98c",
+        "plan_step": "业务确认",
+        "attempt": 1
+      },
+      "created_at": "2026-05-28T20:04:37.834895+00:00"
+    },
+    {
+      "seq": 55,
+      "type": "thinking",
+      "data": {
+        "content": "计划步骤「业务确认」已完成：已对首批核心候选中的立讯精密、歌尔股份、鹏鼎控股调用公司信息工具完成核验。当前工具返回结果仅包含股票代码与股票简称，未提供更详细的主营业务描述，因此本步骤可确认其证券身份与候选有效性，但供应链角色细分仍需在后续结合更多信息补充。",
+        "step": 2,
+        "task_id": "analysis_d07642b4b98c",
+        "plan_step": "业务确认"
+      },
+      "created_at": "2026-05-28T20:04:37.842405+00:00"
+    },
+    {
+      "seq": 56,
+      "type": "progress",
+      "data": {
+        "step": 3,
+        "max_steps": 6,
+        "task_id": "analysis_d07642b4b98c",
+        "phase": "execute",
+        "plan_step": "候选补全",
+        "attempt": 1
+      },
+      "created_at": "2026-05-28T20:04:37.845404+00:00"
+    },
+    {
+      "seq": 57,
+      "type": "thinking",
+      "data": {
+        "content": "开始执行计划步骤 3/6：候选补全（第1/3次尝试）。",
+        "step": 3,
+        "task_id": "analysis_d07642b4b98c",
+        "plan_step": "候选补全",
+        "attempt": 1
+      },
+      "created_at": "2026-05-28T20:04:37.852481+00:00"
+    },
+    {
+      "seq": 58,
+      "type": "thinking",
+      "data": {
+        "content": "优先补足显示面板/硅基显示这一缺口，先搜索明确A股候选京东方A。",
+        "step": 3,
+        "task_id": "analysis_d07642b4b98c",
+        "plan_step": "候选补全",
+        "attempt": 1
+      },
+      "created_at": "2026-05-28T20:04:40.860785+00:00"
+    },
+    {
+      "seq": 59,
+      "type": "tool_call",
+      "data": {
+        "tool": "search_stocks",
+        "input": "京东方AThought:",
+        "step": 3,
+        "task_id": "analysis_d07642b4b98c",
+        "plan_step": "候选补全",
+        "attempt": 1
+      },
+      "created_at": "2026-05-28T20:04:40.864784+00:00"
+    },
+    {
+      "seq": 60,
+      "type": "tool_result",
+      "data": {
+        "tool": "search_stocks",
+        "output": "{\"keyword\": \"京东方AThought:\", \"count\": 0, \"results\": []}",
+        "step": 3,
+        "task_id": "analysis_d07642b4b98c",
+        "plan_step": "候选补全",
+        "attempt": 1
+      },
+      "created_at": "2026-05-28T20:04:40.883809+00:00"
+    },
+    {
+      "seq": 61,
+      "type": "tool_call",
+      "data": {
+        "tool": "search_stocks",
+        "input": "优先补足显示面板/硅基显示这一缺口",
+        "step": 3,
+        "task_id": "analysis_d07642b4b98c",
+        "plan_step": "候选补全",
+        "attempt": 1
+      },
+      "created_at": "2026-05-28T20:04:40.887313+00:00"
+    },
+    {
+      "seq": 62,
+      "type": "tool_result",
+      "data": {
+        "tool": "search_stocks",
+        "output": "{\"keyword\": \"优先补足显示面板/硅基显示这一缺口\", \"count\": 0, \"results\": []}",
+        "step": 3,
+        "task_id": "analysis_d07642b4b98c",
+        "plan_step": "候选补全",
+        "attempt": 1
+      },
+      "created_at": "2026-05-28T20:04:40.897316+00:00"
+    },
+    {
+      "seq": 63,
+      "type": "tool_call",
+      "data": {
+        "tool": "search_stocks",
+        "input": "先搜索明确A股候选京东方A。",
+        "step": 3,
+        "task_id": "analysis_d07642b4b98c",
+        "plan_step": "候选补全",
+        "attempt": 1
+      },
+      "created_at": "2026-05-28T20:04:40.900330+00:00"
+    },
+    {
+      "seq": 64,
+      "type": "tool_result",
+      "data": {
+        "tool": "search_stocks",
+        "output": "{\"keyword\": \"先搜索明确A股候选京东方A。\", \"count\": 0, \"results\": []}",
+        "step": 3,
+        "task_id": "analysis_d07642b4b98c",
+        "plan_step": "候选补全",
+        "attempt": 1
+      },
+      "created_at": "2026-05-28T20:04:40.910638+00:00"
+    },
+    {
+      "seq": 65,
+      "type": "tool_call",
+      "data": {
+        "tool": "search_stocks",
+        "input": "京东方A",
+        "step": 3,
+        "task_id": "analysis_d07642b4b98c",
+        "plan_step": "候选补全",
+        "attempt": 1
+      },
+      "created_at": "2026-05-28T20:04:40.913639+00:00"
+    },
+    {
+      "seq": 66,
+      "type": "tool_result",
+      "data": {
+        "tool": "search_stocks",
+        "output": "{\"keyword\": \"京东方A\", \"count\": 1, \"results\": [{\"code\": \"SZ:000725\", \"name\": \"京东方A\"}]}",
+        "step": 3,
+        "task_id": "analysis_d07642b4b98c",
+        "plan_step": "候选补全",
+        "attempt": 1
+      },
+      "created_at": "2026-05-28T20:04:40.923147+00:00"
+    },
+    {
+      "seq": 67,
+      "type": "thinking",
+      "data": {
+        "content": "已补到显示环节候选，继续补足Micro OLED/硅基显示配套方向，搜索明确A股候选深天马A。",
+        "step": 3,
+        "task_id": "analysis_d07642b4b98c",
+        "plan_step": "候选补全",
+        "attempt": 1
+      },
+      "created_at": "2026-05-28T20:04:42.987277+00:00"
+    },
+    {
+      "seq": 68,
+      "type": "tool_call",
+      "data": {
+        "tool": "search_stocks",
+        "input": "深天马A",
+        "step": 3,
+        "task_id": "analysis_d07642b4b98c",
+        "plan_step": "候选补全",
+        "attempt": 1
+      },
+      "created_at": "2026-05-28T20:04:42.990793+00:00"
+    },
+    {
+      "seq": 69,
+      "type": "tool_result",
+      "data": {
+        "tool": "search_stocks",
+        "output": "{\"keyword\": \"深天马A\", \"count\": 1, \"results\": [{\"code\": \"SZ:000050\", \"name\": \"深天马A\"}]}",
+        "step": 3,
+        "task_id": "analysis_d07642b4b98c",
+        "plan_step": "候选补全",
+        "attempt": 1
+      },
+      "created_at": "2026-05-28T20:04:43.005297+00:00"
+    },
+    {
+      "seq": 70,
+      "type": "thinking",
+      "data": {
+        "content": "继续补足光学元件与Pancake相关缺口，搜索明确A股候选欧菲光。",
+        "step": 3,
+        "task_id": "analysis_d07642b4b98c",
+        "plan_step": "候选补全",
+        "attempt": 1
+      },
+      "created_at": "2026-05-28T20:04:44.883399+00:00"
+    },
+    {
+      "seq": 71,
+      "type": "tool_call",
+      "data": {
+        "tool": "search_stocks",
+        "input": "欧菲光",
+        "step": 3,
+        "task_id": "analysis_d07642b4b98c",
+        "plan_step": "候选补全",
+        "attempt": 1
+      },
+      "created_at": "2026-05-28T20:04:44.888731+00:00"
+    },
+    {
+      "seq": 72,
+      "type": "tool_result",
+      "data": {
+        "tool": "search_stocks",
+        "output": "{\"keyword\": \"欧菲光\", \"count\": 1, \"results\": [{\"code\": \"SZ:002456\", \"name\": \"欧菲光\"}]}",
+        "step": 3,
+        "task_id": "analysis_d07642b4b98c",
+        "plan_step": "候选补全",
+        "attempt": 1
+      },
+      "created_at": "2026-05-28T20:04:44.900564+00:00"
+    },
+    {
+      "seq": 73,
+      "type": "thinking",
+      "data": {
+        "content": "继续补足AR/VR检测与组装自动化设备环节，搜索明确A股候选智立方。",
+        "step": 3,
+        "task_id": "analysis_d07642b4b98c",
+        "plan_step": "候选补全",
+        "attempt": 1
+      },
+      "created_at": "2026-05-28T20:04:47.294410+00:00"
+    },
+    {
+      "seq": 74,
+      "type": "tool_call",
+      "data": {
+        "tool": "search_stocks",
+        "input": "智立方",
+        "step": 3,
+        "task_id": "analysis_d07642b4b98c",
+        "plan_step": "候选补全",
+        "attempt": 1
+      },
+      "created_at": "2026-05-28T20:04:47.298915+00:00"
+    },
+    {
+      "seq": 75,
+      "type": "tool_result",
+      "data": {
+        "tool": "search_stocks",
+        "output": "{\"keyword\": \"智立方\", \"count\": 1, \"results\": [{\"code\": \"SZ:301312\", \"name\": \"智立方\"}]}",
+        "step": 3,
+        "task_id": "analysis_d07642b4b98c",
+        "plan_step": "候选补全",
+        "attempt": 1
+      },
+      "created_at": "2026-05-28T20:04:47.310422+00:00"
+    },
+    {
+      "seq": 76,
+      "type": "thinking",
+      "data": {
+        "content": "继续补足贴合/检测设备环节，搜索明确A股候选精测电子。",
+        "step": 3,
+        "task_id": "analysis_d07642b4b98c",
+        "plan_step": "候选补全",
+        "attempt": 1
+      },
+      "created_at": "2026-05-28T20:04:49.105556+00:00"
+    },
+    {
+      "seq": 77,
+      "type": "tool_call",
+      "data": {
+        "tool": "search_stocks",
+        "input": "精测电子",
+        "step": 3,
+        "task_id": "analysis_d07642b4b98c",
+        "plan_step": "候选补全",
+        "attempt": 1
+      },
+      "created_at": "2026-05-28T20:04:49.112067+00:00"
+    },
+    {
+      "seq": 78,
+      "type": "tool_result",
+      "data": {
+        "tool": "search_stocks",
+        "output": "{\"keyword\": \"精测电子\", \"count\": 1, \"results\": [{\"code\": \"SZ:300567\", \"name\": \"精测电子\"}]}",
+        "step": 3,
+        "task_id": "analysis_d07642b4b98c",
+        "plan_step": "候选补全",
+        "attempt": 1
+      },
+      "created_at": "2026-05-28T20:04:49.125346+00:00"
+    },
+    {
+      "seq": 79,
+      "type": "thinking",
+      "data": {
+        "content": "继续补足高速连接器与精密线束环节，搜索明确A股候选意华股份。",
+        "step": 3,
+        "task_id": "analysis_d07642b4b98c",
+        "plan_step": "候选补全",
+        "attempt": 1
+      },
+      "created_at": "2026-05-28T20:04:50.955602+00:00"
+    },
+    {
+      "seq": 80,
+      "type": "tool_call",
+      "data": {
+        "tool": "search_stocks",
+        "input": "意华股份",
+        "step": 3,
+        "task_id": "analysis_d07642b4b98c",
+        "plan_step": "候选补全",
+        "attempt": 1
+      },
+      "created_at": "2026-05-28T20:04:50.960107+00:00"
+    },
+    {
+      "seq": 81,
+      "type": "tool_result",
+      "data": {
+        "tool": "search_stocks",
+        "output": "{\"keyword\": \"意华股份\", \"count\": 1, \"results\": [{\"code\": \"SZ:002897\", \"name\": \"意华股份\"}]}",
+        "step": 3,
+        "task_id": "analysis_d07642b4b98c",
+        "plan_step": "候选补全",
+        "attempt": 1
+      },
+      "created_at": "2026-05-28T20:04:50.972616+00:00"
+    },
+    {
+      "seq": 82,
+      "type": "thinking",
+      "data": {
+        "content": "已围绕显示、光学、自动化设备、连接器等缺口补入多只明确A股候选，当前步骤可先形成补全结果。",
+        "step": 3,
+        "task_id": "analysis_d07642b4b98c",
+        "plan_step": "候选补全",
+        "attempt": 1
+      },
+      "created_at": "2026-05-28T20:04:58.627971+00:00"
+    },
+    {
+      "seq": 83,
+      "type": "thinking",
+      "data": {
+        "content": "继续补足FPC软板与精密互连环节，搜索明确A股候选东山精密。",
+        "step": 3,
+        "task_id": "analysis_d07642b4b98c",
+        "plan_step": "候选补全",
+        "attempt": 1
+      },
+      "created_at": "2026-05-28T20:05:00.517037+00:00"
+    },
+    {
+      "seq": 84,
+      "type": "tool_call",
+      "data": {
+        "tool": "search_stocks",
+        "input": "东山精密",
+        "step": 3,
+        "task_id": "analysis_d07642b4b98c",
+        "plan_step": "候选补全",
+        "attempt": 1
+      },
+      "created_at": "2026-05-28T20:05:00.522281+00:00"
+    },
+    {
+      "seq": 85,
+      "type": "tool_result",
+      "data": {
+        "tool": "search_stocks",
+        "output": "{\"keyword\": \"东山精密\", \"count\": 1, \"results\": [{\"code\": \"SZ:002384\", \"name\": \"东山精密\"}]}",
+        "step": 3,
+        "task_id": "analysis_d07642b4b98c",
+        "plan_step": "候选补全",
+        "attempt": 1
+      },
+      "created_at": "2026-05-28T20:05:00.535784+00:00"
+    },
+    {
+      "seq": 86,
+      "type": "thinking",
+      "data": {
+        "content": "继续补足高端PCB主板环节，搜索明确A股候选深南电路。",
+        "step": 3,
+        "task_id": "analysis_d07642b4b98c",
+        "plan_step": "候选补全",
+        "attempt": 1
+      },
+      "created_at": "2026-05-28T20:05:02.431458+00:00"
+    },
+    {
+      "seq": 87,
+      "type": "tool_call",
+      "data": {
+        "tool": "search_stocks",
+        "input": "深南电路",
+        "step": 3,
+        "task_id": "analysis_d07642b4b98c",
+        "plan_step": "候选补全",
+        "attempt": 1
+      },
+      "created_at": "2026-05-28T20:05:02.442915+00:00"
+    },
+    {
+      "seq": 88,
+      "type": "tool_result",
+      "data": {
+        "tool": "search_stocks",
+        "output": "{\"keyword\": \"深南电路\", \"count\": 1, \"results\": [{\"code\": \"SZ:002916\", \"name\": \"深南电路\"}]}",
+        "step": 3,
+        "task_id": "analysis_d07642b4b98c",
+        "plan_step": "候选补全",
+        "attempt": 1
+      },
+      "created_at": "2026-05-28T20:05:02.455419+00:00"
+    },
+    {
+      "seq": 89,
+      "type": "thinking",
+      "data": {
+        "content": "继续补足高速PCB与服务器/高速互连延展环节，搜索明确A股候选沪电股份。",
+        "step": 3,
+        "task_id": "analysis_d07642b4b98c",
+        "plan_step": "候选补全",
+        "attempt": 1
+      },
+      "created_at": "2026-05-28T20:05:04.408350+00:00"
+    },
+    {
+      "seq": 90,
+      "type": "tool_call",
+      "data": {
+        "tool": "search_stocks",
+        "input": "沪电股份",
+        "step": 3,
+        "task_id": "analysis_d07642b4b98c",
+        "plan_step": "候选补全",
+        "attempt": 1
+      },
+      "created_at": "2026-05-28T20:05:04.412546+00:00"
+    },
+    {
+      "seq": 91,
+      "type": "tool_result",
+      "data": {
+        "tool": "search_stocks",
+        "output": "{\"keyword\": \"沪电股份\", \"count\": 1, \"results\": [{\"code\": \"SZ:002463\", \"name\": \"沪电股份\"}]}",
+        "step": 3,
+        "task_id": "analysis_d07642b4b98c",
+        "plan_step": "候选补全",
+        "attempt": 1
+      },
+      "created_at": "2026-05-28T20:05:04.425076+00:00"
+    },
+    {
+      "seq": 92,
+      "type": "thinking",
+      "data": {
+        "content": "继续补足SiP模组与电子制造服务环节，搜索明确A股候选环旭电子。",
+        "step": 3,
+        "task_id": "analysis_d07642b4b98c",
+        "plan_step": "候选补全",
+        "attempt": 1
+      },
+      "created_at": "2026-05-28T20:05:06.303636+00:00"
+    },
+    {
+      "seq": 93,
+      "type": "tool_call",
+      "data": {
+        "tool": "search_stocks",
+        "input": "环旭电子",
+        "step": 3,
+        "task_id": "analysis_d07642b4b98c",
+        "plan_step": "候选补全",
+        "attempt": 1
+      },
+      "created_at": "2026-05-28T20:05:06.311140+00:00"
+    },
+    {
+      "seq": 94,
+      "type": "tool_result",
+      "data": {
+        "tool": "search_stocks",
+        "output": "{\"keyword\": \"环旭电子\", \"count\": 1, \"results\": [{\"code\": \"SH:601231\", \"name\": \"环旭电子\"}]}",
+        "step": 3,
+        "task_id": "analysis_d07642b4b98c",
+        "plan_step": "候选补全",
+        "attempt": 1
+      },
+      "created_at": "2026-05-28T20:05:06.325710+00:00"
+    },
+    {
+      "seq": 95,
+      "type": "thinking",
+      "data": {
+        "content": "继续补足先进封装测试环节，搜索明确A股候选通富微电。",
+        "step": 3,
+        "task_id": "analysis_d07642b4b98c",
+        "plan_step": "候选补全",
+        "attempt": 1
+      },
+      "created_at": "2026-05-28T20:05:08.209877+00:00"
+    },
+    {
+      "seq": 96,
+      "type": "tool_call",
+      "data": {
+        "tool": "search_stocks",
+        "input": "通富微电",
+        "step": 3,
+        "task_id": "analysis_d07642b4b98c",
+        "plan_step": "候选补全",
+        "attempt": 1
+      },
+      "created_at": "2026-05-28T20:05:08.213909+00:00"
+    },
+    {
+      "seq": 97,
+      "type": "tool_result",
+      "data": {
+        "tool": "search_stocks",
+        "output": "{\"keyword\": \"通富微电\", \"count\": 1, \"results\": [{\"code\": \"SZ:002156\", \"name\": \"通富微电\"}]}",
+        "step": 3,
+        "task_id": "analysis_d07642b4b98c",
+        "plan_step": "候选补全",
+        "attempt": 1
+      },
+      "created_at": "2026-05-28T20:05:08.225919+00:00"
+    },
+    {
+      "seq": 98,
+      "type": "thinking",
+      "data": {
+        "content": "继续补足存储器件配套环节，搜索明确A股候选兆易创新。",
+        "step": 3,
+        "task_id": "analysis_d07642b4b98c",
+        "plan_step": "候选补全",
+        "attempt": 1
+      },
+      "created_at": "2026-05-28T20:05:11.004596+00:00"
+    },
+    {
+      "seq": 99,
+      "type": "thinking",
+      "data": {
+        "content": "已基于本步骤内实际搜索结果，进一步补全显示、光学、设备、连接器、FPC/PCB、SiP/封装等缺口；现可汇总本步骤已成功检索到的候选标的。",
+        "step": 3,
+        "task_id": "analysis_d07642b4b98c",
+        "plan_step": "候选补全",
+        "attempt": 1
+      },
+      "created_at": "2026-05-28T20:05:23.619230+00:00"
+    },
+    {
+      "seq": 100,
+      "type": "thinking",
+      "data": {
+        "content": "计划步骤「候选补全」已完成：本步骤围绕苹果Vision Pro产业链缺口，已通过逐个公司简称实际检索，补充了显示面板、光学/视觉、AR/VR检测设备、高速连接器、FPC/PCB、SiP/先进封装等多个环节的A股候选标的。",
+        "step": 3,
+        "task_id": "analysis_d07642b4b98c",
+        "plan_step": "候选补全"
+      },
+      "created_at": "2026-05-28T20:05:23.627918+00:00"
+    },
+    {
+      "seq": 101,
+      "type": "progress",
+      "data": {
+        "step": 4,
+        "max_steps": 6,
+        "task_id": "analysis_d07642b4b98c",
+        "phase": "execute",
+        "plan_step": "结果分组",
+        "attempt": 1
+      },
+      "created_at": "2026-05-28T20:05:23.631919+00:00"
+    },
+    {
+      "seq": 102,
+      "type": "thinking",
+      "data": {
+        "content": "开始执行计划步骤 4/6：结果分组（第1/3次尝试）。",
+        "step": 4,
+        "task_id": "analysis_d07642b4b98c",
+        "plan_step": "结果分组",
+        "attempt": 1
+      },
+      "created_at": "2026-05-28T20:05:23.640474+00:00"
+    },
+    {
+      "seq": 103,
+      "type": "thinking",
+      "data": {
+        "content": "已有候选池包括首批发现、基础确认及补充候选，且当前步骤禁止调用工具；可依据既有公司名称、前序category_hint及Vision Pro产业链常见环节进行主环节归类。同一股票仅放入一个最匹配主环节，输出8-15个细分门类即可完成本步骤。",
+        "step": 4,
+        "task_id": "analysis_d07642b4b98c",
+        "plan_step": "结果分组",
+        "attempt": 1
+      },
+      "created_at": "2026-05-28T20:05:42.147355+00:00"
+    },
+    {
+      "seq": 104,
+      "type": "thinking",
+      "data": {
+        "content": "计划步骤「结果分组」已完成：已基于前序确认与补全候选，对苹果Vision Pro产业链相关A股标的按供应链主环节完成分组，形成11个细分门类，覆盖显示、光学视觉、声学整机、封装模组、PCB/FPC、连接器、电池、散热、结构件、自动化设备等关键方向。",
+        "step": 4,
+        "task_id": "analysis_d07642b4b98c",
+        "plan_step": "结果分组"
+      },
+      "created_at": "2026-05-28T20:05:42.167641+00:00"
+    },
+    {
+      "seq": 105,
+      "type": "progress",
+      "data": {
+        "step": 5,
+        "max_steps": 6,
+        "task_id": "analysis_d07642b4b98c",
+        "phase": "execute",
+        "plan_step": "代码校验",
+        "attempt": 1
+      },
+      "created_at": "2026-05-28T20:05:42.172644+00:00"
+    },
+    {
+      "seq": 106,
+      "type": "tool_call",
+      "data": {
+        "tool": "verify_stock_code",
+        "input": "SH:600584,SH:601231,SZ:000050,SZ:000725,SZ:002156,SZ:002241,SZ:002273,SZ:002384,SZ:002456,SZ:002463,SZ:002475,SZ:002897,SZ:002916,SZ:002938,SZ:300207,SZ:300433,SZ:300567,SZ:300684,SZ:301312",
+        "step": 5,
+        "task_id": "analysis_d07642b4b98c",
+        "plan_step": "代码校验",
+        "attempt": 1
+      },
+      "created_at": "2026-05-28T20:05:42.179151+00:00"
+    },
+    {
+      "seq": 107,
+      "type": "tool_result",
+      "data": {
+        "tool": "verify_stock_code",
+        "output": "{\"total\": 19, \"results\": [{\"input\": \"SH:600584\", \"code\": \"SH:600584\", \"valid\": true, \"name\": \"长电科技\"}, {\"input\": \"SH:601231\", \"code\": \"SH:601231\", \"valid\": true, \"name\": \"环旭电子\"}, {\"input\": \"SZ:000050\", \"code\": \"SZ:000050\", \"valid\": true, \"name\": \"深天马A\"}, {\"input\": \"SZ:000725\", \"code\": \"SZ:000725\", \"valid\": true, \"name\": \"京东方A\"}, {\"input\": \"SZ:002156\", \"code\": \"SZ:002156\", \"valid\": true, \"name\": \"通富微电\"}, {\"input\": \"SZ:002241\", \"code\": \"SZ:002241\", \"valid\": true, \"name\": \"歌尔股份\"}, {\"input\": \"SZ:002273\", \"code\": \"SZ:002273\", \"valid\": true, \"name\": \"水晶光电\"}, {\"input\": \"SZ:002384\", \"code\": \"SZ:002384\", \"valid\": true, \"name\": \"东山精密\"}, {\"input\": \"SZ:002456\", \"code\": \"SZ:002456\", \"valid\": true, \"name\": \"欧菲光\"}, {\"input\": \"SZ:002463\", \"code\": \"SZ:002463\", \"valid\": true, \"name\": \"沪电股份\"}, {\"input\": \"SZ:002475\", \"code\": \"SZ:002475\", \"valid\": true, \"name\": \"立讯精密\"}, {\"input\": \"SZ:002897\", \"code\": \"SZ:002897\", \"valid\": true, \"name\": \"意华股份\"}, {\"input\": \"SZ:002916\", \"code\": \"SZ:002916\", \"valid\": true, \"name\": \"深南电路\"}, {\"input\": \"SZ:002938\", \"code\": \"SZ:002938\", \"valid\": true, \"name\": \"鹏鼎控股\"}, {\"input\": \"SZ:300207\", \"code\": \"SZ:300207\", \"valid\": true, \"name\": \"欣旺达\"}, {\"input\": \"SZ:300433\", \"code\": \"SZ:300433\", \"valid\": true, \"name\": \"蓝思科技\"}, {\"input\": \"SZ:300567\", \"code\": \"SZ:300567\", \"valid\": true, \"name\": \"精测电子\"}, {\"input\": \"SZ:300684\", \"code\": \"SZ:300684\", \"valid\": true, \"name\": \"中石科技\"}, {\"input\": \"SZ:301312\", \"code\": \"SZ:301312\", \"valid\": true, \"name\": \"智立方\"}]}",
+        "step": 5,
+        "task_id": "analysis_d07642b4b98c",
+        "plan_step": "代码校验",
+        "attempt": 1
+      },
+      "created_at": "2026-05-28T20:05:42.191514+00:00"
+    },
+    {
+      "seq": 108,
+      "type": "thinking",
+      "data": {
+        "content": "计划步骤「代码校验」已完成：已验证19个股票代码。",
+        "step": 5,
+        "task_id": "analysis_d07642b4b98c",
+        "plan_step": "代码校验"
+      },
+      "created_at": "2026-05-28T20:05:42.205018+00:00"
+    },
+    {
+      "seq": 109,
+      "type": "progress",
+      "data": {
+        "step": 6,
+        "max_steps": 6,
+        "task_id": "analysis_d07642b4b98c",
+        "phase": "execute",
+        "plan_step": "最终组装",
+        "attempt": 1
+      },
+      "created_at": "2026-05-28T20:05:42.209523+00:00"
+    },
+    {
+      "seq": 110,
+      "type": "result",
+      "data": {
+        "theme": {
+          "id": "theme_eab595a9",
+          "name": "苹果Vision Pro产业链",
+          "description": "围绕苹果Vision Pro及后续空间计算终端的A股供应链映射，覆盖显示与硅基显示配套、Pancake光学与视觉器件、3D感知与环境追踪、声学与整机组装、SiP与先进封装、FPC/PCB、连接器线束、电池供电、散热材料、结构件以及AR/VR自动化设备等环节。入选公司以苹果供应链适配能力、头显相关器件技术相关性、精密制造能力及向空间计算终端迁移的潜在弹性为核心依据，区分直接受益环节与具备技术映射能力的间接受益环节。",
+          "source_task_id": "",
+          "created_at": "2026-05-28T20:06:32.855993+00:00",
+          "updated_at": "2026-05-28T20:06:32.855993+00:00",
+          "categories": [
+            {
+              "id": "micro_oled_display",
+              "name": "Micro OLED显示面板与硅基显示配套",
+              "order": 1,
+              "stocks": [
+                {
+                  "code": "SZ:000725",
+                  "name": "京东方A",
+                  "name_en": "BOE A",
+                  "percentage": 69,
+                  "description": "国内显示龙头，具备近眼显示与新型显示技术储备，是Vision Pro相关硅基显示及后续空间计算终端显示环节的重要映射标的。",
+                  "category_tag": "Micro OLED显示面板与硅基显示配套"
+                },
+                {
+                  "code": "SZ:000050",
+                  "name": "深天马A",
+                  "name_en": "Tianma Microelectronics",
+                  "percentage": 58,
+                  "description": "在中小尺寸高端显示领域具备技术基础，受益于头显近眼显示升级趋势，属于Micro OLED及相关显示配套的潜在受益方。",
+                  "category_tag": "Micro OLED显示面板与硅基显示配套"
+                }
+              ]
+            },
+            {
+              "id": "pancake_optics",
+              "name": "Pancake光学模组与视觉光学器件",
+              "order": 2,
+              "stocks": [
+                {
+                  "code": "SZ:002273",
+                  "name": "水晶光电",
+                  "name_en": "Crystal-Optech",
+                  "percentage": 76,
+                  "description": "公司在精密光学元件、滤光片与光学薄膜等方向具备较强能力，适配头显Pancake光学链条中的核心光学器件配套需求。",
+                  "category_tag": "Pancake光学模组与视觉光学器件"
+                },
+                {
+                  "code": "SZ:002456",
+                  "name": "欧菲光",
+                  "name_en": "O-Film",
+                  "percentage": 63,
+                  "description": "具备镜头、摄像模组及光学系统集成能力，可映射至头显光学模组与视觉感知器件环节，但实际订单关系仍偏间接。",
+                  "category_tag": "Pancake光学模组与视觉光学器件"
+                }
+              ]
+            },
+            {
+              "id": "vision_tracking_modules",
+              "name": "3D感知摄像头与环境追踪视觉模组",
+              "order": 3,
+              "stocks": [
+                {
+                  "code": "SZ:002241",
+                  "name": "歌尔股份",
+                  "name_en": "Goertek",
+                  "percentage": 83,
+                  "description": "公司在VR/AR整机、声学与精密光学模组方面积累深厚，具备头显多摄像头、感知模组及环境追踪相关制造能力，是Vision Pro链条高相关标的。",
+                  "category_tag": "3D感知摄像头与环境追踪视觉模组"
+                }
+              ]
+            },
+            {
+              "id": "acoustic_assembly",
+              "name": "空间音频声学器件与整机组装",
+              "order": 4,
+              "stocks": [
+                {
+                  "code": "SZ:002475",
+                  "name": "立讯精密",
+                  "name_en": "Luxshare Precision",
+                  "percentage": 88,
+                  "description": "苹果核心精密制造供应商，覆盖连接、声学、模组及系统组装能力，在头显整机制造、声学器件及复杂精密装配环节具备较强导入可能。",
+                  "category_tag": "空间音频声学器件与整机组装"
+                }
+              ]
+            },
+            {
+              "id": "sip_advanced_packaging",
+              "name": "主控SoC相关SiP模组与先进封装配套",
+              "order": 5,
+              "stocks": [
+                {
+                  "code": "SH:600584",
+                  "name": "长电科技",
+                  "name_en": "JCET",
+                  "percentage": 72,
+                  "description": "国内先进封装龙头，具备高端SiP、倒装及先进封装能力，可映射Vision Pro主控、协处理器及高速芯片封装需求。",
+                  "category_tag": "主控SoC相关SiP模组与先进封装配套"
+                },
+                {
+                  "code": "SH:601231",
+                  "name": "环旭电子",
+                  "name_en": "USI",
+                  "percentage": 74,
+                  "description": "公司在SiP模组、系统级封装与电子制造服务领域能力突出，适合切入头显主板模组、无线连接模组及高集成度系统封装环节。",
+                  "category_tag": "主控SoC相关SiP模组与先进封装配套"
+                },
+                {
+                  "code": "SZ:002156",
+                  "name": "通富微电",
+                  "name_en": "TFME",
+                  "percentage": 61,
+                  "description": "公司具备先进封装与测试能力，可受益于空间计算终端对高算力芯片封测需求提升，但与苹果头显链条的对应关系相对偏间接。",
+                  "category_tag": "主控SoC相关SiP模组与先进封装配套"
+                }
+              ]
+            },
+            {
+              "id": "fpc_pcb_hdi_slp",
+              "name": "FPC软板、高多层HDI与SLP主板",
+              "order": 6,
+              "stocks": [
+                {
+                  "code": "SZ:002938",
+                  "name": "鹏鼎控股",
+                  "name_en": "Avary Holding",
+                  "percentage": 87,
+                  "description": "苹果PCB核心供应链标的，在FPC、HDI及高端主板领域优势明显，契合Vision Pro高密度互连与轻薄化主板需求。",
+                  "category_tag": "FPC软板、高多层HDI与SLP主板"
+                },
+                {
+                  "code": "SZ:002384",
+                  "name": "东山精密",
+                  "name_en": "DSBJ",
+                  "percentage": 72,
+                  "description": "公司覆盖FPC及电子电路制造，具备向高端消费电子精密互连场景供货能力，是头显FPC环节的重要候选。",
+                  "category_tag": "FPC软板、高多层HDI与SLP主板"
+                },
+                {
+                  "code": "SZ:002916",
+                  "name": "深南电路",
+                  "name_en": "SCC",
+                  "percentage": 64,
+                  "description": "公司在高端PCB、高多层板及封装基板领域技术领先，适配头显高算力主板与高速信号传输需求。",
+                  "category_tag": "FPC软板、高多层HDI与SLP主板"
+                },
+                {
+                  "code": "SZ:002463",
+                  "name": "沪电股份",
+                  "name_en": "Wus Printed Circuit",
+                  "percentage": 57,
+                  "description": "公司在高端PCB制造方面具备竞争力，可受益于空间计算终端对高频高速和高层数电路板的需求扩张。",
+                  "category_tag": "FPC软板、高多层HDI与SLP主板"
+                }
+              ]
+            },
+            {
+              "id": "connectors_harness",
+              "name": "高速连接器、天线与精密线束",
+              "order": 7,
+              "stocks": [
+                {
+                  "code": "SZ:002897",
+                  "name": "意华股份",
+                  "name_en": "Yihua Shares",
+                  "percentage": 55,
+                  "description": "公司具备连接器产品能力，可映射头显内部高速互连、外接电源及信号传输等精密连接场景。",
+                  "category_tag": "高速连接器、天线与精密线束"
+                }
+              ]
+            },
+            {
+              "id": "battery_power",
+              "name": "电池Pack、BMS与外接供电组件",
+              "order": 8,
+              "stocks": [
+                {
+                  "code": "SZ:300207",
+                  "name": "欣旺达",
+                  "name_en": "Sunwoda",
+                  "percentage": 73,
+                  "description": "公司在消费电池Pack与电源管理方面积累深厚，符合Vision Pro外接电池包、BMS及轻量化供电方案的产业链映射逻辑。",
+                  "category_tag": "电池Pack、BMS与外接供电组件"
+                }
+              ]
+            },
+            {
+              "id": "thermal_management",
+              "name": "散热材料、均热板、石墨与结构导热件",
+              "order": 9,
+              "stocks": [
+                {
+                  "code": "SZ:300684",
+                  "name": "中石科技",
+                  "name_en": "Sinomag Technology",
+                  "percentage": 71,
+                  "description": "公司在导热材料、石墨散热及热管理解决方案方面具备优势，可受益于头显高算力、小体积下的复杂散热需求。",
+                  "category_tag": "散热材料、均热板、石墨与结构导热件"
+                }
+              ]
+            },
+            {
+              "id": "structure_materials",
+              "name": "金属中框、玻璃盖板与精密结构件",
+              "order": 10,
+              "stocks": [
+                {
+                  "code": "SZ:300433",
+                  "name": "蓝思科技",
+                  "name_en": "Lens Technology",
+                  "percentage": 78,
+                  "description": "苹果产业链核心结构件与玻璃加工厂商，在3D玻璃、外观件及精密结构件方面优势突出，契合Vision Pro高端外观与结构件需求。",
+                  "category_tag": "金属中框、玻璃盖板与精密结构件"
+                }
+              ]
+            },
+            {
+              "id": "automation_equipment",
+              "name": "AR/VR贴合、检测、组装自动化设备",
+              "order": 11,
+              "stocks": [
+                {
+                  "code": "SZ:301312",
+                  "name": "智立方",
+                  "name_en": "Zhilibang",
+                  "percentage": 66,
+                  "description": "公司聚焦消费电子自动化测试与装配设备，适合切入头显精密贴合、检测与组装工艺升级环节。",
+                  "category_tag": "AR/VR贴合、检测、组装自动化设备"
+                },
+                {
+                  "code": "SZ:300567",
+                  "name": "精测电子",
+                  "name_en": "Jingce Electronic",
+                  "percentage": 62,
+                  "description": "公司在显示检测与高端测试设备领域具备能力，可映射近眼显示模组、光学模组及整机检测设备需求。",
+                  "category_tag": "AR/VR贴合、检测、组装自动化设备"
+                }
+              ]
+            }
+          ]
+        },
+        "task_id": "analysis_d07642b4b98c"
+      },
+      "created_at": "2026-05-28T20:06:32.861661+00:00"
+    },
+    {
+      "seq": 111,
+      "type": "thinking",
+      "data": {
+        "content": "计划步骤「最终组装」已完成：最终Theme JSON已生成。",
+        "step": 6,
+        "task_id": "analysis_d07642b4b98c",
+        "plan_step": "最终组装"
+      },
+      "created_at": "2026-05-28T20:06:32.887265+00:00"
+    },
+    {
+      "seq": 112,
+      "type": "done",
+      "data": {
+        "task_id": "analysis_d07642b4b98c"
+      },
+      "created_at": "2026-05-28T20:06:32.892571+00:00"
+    }
+  ],
+  "result": {
+    "id": "theme_eab595a9",
+    "name": "苹果Vision Pro产业链",
+    "description": "围绕苹果Vision Pro及后续空间计算终端的A股供应链映射，覆盖显示与硅基显示配套、Pancake光学与视觉器件、3D感知与环境追踪、声学与整机组装、SiP与先进封装、FPC/PCB、连接器线束、电池供电、散热材料、结构件以及AR/VR自动化设备等环节。入选公司以苹果供应链适配能力、头显相关器件技术相关性、精密制造能力及向空间计算终端迁移的潜在弹性为核心依据，区分直接受益环节与具备技术映射能力的间接受益环节。",
+    "source_task_id": "",
+    "created_at": "2026-05-28T20:06:32.855993+00:00",
+    "updated_at": "2026-05-28T20:06:32.855993+00:00",
+    "categories": [
+      {
+        "id": "micro_oled_display",
+        "name": "Micro OLED显示面板与硅基显示配套",
+        "order": 1,
+        "stocks": [
+          {
+            "code": "SZ:000725",
+            "name": "京东方A",
+            "name_en": "BOE A",
+            "percentage": 69,
+            "description": "国内显示龙头，具备近眼显示与新型显示技术储备，是Vision Pro相关硅基显示及后续空间计算终端显示环节的重要映射标的。",
+            "category_tag": "Micro OLED显示面板与硅基显示配套"
+          },
+          {
+            "code": "SZ:000050",
+            "name": "深天马A",
+            "name_en": "Tianma Microelectronics",
+            "percentage": 58,
+            "description": "在中小尺寸高端显示领域具备技术基础，受益于头显近眼显示升级趋势，属于Micro OLED及相关显示配套的潜在受益方。",
+            "category_tag": "Micro OLED显示面板与硅基显示配套"
+          }
+        ]
+      },
+      {
+        "id": "pancake_optics",
+        "name": "Pancake光学模组与视觉光学器件",
+        "order": 2,
+        "stocks": [
+          {
+            "code": "SZ:002273",
+            "name": "水晶光电",
+            "name_en": "Crystal-Optech",
+            "percentage": 76,
+            "description": "公司在精密光学元件、滤光片与光学薄膜等方向具备较强能力，适配头显Pancake光学链条中的核心光学器件配套需求。",
+            "category_tag": "Pancake光学模组与视觉光学器件"
+          },
+          {
+            "code": "SZ:002456",
+            "name": "欧菲光",
+            "name_en": "O-Film",
+            "percentage": 63,
+            "description": "具备镜头、摄像模组及光学系统集成能力，可映射至头显光学模组与视觉感知器件环节，但实际订单关系仍偏间接。",
+            "category_tag": "Pancake光学模组与视觉光学器件"
+          }
+        ]
+      },
+      {
+        "id": "vision_tracking_modules",
+        "name": "3D感知摄像头与环境追踪视觉模组",
+        "order": 3,
+        "stocks": [
+          {
+            "code": "SZ:002241",
+            "name": "歌尔股份",
+            "name_en": "Goertek",
+            "percentage": 83,
+            "description": "公司在VR/AR整机、声学与精密光学模组方面积累深厚，具备头显多摄像头、感知模组及环境追踪相关制造能力，是Vision Pro链条高相关标的。",
+            "category_tag": "3D感知摄像头与环境追踪视觉模组"
+          }
+        ]
+      },
+      {
+        "id": "acoustic_assembly",
+        "name": "空间音频声学器件与整机组装",
+        "order": 4,
+        "stocks": [
+          {
+            "code": "SZ:002475",
+            "name": "立讯精密",
+            "name_en": "Luxshare Precision",
+            "percentage": 88,
+            "description": "苹果核心精密制造供应商，覆盖连接、声学、模组及系统组装能力，在头显整机制造、声学器件及复杂精密装配环节具备较强导入可能。",
+            "category_tag": "空间音频声学器件与整机组装"
+          }
+        ]
+      },
+      {
+        "id": "sip_advanced_packaging",
+        "name": "主控SoC相关SiP模组与先进封装配套",
+        "order": 5,
+        "stocks": [
+          {
+            "code": "SH:600584",
+            "name": "长电科技",
+            "name_en": "JCET",
+            "percentage": 72,
+            "description": "国内先进封装龙头，具备高端SiP、倒装及先进封装能力，可映射Vision Pro主控、协处理器及高速芯片封装需求。",
+            "category_tag": "主控SoC相关SiP模组与先进封装配套"
+          },
+          {
+            "code": "SH:601231",
+            "name": "环旭电子",
+            "name_en": "USI",
+            "percentage": 74,
+            "description": "公司在SiP模组、系统级封装与电子制造服务领域能力突出，适合切入头显主板模组、无线连接模组及高集成度系统封装环节。",
+            "category_tag": "主控SoC相关SiP模组与先进封装配套"
+          },
+          {
+            "code": "SZ:002156",
+            "name": "通富微电",
+            "name_en": "TFME",
+            "percentage": 61,
+            "description": "公司具备先进封装与测试能力，可受益于空间计算终端对高算力芯片封测需求提升，但与苹果头显链条的对应关系相对偏间接。",
+            "category_tag": "主控SoC相关SiP模组与先进封装配套"
+          }
+        ]
+      },
+      {
+        "id": "fpc_pcb_hdi_slp",
+        "name": "FPC软板、高多层HDI与SLP主板",
+        "order": 6,
+        "stocks": [
+          {
+            "code": "SZ:002938",
+            "name": "鹏鼎控股",
+            "name_en": "Avary Holding",
+            "percentage": 87,
+            "description": "苹果PCB核心供应链标的，在FPC、HDI及高端主板领域优势明显，契合Vision Pro高密度互连与轻薄化主板需求。",
+            "category_tag": "FPC软板、高多层HDI与SLP主板"
+          },
+          {
+            "code": "SZ:002384",
+            "name": "东山精密",
+            "name_en": "DSBJ",
+            "percentage": 72,
+            "description": "公司覆盖FPC及电子电路制造，具备向高端消费电子精密互连场景供货能力，是头显FPC环节的重要候选。",
+            "category_tag": "FPC软板、高多层HDI与SLP主板"
+          },
+          {
+            "code": "SZ:002916",
+            "name": "深南电路",
+            "name_en": "SCC",
+            "percentage": 64,
+            "description": "公司在高端PCB、高多层板及封装基板领域技术领先，适配头显高算力主板与高速信号传输需求。",
+            "category_tag": "FPC软板、高多层HDI与SLP主板"
+          },
+          {
+            "code": "SZ:002463",
+            "name": "沪电股份",
+            "name_en": "Wus Printed Circuit",
+            "percentage": 57,
+            "description": "公司在高端PCB制造方面具备竞争力，可受益于空间计算终端对高频高速和高层数电路板的需求扩张。",
+            "category_tag": "FPC软板、高多层HDI与SLP主板"
+          }
+        ]
+      },
+      {
+        "id": "connectors_harness",
+        "name": "高速连接器、天线与精密线束",
+        "order": 7,
+        "stocks": [
+          {
+            "code": "SZ:002897",
+            "name": "意华股份",
+            "name_en": "Yihua Shares",
+            "percentage": 55,
+            "description": "公司具备连接器产品能力，可映射头显内部高速互连、外接电源及信号传输等精密连接场景。",
+            "category_tag": "高速连接器、天线与精密线束"
+          }
+        ]
+      },
+      {
+        "id": "battery_power",
+        "name": "电池Pack、BMS与外接供电组件",
+        "order": 8,
+        "stocks": [
+          {
+            "code": "SZ:300207",
+            "name": "欣旺达",
+            "name_en": "Sunwoda",
+            "percentage": 73,
+            "description": "公司在消费电池Pack与电源管理方面积累深厚，符合Vision Pro外接电池包、BMS及轻量化供电方案的产业链映射逻辑。",
+            "category_tag": "电池Pack、BMS与外接供电组件"
+          }
+        ]
+      },
+      {
+        "id": "thermal_management",
+        "name": "散热材料、均热板、石墨与结构导热件",
+        "order": 9,
+        "stocks": [
+          {
+            "code": "SZ:300684",
+            "name": "中石科技",
+            "name_en": "Sinomag Technology",
+            "percentage": 71,
+            "description": "公司在导热材料、石墨散热及热管理解决方案方面具备优势，可受益于头显高算力、小体积下的复杂散热需求。",
+            "category_tag": "散热材料、均热板、石墨与结构导热件"
+          }
+        ]
+      },
+      {
+        "id": "structure_materials",
+        "name": "金属中框、玻璃盖板与精密结构件",
+        "order": 10,
+        "stocks": [
+          {
+            "code": "SZ:300433",
+            "name": "蓝思科技",
+            "name_en": "Lens Technology",
+            "percentage": 78,
+            "description": "苹果产业链核心结构件与玻璃加工厂商，在3D玻璃、外观件及精密结构件方面优势突出，契合Vision Pro高端外观与结构件需求。",
+            "category_tag": "金属中框、玻璃盖板与精密结构件"
+          }
+        ]
+      },
+      {
+        "id": "automation_equipment",
+        "name": "AR/VR贴合、检测、组装自动化设备",
+        "order": 11,
+        "stocks": [
+          {
+            "code": "SZ:301312",
+            "name": "智立方",
+            "name_en": "Zhilibang",
+            "percentage": 66,
+            "description": "公司聚焦消费电子自动化测试与装配设备，适合切入头显精密贴合、检测与组装工艺升级环节。",
+            "category_tag": "AR/VR贴合、检测、组装自动化设备"
+          },
+          {
+            "code": "SZ:300567",
+            "name": "精测电子",
+            "name_en": "Jingce Electronic",
+            "percentage": 62,
+            "description": "公司在显示检测与高端测试设备领域具备能力，可映射近眼显示模组、光学模组及整机检测设备需求。",
+            "category_tag": "AR/VR贴合、检测、组装自动化设备"
+          }
+        ]
+      }
+    ]
+  },
+  "error": "",
+  "saved_theme_id": "dadf45a2a58a",
+  "checkpoint": {
+    "step": 7,
+    "max_steps": 6,
+    "messages": [],
+    "last_llm_output": "",
+    "last_action": null,
+    "last_observation": "",
+    "config_snapshot": {
+      "selected_model": "gpt-5.4",
+      "temperature": 0.3,
+      "max_tokens": 4096
+    },
+    "updated_at": "2026-05-28T20:06:32.878266+00:00",
+    "architecture": "plan_execute_react_v1",
+    "plan": {
+      "version": "plan_execute_react_v1",
+      "query": "苹果Vision Pro产业链",
+      "topic_name": "苹果Vision Pro产业链",
+      "description": "围绕苹果Vision Pro及后续空间计算终端的潜在A股供应链映射，重点覆盖其上游显示与光学、传感与交互、主控与存储相关配套、FPC/PCB与连接器、SiP与先进封装、结构件与功能材料、电源与散热、自动化设备以及软件内容生态等环节。分析时应以苹果头显实际BOM、模组配套关系、苹果供应商认证、间接供货链条和国产替代弹性为核心，区分直接进入Vision Pro、进入苹果其他硬件后具备迁移可能、以及仅具备技术关联但尚未验证订单关系的公司。",
+      "candidate_search_terms": [
+        "立讯精密",
+        "歌尔股份",
+        "鹏鼎控股",
+        "东山精密",
+        "深南电路",
+        "沪电股份",
+        "景旺电子",
+        "环旭电子",
+        "长电科技",
+        "通富微电",
+        "华天科技",
+        "兆易创新",
+        "澜起科技",
+        "北京君正",
+        "韦尔股份",
+        "联创电子",
+        "水晶光电",
+        "蓝思科技",
+        "领益智造",
+        "欣旺达",
+        "德赛电池",
+        "安洁科技",
+        "中石科技",
+        "信维通信",
+        "精研科技",
+        "苏大维格",
+        "福晶科技",
+        "华工科技"
+      ],
+      "category_hypotheses": [
+        "Micro OLED显示面板与硅基显示配套",
+        "Pancake光学模组与衍射/反射光学元件",
+        "3D感知摄像头与环境追踪视觉模组",
+        "眼动追踪红外器件与传感模组",
+        "空间音频声学器件与麦克风阵列",
+        "主控SoC相关SiP模组与先进封装配套",
+        "NAND/DRAM存储器件及控制器配套",
+        "FPC软板、高多层HDI与SLP主板",
+        "高速连接器、天线与精密线束",
+        "电池Pack、BMS与外接供电组件",
+        "散热材料、均热板、石墨与结构导热件",
+        "金属中框、玻璃盖板与精密结构件",
+        "AR/VR贴合、检测、组装自动化设备",
+        "空间计算内容生态、3D交互引擎与开发工具链"
+      ],
+      "steps": [
+        {
+          "id": 1,
+          "key": "candidate_discovery",
+          "name": "候选发现",
+          "objective": "根据规划提示中的公司简称、股票简称或明确企业名搜索A股候选标的。",
+          "allowed_tools": [
+            "search_stocks"
+          ],
+          "max_actions": 14,
+          "required_outputs": [
+            "candidate_stocks"
+          ],
+          "hints": [
+            "立讯精密",
+            "歌尔股份",
+            "鹏鼎控股",
+            "东山精密",
+            "深南电路",
+            "沪电股份",
+            "景旺电子",
+            "环旭电子",
+            "长电科技",
+            "通富微电",
+            "华天科技",
+            "兆易创新",
+            "澜起科技",
+            "北京君正",
+            "韦尔股份",
+            "联创电子",
+            "水晶光电",
+            "蓝思科技",
+            "领益智造",
+            "欣旺达",
+            "德赛电池",
+            "安洁科技",
+            "中石科技",
+            "信维通信",
+            "精研科技",
+            "苏大维格",
+            "福晶科技",
+            "华工科技"
+          ],
+          "status": "completed"
+        },
+        {
+          "id": 2,
+          "key": "business_confirmation",
+          "name": "业务确认",
+          "objective": "对核心候选调用公司信息工具，确认主营业务和供应链角色。",
+          "allowed_tools": [
+            "get_company_info"
+          ],
+          "max_actions": 12,
+          "required_outputs": [
+            "confirmed_stocks"
+          ],
+          "hints": [],
+          "status": "completed"
+        },
+        {
+          "id": 3,
+          "key": "candidate_expansion",
+          "name": "候选补全",
+          "objective": "基于已发现候选和供应链环节缺口，继续使用明确公司简称或股票简称补充A股候选标的。",
+          "allowed_tools": [
+            "search_stocks"
+          ],
+          "max_actions": 14,
+          "required_outputs": [
+            "expanded_candidates"
+          ],
+          "hints": [
+            "Micro OLED显示面板与硅基显示配套",
+            "Pancake光学模组与衍射/反射光学元件",
+            "3D感知摄像头与环境追踪视觉模组",
+            "眼动追踪红外器件与传感模组",
+            "空间音频声学器件与麦克风阵列",
+            "主控SoC相关SiP模组与先进封装配套",
+            "NAND/DRAM存储器件及控制器配套",
+            "FPC软板、高多层HDI与SLP主板",
+            "高速连接器、天线与精密线束",
+            "电池Pack、BMS与外接供电组件",
+            "散热材料、均热板、石墨与结构导热件",
+            "金属中框、玻璃盖板与精密结构件",
+            "AR/VR贴合、检测、组装自动化设备",
+            "空间计算内容生态、3D交互引擎与开发工具链"
+          ],
+          "status": "completed"
+        },
+        {
+          "id": 4,
+          "key": "category_grouping",
+          "name": "结果分组",
+          "objective": "基于已确认公司信息和补全候选按供应链环节分组，不调用工具。",
+          "allowed_tools": [],
+          "max_actions": 0,
+          "required_outputs": [
+            "categories"
+          ],
+          "hints": [
+            "Micro OLED显示面板与硅基显示配套",
+            "Pancake光学模组与衍射/反射光学元件",
+            "3D感知摄像头与环境追踪视觉模组",
+            "眼动追踪红外器件与传感模组",
+            "空间音频声学器件与麦克风阵列",
+            "主控SoC相关SiP模组与先进封装配套",
+            "NAND/DRAM存储器件及控制器配套",
+            "FPC软板、高多层HDI与SLP主板",
+            "高速连接器、天线与精密线束",
+            "电池Pack、BMS与外接供电组件",
+            "散热材料、均热板、石墨与结构导热件",
+            "金属中框、玻璃盖板与精密结构件",
+            "AR/VR贴合、检测、组装自动化设备",
+            "空间计算内容生态、3D交互引擎与开发工具链"
+          ],
+          "status": "completed"
+        },
+        {
+          "id": 5,
+          "key": "code_verification",
+          "name": "代码校验",
+          "objective": "一次性验证最终候选股票代码。",
+          "allowed_tools": [
+            "verify_stock_code"
+          ],
+          "max_actions": 1,
+          "required_outputs": [
+            "verified_codes"
+          ],
+          "hints": [],
+          "status": "completed"
+        },
+        {
+          "id": 6,
+          "key": "final_assembly",
+          "name": "最终组装",
+          "objective": "只使用已验证代码输出Theme JSON。",
+          "allowed_tools": [],
+          "max_actions": 0,
+          "required_outputs": [
+            "theme"
+          ],
+          "hints": [],
+          "status": "completed"
+        }
+      ]
+    },
+    "current_plan_step": 7,
+    "step_attempt": 1,
+    "local_action_count": 0,
+    "completed_steps": [
+      {
+        "step_id": 1,
+        "key": "candidate_discovery",
+        "name": "候选发现",
+        "summary": "已完成首批候选发现，获取到7只覆盖不同供应链环节的A股候选标的。",
+        "data": {
+          "summary": "已完成首批候选发现，获取到7只覆盖不同供应链环节的A股候选标的。",
+          "candidate_stocks": [
+            {
+              "code": "SZ:002475",
+              "name": "立讯精密"
+            },
+            {
+              "code": "SZ:002241",
+              "name": "歌尔股份"
+            },
+            {
+              "code": "SZ:002938",
+              "name": "鹏鼎控股"
+            },
+            {
+              "code": "SH:600584",
+              "name": "长电科技"
+            },
+            {
+              "code": "SZ:002273",
+              "name": "水晶光电"
+            },
+            {
+              "code": "SZ:300433",
+              "name": "蓝思科技"
+            },
+            {
+              "code": "SZ:300207",
+              "name": "欣旺达"
+            },
+            {
+              "code": "SZ:300684",
+              "name": "中石科技"
+            }
+          ]
+        },
+        "observations": [
+          {
+            "tool": "search_stocks",
+            "input": "立讯精密Thought:",
+            "output": {
+              "keyword": "立讯精密Thought:",
+              "count": 0,
+              "results": []
+            }
+          },
+          {
+            "tool": "search_stocks",
+            "input": "继续覆盖声学/整机组装环节",
+            "output": {
+              "keyword": "继续覆盖声学/整机组装环节",
+              "count": 0,
+              "results": []
+            }
+          },
+          {
+            "tool": "search_stocks",
+            "input": "检索下一家候选。",
+            "output": {
+              "keyword": "检索下一家候选。",
+              "count": 0,
+              "results": []
+            }
+          },
+          {
+            "tool": "search_stocks",
+            "input": "歌尔股份Thought:",
+            "output": {
+              "keyword": "歌尔股份Thought:",
+              "count": 0,
+              "results": []
+            }
+          },
+          {
+            "tool": "search_stocks",
+            "input": "继续覆盖FPC/PCB环节",
+            "output": {
+              "keyword": "继续覆盖FPC/PCB环节",
+              "count": 0,
+              "results": []
+            }
+          },
+          {
+            "tool": "search_stocks",
+            "input": "检索下一家候选。",
+            "output": {
+              "keyword": "检索下一家候选。",
+              "count": 0,
+              "results": []
+            }
+          },
+          {
+            "tool": "search_stocks",
+            "input": "鹏鼎控股",
+            "output": {
+              "keyword": "鹏鼎控股",
+              "count": 1,
+              "results": [
+                {
+                  "code": "SZ:002938",
+                  "name": "鹏鼎控股"
+                }
+              ]
+            }
+          },
+          {
+            "tool": "search_stocks",
+            "input": "立讯精密",
+            "output": {
+              "keyword": "立讯精密",
+              "count": 1,
+              "results": [
+                {
+                  "code": "SZ:002475",
+                  "name": "立讯精密"
+                }
+              ]
+            }
+          },
+          {
+            "tool": "search_stocks",
+            "input": "歌尔股份",
+            "output": {
+              "keyword": "歌尔股份",
+              "count": 1,
+              "results": [
+                {
+                  "code": "SZ:002241",
+                  "name": "歌尔股份"
+                }
+              ]
+            }
+          },
+          {
+            "tool": "search_stocks",
+            "input": "长电科技",
+            "output": {
+              "keyword": "长电科技",
+              "count": 1,
+              "results": [
+                {
+                  "code": "SH:600584",
+                  "name": "长电科技"
+                }
+              ]
+            }
+          },
+          {
+            "tool": "search_stocks",
+            "input": "水晶光电",
+            "output": {
+              "keyword": "水晶光电",
+              "count": 1,
+              "results": [
+                {
+                  "code": "SZ:002273",
+                  "name": "水晶光电"
+                }
+              ]
+            }
+          },
+          {
+            "tool": "search_stocks",
+            "input": "蓝思科技",
+            "output": {
+              "keyword": "蓝思科技",
+              "count": 1,
+              "results": [
+                {
+                  "code": "SZ:300433",
+                  "name": "蓝思科技"
+                }
+              ]
+            }
+          },
+          {
+            "tool": "search_stocks",
+            "input": "欣旺达",
+            "output": {
+              "keyword": "欣旺达",
+              "count": 1,
+              "results": [
+                {
+                  "code": "SZ:300207",
+                  "name": "欣旺达"
+                }
+              ]
+            }
+          },
+          {
+            "tool": "search_stocks",
+            "input": "中石科技",
+            "output": {
+              "keyword": "中石科技",
+              "count": 1,
+              "results": [
+                {
+                  "code": "SZ:300684",
+                  "name": "中石科技"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "step_id": 2,
+        "key": "business_confirmation",
+        "name": "业务确认",
+        "summary": "已对首批核心候选中的立讯精密、歌尔股份、鹏鼎控股调用公司信息工具完成核验。当前工具返回结果仅包含股票代码与股票简称，未提供更详细的主营业务描述，因此本步骤可确认其证券身份与候选有效性，但供应链角色细分仍需在后续结合更多信息补充。",
+        "data": {
+          "summary": "已对首批核心候选中的立讯精密、歌尔股份、鹏鼎控股调用公司信息工具完成核验。当前工具返回结果仅包含股票代码与股票简称，未提供更详细的主营业务描述，因此本步骤可确认其证券身份与候选有效性，但供应链角色细分仍需在后续结合更多信息补充。",
+          "confirmed_stocks": [
+            {
+              "code": "SZ:002475",
+              "name": "立讯精密",
+              "tool_confirmed": true,
+              "confirmed_fields": [
+                "股票代码",
+                "股票简称"
+              ],
+              "business_confirm_level": "基础确认",
+              "supply_chain_role": "待进一步确认"
+            },
+            {
+              "code": "SZ:002241",
+              "name": "歌尔股份",
+              "tool_confirmed": true,
+              "confirmed_fields": [
+                "股票代码",
+                "股票简称"
+              ],
+              "business_confirm_level": "基础确认",
+              "supply_chain_role": "待进一步确认"
+            },
+            {
+              "code": "SZ:002938",
+              "name": "鹏鼎控股",
+              "tool_confirmed": true,
+              "confirmed_fields": [
+                "股票代码",
+                "股票简称"
+              ],
+              "business_confirm_level": "基础确认",
+              "supply_chain_role": "待进一步确认"
+            }
+          ]
+        },
+        "observations": [
+          {
+            "tool": "get_company_info",
+            "input": "SZ:002475",
+            "output": {
+              "code": "002475",
+              "info": {
+                "数据源": "akshare-cache-fallback",
+                "股票代码": "002475",
+                "股票简称": "立讯精密"
+              }
+            }
+          },
+          {
+            "tool": "get_company_info",
+            "input": "SZ:002241",
+            "output": {
+              "code": "002241",
+              "info": {
+                "数据源": "akshare-cache-fallback",
+                "股票代码": "002241",
+                "股票简称": "歌尔股份"
+              }
+            }
+          },
+          {
+            "tool": "get_company_info",
+            "input": "SZ:002938",
+            "output": {
+              "code": "002938",
+              "info": {
+                "数据源": "akshare-cache-fallback",
+                "股票代码": "002938",
+                "股票简称": "鹏鼎控股"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "step_id": 3,
+        "key": "candidate_expansion",
+        "name": "候选补全",
+        "summary": "本步骤围绕苹果Vision Pro产业链缺口，已通过逐个公司简称实际检索，补充了显示面板、光学/视觉、AR/VR检测设备、高速连接器、FPC/PCB、SiP/先进封装等多个环节的A股候选标的。",
+        "data": {
+          "summary": "本步骤围绕苹果Vision Pro产业链缺口，已通过逐个公司简称实际检索，补充了显示面板、光学/视觉、AR/VR检测设备、高速连接器、FPC/PCB、SiP/先进封装等多个环节的A股候选标的。",
+          "expanded_candidates": [
+            {
+              "code": "SZ:000725",
+              "name": "京东方A",
+              "category_hint": "Micro OLED显示面板与硅基显示配套"
+            },
+            {
+              "code": "SZ:000050",
+              "name": "深天马A",
+              "category_hint": "Micro OLED显示面板与硅基显示配套"
+            },
+            {
+              "code": "SZ:002456",
+              "name": "欧菲光",
+              "category_hint": "Pancake光学模组与3D感知视觉模组"
+            },
+            {
+              "code": "SZ:301312",
+              "name": "智立方",
+              "category_hint": "AR/VR贴合、检测、组装自动化设备"
+            },
+            {
+              "code": "SZ:300567",
+              "name": "精测电子",
+              "category_hint": "AR/VR贴合、检测、组装自动化设备"
+            },
+            {
+              "code": "SZ:002897",
+              "name": "意华股份",
+              "category_hint": "高速连接器、天线与精密线束"
+            },
+            {
+              "code": "SZ:002384",
+              "name": "东山精密",
+              "category_hint": "FPC软板、高多层HDI与SLP主板"
+            },
+            {
+              "code": "SZ:002916",
+              "name": "深南电路",
+              "category_hint": "FPC软板、高多层HDI与SLP主板"
+            },
+            {
+              "code": "SZ:002463",
+              "name": "沪电股份",
+              "category_hint": "FPC软板、高多层HDI与SLP主板"
+            },
+            {
+              "code": "SH:601231",
+              "name": "环旭电子",
+              "category_hint": "主控SoC相关SiP模组与先进封装配套"
+            },
+            {
+              "code": "SZ:002156",
+              "name": "通富微电",
+              "category_hint": "主控SoC相关SiP模组与先进封装配套"
+            }
+          ]
+        },
+        "observations": [
+          {
+            "tool": "search_stocks",
+            "input": "京东方AThought:",
+            "output": {
+              "keyword": "京东方AThought:",
+              "count": 0,
+              "results": []
+            }
+          },
+          {
+            "tool": "search_stocks",
+            "input": "优先补足显示面板/硅基显示这一缺口",
+            "output": {
+              "keyword": "优先补足显示面板/硅基显示这一缺口",
+              "count": 0,
+              "results": []
+            }
+          },
+          {
+            "tool": "search_stocks",
+            "input": "先搜索明确A股候选京东方A。",
+            "output": {
+              "keyword": "先搜索明确A股候选京东方A。",
+              "count": 0,
+              "results": []
+            }
+          },
+          {
+            "tool": "search_stocks",
+            "input": "京东方A",
+            "output": {
+              "keyword": "京东方A",
+              "count": 1,
+              "results": [
+                {
+                  "code": "SZ:000725",
+                  "name": "京东方A"
+                }
+              ]
+            }
+          },
+          {
+            "tool": "search_stocks",
+            "input": "深天马A",
+            "output": {
+              "keyword": "深天马A",
+              "count": 1,
+              "results": [
+                {
+                  "code": "SZ:000050",
+                  "name": "深天马A"
+                }
+              ]
+            }
+          },
+          {
+            "tool": "search_stocks",
+            "input": "欧菲光",
+            "output": {
+              "keyword": "欧菲光",
+              "count": 1,
+              "results": [
+                {
+                  "code": "SZ:002456",
+                  "name": "欧菲光"
+                }
+              ]
+            }
+          },
+          {
+            "tool": "search_stocks",
+            "input": "智立方",
+            "output": {
+              "keyword": "智立方",
+              "count": 1,
+              "results": [
+                {
+                  "code": "SZ:301312",
+                  "name": "智立方"
+                }
+              ]
+            }
+          },
+          {
+            "tool": "search_stocks",
+            "input": "精测电子",
+            "output": {
+              "keyword": "精测电子",
+              "count": 1,
+              "results": [
+                {
+                  "code": "SZ:300567",
+                  "name": "精测电子"
+                }
+              ]
+            }
+          },
+          {
+            "tool": "search_stocks",
+            "input": "意华股份",
+            "output": {
+              "keyword": "意华股份",
+              "count": 1,
+              "results": [
+                {
+                  "code": "SZ:002897",
+                  "name": "意华股份"
+                }
+              ]
+            }
+          },
+          {
+            "tool": "search_stocks",
+            "input": "东山精密",
+            "output": {
+              "keyword": "东山精密",
+              "count": 1,
+              "results": [
+                {
+                  "code": "SZ:002384",
+                  "name": "东山精密"
+                }
+              ]
+            }
+          },
+          {
+            "tool": "search_stocks",
+            "input": "深南电路",
+            "output": {
+              "keyword": "深南电路",
+              "count": 1,
+              "results": [
+                {
+                  "code": "SZ:002916",
+                  "name": "深南电路"
+                }
+              ]
+            }
+          },
+          {
+            "tool": "search_stocks",
+            "input": "沪电股份",
+            "output": {
+              "keyword": "沪电股份",
+              "count": 1,
+              "results": [
+                {
+                  "code": "SZ:002463",
+                  "name": "沪电股份"
+                }
+              ]
+            }
+          },
+          {
+            "tool": "search_stocks",
+            "input": "环旭电子",
+            "output": {
+              "keyword": "环旭电子",
+              "count": 1,
+              "results": [
+                {
+                  "code": "SH:601231",
+                  "name": "环旭电子"
+                }
+              ]
+            }
+          },
+          {
+            "tool": "search_stocks",
+            "input": "通富微电",
+            "output": {
+              "keyword": "通富微电",
+              "count": 1,
+              "results": [
+                {
+                  "code": "SZ:002156",
+                  "name": "通富微电"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "step_id": 4,
+        "key": "category_grouping",
+        "name": "结果分组",
+        "summary": "已基于前序确认与补全候选，对苹果Vision Pro产业链相关A股标的按供应链主环节完成分组，形成11个细分门类，覆盖显示、光学视觉、声学整机、封装模组、PCB/FPC、连接器、电池、散热、结构件、自动化设备等关键方向。",
+        "data": {
+          "summary": "已基于前序确认与补全候选，对苹果Vision Pro产业链相关A股标的按供应链主环节完成分组，形成11个细分门类，覆盖显示、光学视觉、声学整机、封装模组、PCB/FPC、连接器、电池、散热、结构件、自动化设备等关键方向。",
+          "categories": [
+            {
+              "category": "Micro OLED显示面板与硅基显示配套",
+              "stocks": [
+                {
+                  "code": "SZ:000725",
+                  "name": "京东方A"
+                },
+                {
+                  "code": "SZ:000050",
+                  "name": "深天马A"
+                }
+              ]
+            },
+            {
+              "category": "Pancake光学模组与视觉光学器件",
+              "stocks": [
+                {
+                  "code": "SZ:002273",
+                  "name": "水晶光电"
+                },
+                {
+                  "code": "SZ:002456",
+                  "name": "欧菲光"
+                }
+              ]
+            },
+            {
+              "category": "3D感知摄像头与环境追踪视觉模组",
+              "stocks": [
+                {
+                  "code": "SZ:002241",
+                  "name": "歌尔股份"
+                }
+              ]
+            },
+            {
+              "category": "空间音频声学器件与整机组装",
+              "stocks": [
+                {
+                  "code": "SZ:002475",
+                  "name": "立讯精密"
+                }
+              ]
+            },
+            {
+              "category": "主控SoC相关SiP模组与先进封装配套",
+              "stocks": [
+                {
+                  "code": "SH:600584",
+                  "name": "长电科技"
+                },
+                {
+                  "code": "SH:601231",
+                  "name": "环旭电子"
+                },
+                {
+                  "code": "SZ:002156",
+                  "name": "通富微电"
+                }
+              ]
+            },
+            {
+              "category": "FPC软板、高多层HDI与SLP主板",
+              "stocks": [
+                {
+                  "code": "SZ:002938",
+                  "name": "鹏鼎控股"
+                },
+                {
+                  "code": "SZ:002384",
+                  "name": "东山精密"
+                },
+                {
+                  "code": "SZ:002916",
+                  "name": "深南电路"
+                },
+                {
+                  "code": "SZ:002463",
+                  "name": "沪电股份"
+                }
+              ]
+            },
+            {
+              "category": "高速连接器、天线与精密线束",
+              "stocks": [
+                {
+                  "code": "SZ:002897",
+                  "name": "意华股份"
+                }
+              ]
+            },
+            {
+              "category": "电池Pack、BMS与外接供电组件",
+              "stocks": [
+                {
+                  "code": "SZ:300207",
+                  "name": "欣旺达"
+                }
+              ]
+            },
+            {
+              "category": "散热材料、均热板、石墨与结构导热件",
+              "stocks": [
+                {
+                  "code": "SZ:300684",
+                  "name": "中石科技"
+                }
+              ]
+            },
+            {
+              "category": "金属中框、玻璃盖板与精密结构件",
+              "stocks": [
+                {
+                  "code": "SZ:300433",
+                  "name": "蓝思科技"
+                }
+              ]
+            },
+            {
+              "category": "AR/VR贴合、检测、组装自动化设备",
+              "stocks": [
+                {
+                  "code": "SZ:301312",
+                  "name": "智立方"
+                },
+                {
+                  "code": "SZ:300567",
+                  "name": "精测电子"
+                }
+              ]
+            }
+          ]
+        },
+        "observations": []
+      },
+      {
+        "step_id": 5,
+        "key": "code_verification",
+        "name": "代码校验",
+        "summary": "已验证19个股票代码。",
+        "data": {
+          "verified_codes": [
+            "SH:600584",
+            "SH:601231",
+            "SZ:000050",
+            "SZ:000725",
+            "SZ:002156",
+            "SZ:002241",
+            "SZ:002273",
+            "SZ:002384",
+            "SZ:002456",
+            "SZ:002463",
+            "SZ:002475",
+            "SZ:002897",
+            "SZ:002916",
+            "SZ:002938",
+            "SZ:300207",
+            "SZ:300433",
+            "SZ:300567",
+            "SZ:300684",
+            "SZ:301312"
+          ],
+          "raw_result": {
+            "total": 19,
+            "results": [
+              {
+                "input": "SH:600584",
+                "code": "SH:600584",
+                "valid": true,
+                "name": "长电科技"
+              },
+              {
+                "input": "SH:601231",
+                "code": "SH:601231",
+                "valid": true,
+                "name": "环旭电子"
+              },
+              {
+                "input": "SZ:000050",
+                "code": "SZ:000050",
+                "valid": true,
+                "name": "深天马A"
+              },
+              {
+                "input": "SZ:000725",
+                "code": "SZ:000725",
+                "valid": true,
+                "name": "京东方A"
+              },
+              {
+                "input": "SZ:002156",
+                "code": "SZ:002156",
+                "valid": true,
+                "name": "通富微电"
+              },
+              {
+                "input": "SZ:002241",
+                "code": "SZ:002241",
+                "valid": true,
+                "name": "歌尔股份"
+              },
+              {
+                "input": "SZ:002273",
+                "code": "SZ:002273",
+                "valid": true,
+                "name": "水晶光电"
+              },
+              {
+                "input": "SZ:002384",
+                "code": "SZ:002384",
+                "valid": true,
+                "name": "东山精密"
+              },
+              {
+                "input": "SZ:002456",
+                "code": "SZ:002456",
+                "valid": true,
+                "name": "欧菲光"
+              },
+              {
+                "input": "SZ:002463",
+                "code": "SZ:002463",
+                "valid": true,
+                "name": "沪电股份"
+              },
+              {
+                "input": "SZ:002475",
+                "code": "SZ:002475",
+                "valid": true,
+                "name": "立讯精密"
+              },
+              {
+                "input": "SZ:002897",
+                "code": "SZ:002897",
+                "valid": true,
+                "name": "意华股份"
+              },
+              {
+                "input": "SZ:002916",
+                "code": "SZ:002916",
+                "valid": true,
+                "name": "深南电路"
+              },
+              {
+                "input": "SZ:002938",
+                "code": "SZ:002938",
+                "valid": true,
+                "name": "鹏鼎控股"
+              },
+              {
+                "input": "SZ:300207",
+                "code": "SZ:300207",
+                "valid": true,
+                "name": "欣旺达"
+              },
+              {
+                "input": "SZ:300433",
+                "code": "SZ:300433",
+                "valid": true,
+                "name": "蓝思科技"
+              },
+              {
+                "input": "SZ:300567",
+                "code": "SZ:300567",
+                "valid": true,
+                "name": "精测电子"
+              },
+              {
+                "input": "SZ:300684",
+                "code": "SZ:300684",
+                "valid": true,
+                "name": "中石科技"
+              },
+              {
+                "input": "SZ:301312",
+                "code": "SZ:301312",
+                "valid": true,
+                "name": "智立方"
+              }
+            ]
+          }
+        },
+        "observations": []
+      },
+      {
+        "step_id": 6,
+        "key": "final_assembly",
+        "name": "最终组装",
+        "summary": "最终Theme JSON已生成。",
+        "data": {
+          "theme_id": "theme_eab595a9"
+        },
+        "observations": []
+      }
+    ],
+    "current_step_messages": [],
+    "verified_stock_codes": [
+      "SH:600584",
+      "SH:601231",
+      "SZ:000050",
+      "SZ:000725",
+      "SZ:002156",
+      "SZ:002241",
+      "SZ:002273",
+      "SZ:002384",
+      "SZ:002456",
+      "SZ:002463",
+      "SZ:002475",
+      "SZ:002897",
+      "SZ:002916",
+      "SZ:002938",
+      "SZ:300207",
+      "SZ:300433",
+      "SZ:300567",
+      "SZ:300684",
+      "SZ:301312"
+    ],
+    "last_step_error": ""
+  }
+}

@@ -1,0 +1,58 @@
+{
+  "SZ:300684": {
+    "code": "SZ:300684",
+    "name": "中石科技",
+    "current_price": 63.85,
+    "prev_close": 62.98,
+    "open_price": 62.46,
+    "high": 64.22,
+    "low": 61.56,
+    "change": 0.87,
+    "change_percent": 1.38,
+    "volume": 862608126.58,
+    "volume_display": "8.63亿",
+    "timestamp": "2026-05-29 04:06:56"
+  },
+  "SZ:300433": {
+    "code": "SZ:300433",
+    "name": "蓝思科技",
+    "current_price": 40.23,
+    "prev_close": 40.28,
+    "open_price": 39.8,
+    "high": 41.7,
+    "low": 39.5,
+    "change": -0.05,
+    "change_percent": -0.12,
+    "volume": 7809136037.88,
+    "volume_display": "78.09亿",
+    "timestamp": "2026-05-29 04:06:56"
+  },
+  "SZ:301312": {
+    "code": "SZ:301312",
+    "name": "智立方",
+    "current_price": 135.18,
+    "prev_close": 135.42,
+    "open_price": 134.0,
+    "high": 136.66,
+    "low": 132.29,
+    "change": -0.24,
+    "change_percent": -0.18,
+    "volume": 686103633.84,
+    "volume_display": "6.86亿",
+    "timestamp": "2026-05-29 04:06:56"
+  },
+  "SZ:300567": {
+    "code": "SZ:300567",
+    "name": "精测电子",
+    "current_price": 210.4,
+    "prev_close": 209.79,
+    "open_price": 209.0,
+    "high": 214.8,
+    "low": 201.88,
+    "change": 0.61,
+    "change_percent": 0.29,
+    "volume": 1964102756.31,
+    "volume_display": "19.64亿",
+    "timestamp": "2026-05-29 04:06:56"
+  }
+}

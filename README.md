@@ -1,0 +1,540 @@
+# DaimsenGogo 股票供应链大屏
+
+## 项目简介
+
+DaimsenGogo 是一个面向 A 股产业链研究场景的 AI 分析与可视化平台。用户输入一个产业主题，例如“苹果手机供应链”“宁德时代电池供应链”“华为昇腾供应链”，系统会调用大模型进行供应链拆解，生成主题、产业分类、相关上市公司及业务说明，并在看板中展示实时行情、涨跌幅、近一个月日 K 线和主题分类结构。
+
+项目采用前后端分离架构：前端使用 React + TypeScript + Vite 构建交互式大屏，后端使用 FastAPI 提供 AI 分析、主题管理、行情代理、模型配置、历史任务和个股盘面洞察接口。数据持久化以本地 JSON 文件为主，适合演示、学习、面试项目复盘和个人研究使用。
+
+## 核心功能
+
+### 1. AI 供应链分析
+
+- 支持用户输入自然语言主题，自动生成供应链分析结果。
+- 后端通过 Plan-Execute + ReAct 混合流程组织大模型分析。
+- 使用 SSE 流式返回分析进度，前端可实时展示执行过程、等待用户确认并继续执行。
+- 分析任务会保存检查点、事件流和最终结果，便于历史回看和调试。
+- 自动沉淀分析结果为“主题”，供后续看板复用。
+
+### 2. 供应链主题看板
+
+- 左侧展示已保存主题列表。
+- 支持切换主题、保留当前主题状态、删除主题。
+- 看板按供应链分类展示相关股票。
+- 支持“全部视图”和分类视图，方便快速查看主题整体结构。
+
+### 3. 股票实时行情
+
+- 对主题下股票按代码获取实时行情。
+- 现价、涨跌额、涨跌幅、开盘价、最高价、最低价和成交额来自雪球行情接口。
+- 前端每 30 秒轮询一次当前主题股票行情。
+- 后端对实时行情设置短缓存与并发限制，避免频繁请求外部数据源。
+
+### 4. K 线与均线图
+
+- 每只股票展示近一个月日 K 线走势。
+- K 线数据固定取最近 22 个交易日。
+- 优先使用雪球日 K 接口获取近期走势，失败时回退 AkShare 腾讯日线封装。
+- 使用前复权日线数据，适合在卡片中展示近期趋势。
+- 前端使用 IntersectionObserver 懒加载 K 线，只有进入视口附近的图表才会请求数据。
+- 个股盘面洞察中额外展示近一年收盘价曲线，以及 MA5、MA20、MA120、MA240 均线。
+
+### 5. 模型配置管理
+
+- 支持配置大模型 API 地址、API Key 和模型名称。
+- 支持 OpenAI 协议兼容的大模型服务，不限定 OpenAI 官方接口。
+- 配置会同步写入 `.env`，前端“模型配置”页也会读取 `.env` 的最新值。
+- AI 分析前会校验模型配置是否完整。
+
+### 6. 历史任务管理
+
+- 保存 AI 分析任务执行记录。
+- 支持查看历史分析任务，方便复盘分析过程。
+
+### 7. 个股盘面洞察
+
+- 用户在看板中点击个股后才触发洞察取数，不在后台预加载。
+- 后端并行调取历史收盘价、股东人数、财报和大事提醒，并在本地计算指标。
+- 左侧展示收盘价均线、DIF / DEA / MACD、股东人数变化、归母净利润与同比、筹码分布等图表。
+- 右侧默认展示纯数据规则摘要，点击“智能解盘”后才将清洗后的结构化数据发送给大模型生成“综合解读”。
+- “智能解盘”结果在前端缓存，点击“返回”可回到本地规则摘要，再次点击不会重复请求大模型。
+
+### 8. 筹码分布与本地指标计算
+
+- 筹码分布不依赖第三方成品接口，采用 K 线 + 换手率 + CYQ 本地算法计算。
+- 默认口径为 120 个交易日计算窗口、150 个价格档、210 根日 K 预热、最近 90 个交易日快照。
+- 输出平均成本、获利比例、70/90 成本区间、集中度、支撑位、压力位和横向柱状分布图。
+- 筹码分布作为技术面估算指标使用，不代表真实账户持仓成本。
+
+## 技术架构
+
+```text
+┌────────────────────────────────────────────────────────────┐
+│                        前端展示层                           │
+│ React + TypeScript + Vite + Zustand + React Router          │
+│ 供应链看板 / AI分析页 / 模型配置页 / 盘面洞察 / K线图         │
+└───────────────────────────┬────────────────────────────────┘
+                            │ /api
+┌───────────────────────────▼────────────────────────────────┐
+│                        FastAPI 服务层                        │
+│ analysis-tasks / themes / stocks / config / analysis         │
+│ SSE流式分析 / 主题CRUD / 行情代理 / 配置读写 / 个股洞察       │
+└───────────────────────────┬────────────────────────────────┘
+                            │
+┌───────────────────────────▼────────────────────────────────┐
+│                        业务服务层                            │
+│ Plan-Execute Agent / 洞察服务 / 文件服务 / 数据源适配         │
+│ CYQ筹码计算 / MACD均线计算 / 缓存 / 并发控制 / 异常降级        │
+└───────────────────────────┬────────────────────────────────┘
+                            │
+┌───────────────────────────▼────────────────────────────────┐
+│                        数据与外部接口层                      │
+│ 本地JSON与.env / 大模型API / 雪球 / AkShare / 东方财富K线     │
+└────────────────────────────────────────────────────────────┘
+```
+
+## 产业链生成链路
+
+当前项目的产业链生成以“用户主题输入 -> 后端任务编排 -> 股票候选验证 -> 人工确认 -> 主题保存”为主线。核心链路如下：
+
+1. 用户在前端“AI分析”页面输入产业链主题，前端通过 `POST /api/analysis-tasks/run` 创建分析任务。
+2. 后端 `analysis_task_router` 生成 `analysis_xxx` 任务 ID，将任务状态、事件流、检查点和结果写入 `data/analysis_tasks/`。
+3. `plan_execute_react_loop` 进入固定 SOP：候选发现、业务确认、候选补全、结果分组、代码校验、最终组装。
+4. Agent 会调用本地工具检索股票：`search_stocks` 从 A 股股票基础列表中查找候选，`get_company_info` 补充公司业务信息，`verify_stock_code` 校验代码与市场前缀。
+5. A 股股票基础列表来自 `AkShare` 的全市场接口，并缓存到 `data/task_cache/_shared/stock_list.json`；外部接口异常时优先使用本地缓存。
+6. 前端通过 SSE 接收任务事件，展示推理过程、候选股票、确认节点和最终主题结构。
+7. 用户确认或调整结果后，后端将最终 `Theme` 保存到 `data/themes/{theme_id}.json`，看板页读取该主题并展示分类股票、行情和图表。
+
+这条链路的重点是：大模型负责产业链理解和结构化推理，本地工具负责股票代码、公司信息和数据一致性校验，最终结果以本地 JSON 主题文件沉淀，便于后续看板复用和二次开发。
+
+## 技术栈
+
+### 前端
+
+| 技术 | 用途 |
+| --- | --- |
+| React 19 | 页面组件与状态驱动渲染 |
+| TypeScript | 类型约束，提高代码可维护性 |
+| Vite | 前端开发服务器与构建工具 |
+| Zustand | 主题、股票行情、配置等状态管理 |
+| React Router | 页面路由与主题详情路由 |
+| Axios | API 请求封装 |
+| lightweight-charts | 股票 K 线图展示 |
+| Tailwind CSS | 页面样式与大屏视觉设计 |
+
+### 后端
+
+| 技术 | 用途 |
+| --- | --- |
+| FastAPI | API 服务框架 |
+| Uvicorn | ASGI 服务运行器 |
+| Pydantic | 请求和响应数据模型 |
+| sse-starlette | SSE 流式事件返回 |
+| OpenAI SDK | 兼容 OpenAI 协议的大模型调用 |
+| AkShare | A 股日 K 兜底、股票基础信息获取 |
+| requests | 雪球、东方财富等 HTTP 请求 |
+| 本地 JSON | 主题、配置、历史任务和缓存持久化 |
+
+## 数据来源
+
+### 实时行情
+
+实时行情使用雪球原始行情接口：
+
+```text
+https://stock.xueqiu.com/v5/stock/quote.json?symbol={SYMBOL}&extend=detail
+```
+
+后端会先访问雪球股票页获取必要 Cookie，再请求 quote 接口。核心字段映射如下：
+
+| 雪球字段 | 项目字段 | 含义 |
+| --- | --- | --- |
+| current | current_price | 当前价格 |
+| percent | change_percent | 涨跌幅 |
+| chg | change | 涨跌额 |
+| last_close | prev_close | 昨收价 |
+| open | open_price | 开盘价 |
+| high | high | 最高价 |
+| low | low | 最低价 |
+| amount | volume | 成交额 |
+| name | name | 股票名称 |
+
+### K 线数据
+
+K 线数据优先使用雪球日 K 接口：
+
+```text
+https://stock.xueqiu.com/v5/stock/chart/kline.json?symbol={SYMBOL}&period=day&type=before&count=-22&indicator=kline
+```
+
+项目固定取最近 22 个交易日，作为“近一个月日 K”展示。雪球接口失败或返回不可用数据时，会回退到 AkShare 的腾讯日线封装：
+
+```python
+ak.stock_zh_a_hist_tx(symbol="sz002460", adjust="qfq")
+```
+
+### 个股诊断数据
+
+个股盘面洞察会按需调取股票历史数据，并在后端统一清洗为前端图表和大模型可用的结构化对象：
+
+- 近一年收盘价：用于计算 DIF、DEA、MACD 和 MA5 / MA20 / MA120 / MA240。
+- 近三年股东人数：用于观察筹码集中或分散趋势。
+- 近五年财报：用于展示归母净利润和同比变化。
+- 近五年大事提醒：仅保留风险提示、股权变动、重大事项中与诊断有关的事件。
+
+### 筹码分布数据
+
+筹码分布优先使用东方财富 K 线字段中的 `open/high/low/close/volume/amount/turnoverRate`，再通过本地 CYQ 算法计算，不依赖外部接口直接返回成品筹码分布。
+
+计算参数固定为：
+
+```json
+{
+  "window": 120,
+  "bins": 150,
+  "warmup_count": 210,
+  "snapshots": 90
+}
+```
+
+下面是当前项目里“取数/调取”的所有主要接口，按用途分组。对应代码主要在 [stock_router.py](backend/routers/stock_router.py)、[akshare_adapter.py](backend/services/akshare_adapter.py)、[chip_distribution_service.py](backend/services/chip_distribution_service.py)。
+
+**一、前端调用本项目后端接口**
+
+| 用途 | 方法 | 接口 |
+|---|---:|---|
+| 批量实时行情 | GET | `/api/stocks/quotes?codes=SZ:000725,SH:600000&task_id=xxx` |
+| 股票卡片近一月 K 线 | GET | `/api/stocks/kline?code=SZ:000725&period=daily&count=22&task_id=xxx` |
+| 近一年收盘价 | GET | `/api/stocks/close-history?code=SZ:000725&count=250` |
+| 个股盘面洞察 | GET | `/api/stocks/diagnosis?code=SZ:000725&name=京东方A` |
+| 智能解盘 | POST | `/api/stocks/diagnosis/enhance?code=SZ:000725&name=京东方A` |
+| 股票搜索 | GET | `/api/stocks/search?q=京东方&task_id=xxx` |
+| 模型配置读取 | GET | `/api/config/` |
+| 模型配置保存 | PUT | `/api/config/` |
+| 拉取模型列表 | POST | `/api/config/fetch-models` |
+| 选择模型 | PUT | `/api/config/select-model` |
+| 产业链分析任务 | POST | `/api/analysis-tasks/run` |
+| 继续分析任务 | POST | `/api/analysis-tasks/{task_id}/continue` |
+| 历史任务列表 | GET | `/api/analysis-tasks/` |
+| 历史任务详情 | GET | `/api/analysis-tasks/{task_id}` |
+| 主题列表 | GET | `/api/themes/` |
+| 主题详情 | GET | `/api/themes/{theme_id}` |
+
+**二、雪球接口**
+
+| 用途 | 接口 |
+|---|---|
+| 预热 Cookie | `https://xueqiu.com/S/{symbol}` |
+| 实时行情 | `https://stock.xueqiu.com/v5/stock/quote.json?symbol={symbol}&extend=detail` |
+| 历史 K 线 / 收盘价 | `https://stock.xueqiu.com/v5/stock/chart/kline.json` |
+| 股东人数 | `https://stock.xueqiu.com/v5/stock/f10/cn/holders.json?symbol={symbol}&count=20` |
+| 财务指标 | `https://stock.xueqiu.com/v5/stock/finance/cn/indicator.json?symbol={symbol}&type=Q4&is_detail=true&count=5` |
+| 大事提醒 | `https://stock.xueqiu.com/v5/stock/screener/event/list.json?symbol={symbol}&page=1&size=200` |
+
+雪球 symbol 格式是 `SZ000725`、`SH600000` 这种。
+
+**三、东方财富接口**
+
+| 用途 | 接口 |
+|---|---|
+| 筹码分布输入 K 线 | `https://push2his.eastmoney.com/api/qt/stock/kline/get` |
+
+当前参数大概是：
+
+```text
+secid=0.000725
+fields1=f1,f2,f3,f4,f5,f6
+fields2=f51,f52,f53,f54,f55,f56,f57,f58,f59,f60,f61
+klt=101
+fqt=0
+end=YYYYMMDD
+lmt=210
+```
+
+这里取 `open/high/low/close/volume/amount/turnoverRate`，再用本地 CYQ 算法算筹码分布。
+
+**四、AkShare / Baostock 本地封装**
+
+| 用途 | 调用 |
+|---|---|
+| A 股股票列表 | `ak.stock_zh_a_spot_em()` |
+| 股票近一月 K 线兜底 | `ak.stock_zh_a_hist_tx(symbol="sz000725", adjust="qfq")` |
+| 公司基础信息 | `ak.stock_individual_info_em(symbol="000725")` |
+| 股票列表兜底 | `baostock.query_stock_basic()` |
+
+**五、大模型接口**
+
+| 用途 | 接口 |
+|---|---|
+| 获取模型列表 | `{LLM_BASE_URL}/models` |
+| 产业链分析 / 智能解盘 | OpenAI SDK 调用 `{LLM_BASE_URL}/chat/completions` |
+
+配置来自 `.env` 或前端“模型配置”页：
+
+```text
+LLM_PROVIDER_NAME
+LLM_BASE_URL
+LLM_API_KEY
+LLM_MODEL
+```
+
+
+
+### 主题数据
+
+主题数据来自 AI 分析结果并保存为本地 JSON 文件，结构包括：
+
+- 主题 ID
+- 主题名称
+- 主题描述
+- 供应链分类
+- 每个分类下的股票列表
+- 股票业务说明和供应链占比
+
+## 目录结构
+
+```text
+DaimsenGogo/
+├── backend/                    # FastAPI 后端
+│   ├── agent/                  # ReAct / Plan-Execute 分析逻辑
+│   ├── models/                 # Pydantic 数据模型
+│   ├── routers/                # API 路由
+│   ├── services/               # 文件服务、行情服务、诊断服务、数据源适配
+│   └── main.py                 # FastAPI 入口
+├── frontend/                   # React 前端
+│   ├── src/api/                # API 请求封装
+│   ├── src/components/         # 页面组件与大屏组件
+│   ├── src/hooks/              # 行情轮询等 Hooks
+│   ├── src/pages/              # 页面入口
+│   └── src/stores/             # Zustand 状态管理
+├── scripts/                    # 启动脚本与测试脚本
+│   ├── launcher.py             # 单窗口启动前后端
+│   ├── start.bat               # Windows 一键启动脚本
+│   ├── start.sh                # Unix 启动脚本
+│   └── test_xq_quote.py        # 雪球接口临时测试脚本
+├── data/                       # 本地数据目录，运行后生成或更新
+│   ├── themes/                 # 供应链主题数据
+│   ├── analysis_tasks/         # AI 分析历史任务
+│   ├── task_cache/             # 行情、K线、股票列表缓存
+│   └── config.json             # 模型配置兼容文件
+├── .env.example                # 大模型配置示例
+└── README.md
+```
+
+## 使用方式
+
+### 1. 环境准备
+
+后端依赖 Python 环境，前端依赖 Node.js 与 npm。
+
+可以使用 conda 环境，也可以使用本地 `.venv`。如果沿用当前项目约定的 conda 环境：
+
+```bash
+conda activate env_reactAgent
+```
+
+安装后端依赖：
+
+```bash
+conda run -n env_reactAgent pip install -r backend/requirements.txt
+```
+
+安装前端依赖：
+
+```bash
+cd frontend
+npm install
+```
+
+复制大模型配置示例：
+
+```bash
+cp .env.example .env
+```
+
+按需填写：
+
+```bash
+LLM_PROVIDER_NAME=
+LLM_BASE_URL=
+LLM_API_KEY=
+LLM_MODEL=
+```
+
+也可以在前端“模型配置”页填写并保存，后端会同步更新 `.env`。`.env` 中的 API Key 不应提交到 Git。
+
+### 2. Windows 一键启动
+
+在项目根目录执行：
+
+```bash
+scripts/start.bat
+```
+
+该脚本会通过 `scripts/launcher.py` 启动：
+
+- 后端：`http://localhost:8000`
+- 前端：`http://localhost:5173`
+- API 文档：`http://localhost:8000/docs`
+
+### 3. 手动启动后端
+
+```bash
+conda run -n env_reactAgent python -m uvicorn backend.main:app --port 8000 --host 0.0.0.0
+```
+
+### 4. 手动启动前端
+
+```bash
+cd frontend
+npm run dev
+```
+
+### 5. 前端构建
+
+```bash
+cd frontend
+npm run build
+```
+
+## 基本操作流程
+
+1. 打开前端页面 `http://localhost:5173`。
+2. 进入“模型配置”页面，填写 API 地址、API Key 和模型名称，或直接维护 `.env`。
+3. 进入“AI分析”页面，输入供应链主题。
+4. 等待 AI 分析过程流式输出，按页面提示确认候选股票和最终结果。
+5. 保存主题后进入“供应链看板”，查看主题分类、股票卡片、实时行情和近一个月 K 线。
+6. 点击任意个股，打开“盘面洞察”，后端会实时拉取并计算该股诊断数据。
+7. 如需大模型综合分析，点击右侧“智能解盘”，返回后可回到本地规则摘要。
+8. 后续可在左侧主题列表中切换或删除主题。
+
+## API 概览
+
+| 模块 | 方法与路径 | 说明 |
+| --- | --- | --- |
+| AI 分析任务 | POST `/api/analysis-tasks/run` | 启动供应链分析任务，返回 SSE 事件流 |
+| AI 分析任务 | POST `/api/analysis-tasks/{task_id}/continue` | 用户确认后继续执行任务 |
+| AI 分析任务 | GET `/api/analysis-tasks/` | 查询历史分析任务 |
+| AI 分析 | POST `/api/analysis/run` | 旧版直接流式分析入口 |
+| 主题管理 | GET `/api/themes/` | 获取主题摘要列表 |
+| 主题管理 | GET `/api/themes/{theme_id}` | 获取主题详情 |
+| 主题管理 | POST `/api/themes/` | 创建主题 |
+| 主题管理 | PUT `/api/themes/{theme_id}` | 更新主题 |
+| 主题管理 | DELETE `/api/themes/{theme_id}` | 删除主题 |
+| 行情数据 | GET `/api/stocks/quotes` | 批量获取实时行情 |
+| 行情数据 | GET `/api/stocks/kline` | 获取近一个月日 K |
+| 行情数据 | GET `/api/stocks/close-history` | 获取历史收盘价 |
+| 个股诊断 | GET `/api/stocks/diagnosis` | 获取盘面洞察数据和本地规则摘要 |
+| 个股诊断 | POST `/api/stocks/diagnosis/enhance` | 调用大模型生成智能解盘 |
+| 股票检索 | GET `/api/stocks/search` | 从本地 A 股列表检索股票 |
+| 模型配置 | `/api/config/*` | 读取和保存模型配置 |
+
+## 性能优化设计
+
+### 1. 行情与主题解耦
+
+主题数据只保存 AI 生成的供应链结构，不直接保存实时行情。行情进入看板后按股票代码请求，避免主题切换时重复生成分析结果。
+
+### 2. 指定股票行情获取
+
+实时行情不再全量下载 A 股行情，而是只请求当前主题下的股票代码，降低外部接口压力和等待时间。
+
+### 3. 并发控制
+
+后端对外部行情请求设置并发上限：
+
+- 实时行情并发：5
+- K 线请求并发：3
+
+这样可以避免大量 `asyncio.to_thread` 任务挤占线程池，影响模型配置、历史任务等轻量接口。
+
+### 4. 多级缓存
+
+- 实时行情进程内缓存：5 秒，命中后不再请求雪球实时行情接口。
+- K 线进程内缓存：1 小时，按 `task_id + code` 隔离；命中后后端直接返回，不再请求雪球或 AkShare。
+- 股票基础列表进程内缓存：1 小时，减少全市场股票列表重复拉取。
+- 任务级 JSON 缓存用于外部接口异常时兜底，例如 `data/task_cache/{task_id}/akshare_kline_cache.json`。
+- K 线 JSON 缓存会在后端进程内缓存未命中、且成功从雪球或 AkShare 拉到数据后更新；接口异常时优先读取已有 JSON 缓存。
+
+### 5. K 线懒加载
+
+前端不在主题加载时一次性请求所有股票 K 线，而是在图表进入视口附近时再请求，减少首屏并发量。当前前端不持久缓存 K 线，所以切换回“全部”视图或重新挂载图表时，浏览器仍可能再次请求 `/api/stocks/kline`；这类请求会先经过后端进程内缓存，只有缓存未命中或过期时才会继续访问雪球或 AkShare。
+
+### 6. 第三方输出静默
+
+后端封装 AkShare 调用时屏蔽第三方库的进度条和下载输出，避免污染业务日志。
+
+### 7. 个股诊断按需触发
+
+盘面洞察只在用户点击个股后才拉取数据和计算指标，不在看板加载时预取，避免打开主题时产生大量历史数据请求。
+
+### 8. 大模型调用延后
+
+个股诊断默认先展示本地规则摘要。只有用户点击“智能解盘”后，后端才会将清洗后的结构化数据和内置提示词发送给大模型，降低不必要的 API 消耗。
+
+## 本地数据说明
+
+| 路径 | 说明 |
+| --- | --- |
+| `.env` | 本地大模型 API 配置，包含 URL、Key、模型名等敏感信息，不应提交 |
+| `.env.example` | 大模型配置示例，可提交 |
+| `data/themes/` | 已保存的供应链主题 |
+| `data/analysis_tasks/` | AI 分析历史任务 |
+| `data/config.json` | 模型配置兼容文件，当前以 `.env` 为主要来源 |
+| `data/task_cache/_shared/stock_list.json` | 共享股票基础列表缓存 |
+| `data/task_cache/{task_id}/akshare_kline_cache.json` | 任务级 K 线缓存 |
+| `data/task_cache/{task_id}/akshare_company_cache.json` | 任务级公司信息缓存 |
+| `data/task_cache/{task_id}/akshare_quotes_cache.json` | 任务级行情缓存 |
+
+## 常见问题
+
+### 1. 为什么切换主题后行情需要加载？
+
+主题数据和行情数据是分开的。主题保存的是供应链结构，行情是实时变化数据，因此进入或切换主题后会按当前股票列表获取最新行情。
+
+### 2. 停留在主题页面时行情会自动刷新吗？
+
+会。前端进入主题后会立即请求一次行情，之后默认每 30 秒刷新一次当前主题股票行情。
+
+### 3. 为什么 K 线不是一次全部加载？
+
+看板里股票数量可能较多，如果一次性请求所有 K 线，会造成大量外部请求并影响页面响应。因此项目采用懒加载策略，用户滚动到对应股票卡片附近时才请求 K 线。
+
+### 4. 为什么历史任务和模型配置也可能被行情请求影响？
+
+它们虽然读取本地文件，但仍与行情请求共用同一个 FastAPI 进程和线程池资源。如果外部行情请求过多，会挤占后端处理能力。项目通过行情并发限制、缓存和懒加载降低影响。
+
+### 5. 雪球接口返回异常怎么办？
+
+后端会优先请求实时接口；如果失败，会尝试读取本地缓存。若没有缓存，前端对应字段可能显示 `--`。
+
+### 6. 产业链股票是从哪里来的？
+
+大模型先根据主题生成候选公司和业务逻辑，本地工具再从 A 股股票基础列表中检索、补全和校验股票代码。股票基础列表缓存位于 `data/task_cache/_shared/stock_list.json`。
+
+### 7. 个股盘面洞察会提前拉数据吗？
+
+不会。只有用户点击具体股票时，后端才开始拉取历史收盘价、股东人数、财报、大事提醒和筹码分布所需 K 线。
+
+### 8. 智能解盘会把原始接口数据直接丢给大模型吗？
+
+不会。后端会先把股东人数、筹码分布、MACD、均线、财报和事件数据清洗成标准化摘要，再结合内置提示词发送给大模型。
+
+### 9. API Key 会提交到 Git 吗？
+
+不会。真实配置写在 `.env`，该文件应保持本地私有；仓库只保留 `.env.example` 作为字段示例。
+
+## 适用场景
+
+- AI 产品经理或全栈工程师面试项目展示。
+- 学习 React + FastAPI 前后端分离实践。
+- 学习 AI Agent 如何落地到结构化业务分析。
+- 学习金融数据看板中的缓存、并发控制和数据源适配。
+- 产业链研究和股票主题观察的个人工具原型。
+
+## 注意事项
+
+- 本项目用于学习和演示，不构成任何投资建议。
+- 外部行情接口可能因网络、Cookie、频率限制或数据源变更而不可用。
+- 本地 JSON 存储适合个人和演示场景，不适合多人并发生产环境。
+- 如果用于生产，需要补充数据库、权限控制、任务队列、监控告警和更严格的数据合规设计。
