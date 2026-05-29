@@ -1,24 +1,66 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, type CSSProperties } from 'react'
 import { useConfigStore } from '../../stores/configStore'
 import toast from 'react-hot-toast'
 
 /**
- * AI模型供应商配置表单组件
- * 用于输入和保存供应商名称、API地址和密钥
- * 支持测试连接并获取可用模型列表
+ * 供应商配置表单（高保真重构）
+ * .panel：圆点 + 标题；字段 供应商名称 / Base URL(等宽) / API Key(password)；
+ * 按钮 保存配置(渐变) / 获取模型列表(描边)。逻辑与原实现一致。
  */
+
+function Field({
+  label,
+  value,
+  onChange,
+  placeholder,
+  type = 'text',
+  mono,
+}: {
+  label: string
+  value: string
+  onChange: (v: string) => void
+  placeholder?: string
+  type?: string
+  mono?: boolean
+}) {
+  const [focused, setFocused] = useState(false)
+  const inputStyle: CSSProperties = {
+    width: '100%',
+    border: `1px solid ${focused ? 'var(--accent-line)' : 'var(--border)'}`,
+    background: 'var(--surface-2)',
+    borderRadius: 'var(--r-sm)',
+    padding: '11px 13px',
+    color: 'var(--text)',
+    fontSize: 13.5,
+    fontFamily: mono ? 'var(--font-mono)' : 'var(--font-cjk)',
+    outline: 'none',
+    transition: 'border-color 0.2s',
+  }
+  return (
+    <label style={{ display: 'block', marginBottom: 15 }}>
+      <span style={{ display: 'block', fontSize: 11.5, fontWeight: 600, color: 'var(--text-faint)', marginBottom: 7, letterSpacing: '0.04em' }}>
+        {label}
+      </span>
+      <input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        type={type}
+        style={inputStyle}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
+      />
+    </label>
+  )
+}
+
 export default function ProviderForm() {
-  /* ---------- Store状态与操作 ---------- */
   const { config, updateProvider, fetchModels, fetchingModels } = useConfigStore()
 
-  /* ---------- 本地表单状态 ---------- */
   const [name, setName] = useState('')
   const [baseUrl, setBaseUrl] = useState('')
   const [apiKey, setApiKey] = useState('')
 
-  /**
-   * 当远程配置加载完成后，同步供应商信息到本地表单
-   */
   useEffect(() => {
     if (config?.provider) {
       setName(config.provider.name)
@@ -27,10 +69,6 @@ export default function ProviderForm() {
     }
   }, [config?.provider])
 
-  /**
-   * 保存供应商配置到后端
-   * 校验必填字段后调用store方法提交
-   */
   const handleSave = async () => {
     if (!baseUrl || (!apiKey && !config?.provider.has_api_key)) {
       toast.error('请填写API地址和密钥')
@@ -40,10 +78,6 @@ export default function ProviderForm() {
     toast.success('供应商配置已保存')
   }
 
-  /**
-   * 测试连接并获取模型列表
-   * 使用当前表单中的地址和密钥发起查询
-   */
   const handleFetchModels = async () => {
     if (!baseUrl || !apiKey) {
       toast.error('请先填写API地址和密钥')
@@ -51,112 +85,64 @@ export default function ProviderForm() {
     }
     try {
       const models = await fetchModels(baseUrl, apiKey)
-      if (models.length > 0) {
-        toast.success(`成功获取 ${models.length} 个模型`)
-      } else {
-        toast.error('未获取到可用模型')
-      }
+      if (models.length > 0) toast.success(`成功获取 ${models.length} 个模型`)
+      else toast.error('未获取到可用模型')
     } catch {
       toast.error('获取模型列表失败')
     }
   }
 
-  /** 输入框通用内联样式 */
-  const inputStyle = {
-    backgroundColor: 'var(--color-bg-primary)',
-    borderColor: 'var(--color-border)',
-    color: 'var(--color-text-primary)',
-  }
-
   return (
-    <div
-      className="rounded-lg p-6 border"
-      style={{
-        backgroundColor: 'var(--color-bg-card)',
-        borderColor: 'var(--color-border)',
-      }}
-    >
-      {/* 卡片标题 */}
-      <h3
-        className="text-lg font-semibold mb-4"
-        style={{ color: 'var(--color-text-primary)' }}
-      >
-        供应商配置
-      </h3>
-
-      {/* 供应商名称输入 */}
-      <div className="mb-4">
-        <label
-          className="block text-sm mb-1"
-          style={{ color: 'var(--color-text-secondary)' }}
-        >
-          供应商名称
-        </label>
-        <input
-          type="text"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="如：DeepSeek、OpenAI、通义千问"
-          className="w-full px-3 py-2 rounded-md border text-sm"
-          style={inputStyle}
-        />
+    <div className="panel fade-in" style={{ padding: 22 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 18 }}>
+        <span style={{ width: 8, height: 8, borderRadius: 99, background: 'var(--accent-bright)' }} />
+        <h2 style={{ fontSize: 15, fontWeight: 700 }}>供应商配置</h2>
       </div>
 
-      {/* API基础地址输入 */}
-      <div className="mb-4">
-        <label
-          className="block text-sm mb-1"
-          style={{ color: 'var(--color-text-secondary)' }}
-        >
-          Base URL
-        </label>
-        <input
-          type="text"
-          value={baseUrl}
-          onChange={(e) => setBaseUrl(e.target.value)}
-          placeholder="https://api.deepseek.com/v1"
-          className="w-full px-3 py-2 rounded-md border text-sm"
-          style={inputStyle}
-        />
-      </div>
+      <Field label="供应商名称" value={name} onChange={setName} placeholder="如：DeepSeek、OpenAI、通义千问" />
+      <Field label="Base URL" value={baseUrl} onChange={setBaseUrl} placeholder="https://api.deepseek.com/v1" mono />
+      <Field
+        label="API Key"
+        value={apiKey}
+        onChange={setApiKey}
+        type="password"
+        mono
+        placeholder={config?.provider.has_api_key ? '已保存，留空则不修改' : 'sk-...'}
+      />
 
-      {/* API密钥输入（密码类型） */}
-      <div className="mb-4">
-        <label
-          className="block text-sm mb-1"
-          style={{ color: 'var(--color-text-secondary)' }}
-        >
-          API Key
-        </label>
-        <input
-          type="password"
-          value={apiKey}
-          onChange={(e) => setApiKey(e.target.value)}
-          placeholder={config?.provider.has_api_key ? '已保存，留空则不修改' : 'sk-...'}
-          className="w-full px-3 py-2 rounded-md border text-sm"
-          style={inputStyle}
-        />
-      </div>
-
-      {/* 操作按钮区域 */}
-      <div className="flex gap-3">
-        {/* 保存按钮 */}
+      <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
         <button
           onClick={handleSave}
-          className="px-4 py-2 rounded-md text-sm font-medium text-white"
-          style={{ backgroundColor: 'var(--color-accent)' }}
+          style={{
+            cursor: 'pointer',
+            border: 'none',
+            borderRadius: 'var(--r-sm)',
+            padding: '10px 22px',
+            fontFamily: 'var(--font-cjk)',
+            fontWeight: 700,
+            fontSize: 13.5,
+            color: '#fff',
+            background: 'linear-gradient(135deg, var(--accent-bright), var(--accent))',
+            boxShadow: '0 10px 22px -12px var(--accent)',
+          }}
         >
           保存配置
         </button>
-        {/* 获取模型列表按钮 */}
         <button
           onClick={handleFetchModels}
           disabled={fetchingModels}
-          className="px-4 py-2 rounded-md text-sm font-medium border"
+          className="card"
           style={{
-            borderColor: 'var(--color-accent)',
-            color: 'var(--color-accent)',
-            opacity: fetchingModels ? 0.5 : 1,
+            cursor: fetchingModels ? 'not-allowed' : 'pointer',
+            borderRadius: 'var(--r-sm)',
+            padding: '10px 20px',
+            fontFamily: 'var(--font-cjk)',
+            fontWeight: 600,
+            fontSize: 13.5,
+            color: 'var(--accent-bright)',
+            background: 'transparent',
+            borderColor: 'var(--accent-line)',
+            opacity: fetchingModels ? 0.6 : 1,
           }}
         >
           {fetchingModels ? '获取中...' : '获取模型列表'}

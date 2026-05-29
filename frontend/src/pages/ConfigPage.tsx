@@ -4,14 +4,11 @@ import ProviderForm from '../components/config/ProviderForm'
 import ModelSelector from '../components/config/ModelSelector'
 
 /**
- * 模型配置页面
- * 包含两个核心区块：
- * 1. ProviderForm - 供应商配置表单（名称、地址、密钥）
- * 2. ModelSelector - 可用模型选择器
- * 页面挂载时自动从后端加载当前配置
+ * 模型配置页面（高保真重构）
+ * 居中 max-width 980，双栏 grid：左「供应商配置」表单 + 右「可用模型」单选列表。
+ * 页面挂载时加载配置，并在聚焦/可见时定期同步。
  */
 export default function ConfigPage() {
-  /* ---------- 从Store获取状态和方法 ---------- */
   const { loadConfig, loading, error } = useConfigStore()
 
   useEffect(() => {
@@ -20,14 +17,11 @@ export default function ConfigPage() {
       void loadConfig()
     }
     const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        syncConfig()
-      }
+      if (document.visibilityState === 'visible') syncConfig()
     }
     const intervalId = window.setInterval(syncConfig, 5000)
     window.addEventListener('focus', syncConfig)
     document.addEventListener('visibilitychange', handleVisibilityChange)
-
     return () => {
       window.clearInterval(intervalId)
       window.removeEventListener('focus', syncConfig)
@@ -35,44 +29,44 @@ export default function ConfigPage() {
     }
   }, [loadConfig])
 
-  /* ---------- 加载中占位 ---------- */
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <p style={{ color: 'var(--color-text-muted)' }}>加载配置中...</p>
-      </div>
-    )
-  }
-
-  /* ---------- 页面主体 ---------- */
   return (
-    <div className="max-w-2xl mx-auto p-6">
-      {/* 页面标题 */}
-      <h2
-        className="text-xl font-bold mb-6"
-        style={{ color: 'var(--color-text-primary)' }}
-      >
-        模型配置
-      </h2>
-
-      {/* 错误提示横幅 - 仅在有错误时显示 */}
-      {error && (
-        <div
-          className="mb-4 p-3 rounded-md text-sm"
-          style={{
-            backgroundColor: 'rgba(239, 68, 68, 0.1)',
-            color: 'var(--color-stock-up)',
-            border: '1px solid rgba(239, 68, 68, 0.3)',
-          }}
-        >
-          {error}
+    <div style={{ flex: 1, overflowY: 'auto', padding: '36px 0' }}>
+      <div style={{ maxWidth: 980, margin: '0 auto', padding: '0 32px' }}>
+        {/* 标题 */}
+        <div className="fade-in" style={{ marginBottom: 24 }}>
+          <span style={{ fontSize: 11.5, fontWeight: 700, letterSpacing: '0.22em', color: 'var(--accent-bright)' }}>
+            SETTINGS
+          </span>
+          <h1 style={{ fontSize: 26, fontWeight: 700, margin: '8px 0 4px' }}>模型配置</h1>
+          <p style={{ fontSize: 13.5, color: 'var(--text-dim)' }}>
+            配置 AI 供应商接入信息，并选择用于盘面洞察与供应链拆解的模型。
+          </p>
         </div>
-      )}
 
-      {/* 配置区块容器：供应商表单 + 模型选择器 */}
-      <div className="space-y-6">
-        <ProviderForm />
-        <ModelSelector />
+        {error && (
+          <div
+            style={{
+              marginBottom: 16,
+              padding: '12px 14px',
+              borderRadius: 'var(--r-sm)',
+              fontSize: 13,
+              background: 'var(--up-soft)',
+              color: 'var(--up)',
+              border: '1px solid var(--up)',
+            }}
+          >
+            {error}
+          </div>
+        )}
+
+        {loading && !useConfigStore.getState().config ? (
+          <div style={{ padding: 48, textAlign: 'center', color: 'var(--text-faint)' }}>加载配置中...</div>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18, alignItems: 'start' }}>
+            <ProviderForm />
+            <ModelSelector />
+          </div>
+        )}
       </div>
     </div>
   )
