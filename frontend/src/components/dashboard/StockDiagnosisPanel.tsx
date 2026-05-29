@@ -325,7 +325,7 @@ function ChartBlock({
   children: ReactNode
 }) {
   return (
-    <div className="card" style={{ background: 'var(--surface-2)', padding: '14px 16px' }}>
+    <div className="card" style={{ background: 'var(--surface-2)', padding: '14px 16px', flexShrink: 0 }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: 8 }}>
         <div>
           <div style={{ fontSize: 13.5, fontWeight: 700 }}>{title}</div>
