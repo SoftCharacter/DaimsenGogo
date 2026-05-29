@@ -16,14 +16,14 @@ function App() {
 
   return (
     <BrowserRouter>
-      {/* 全局Toast通知 - 深色主题样式 */}
+      {/* 全局Toast通知 - 跟随设计 token */}
       <Toaster
         position="top-right"
         toastOptions={{
           style: {
-            background: '#151c2c',
-            color: '#e2e8f0',
-            border: '1px solid #1e293b',
+            background: 'var(--surface)',
+            color: 'var(--text)',
+            border: '1px solid var(--border)',
           },
         }}
       />
