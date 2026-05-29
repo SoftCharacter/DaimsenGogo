@@ -541,9 +541,9 @@ export default function StockDiagnosisPanel({
             {error}
           </div>
         ) : diagnosis ? (
-          <div style={{ display: 'grid', gridTemplateColumns: '1.6fr 1fr', flex: 1, overflow: 'hidden' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.6fr) minmax(0, 1fr)', flex: 1, minHeight: 0, overflow: 'hidden' }}>
             {/* 左：图表区 */}
-            <div style={{ overflowY: 'auto', padding: '20px 22px', display: 'flex', flexDirection: 'column', gap: 16, borderRight: '1px solid var(--border)' }}>
+            <div style={{ minWidth: 0, overflowY: 'auto', padding: '20px 22px', display: 'flex', flexDirection: 'column', gap: 16, borderRight: '1px solid var(--border)' }}>
               <ChartBlock
                 title="日线均线"
                 sub="收盘价 · MA5 / MA20 / MA120 / MA240"
@@ -599,7 +599,7 @@ export default function StockDiagnosisPanel({
             </div>
 
             {/* 右：结构解读 */}
-            <div style={{ overflowY: 'auto', padding: '20px 22px' }}>
+            <div style={{ minWidth: 0, overflowY: 'auto', padding: '20px 22px' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginBottom: 16 }}>
                 <h3 style={{ fontSize: 15, fontWeight: 700 }}>结构解读</h3>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
