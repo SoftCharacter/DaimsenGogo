@@ -46,11 +46,6 @@ export default function DashboardPage() {
     if (id) fetchTheme(id)
   }, [id, fetchTheme])
 
-  /** 主题切换时重置筛选 */
-  useEffect(() => {
-    setActiveSeg(ALL)
-  }, [id])
-
   const displayTheme = currentTheme?.id === id ? currentTheme : null
 
   /** 全部成分股（合并所有分类） */
@@ -70,10 +65,13 @@ export default function DashboardPage() {
     [allStocks],
   )
 
+  /** 实际生效的筛选：主题切换后旧分类不存在则回落到「全部」（无需 effect 重置） */
+  const effectiveSeg = segments.includes(activeSeg) ? activeSeg : ALL
+
   /** 当前筛选后的列表 */
   const list = useMemo(
-    () => (activeSeg === ALL ? allStocks : allStocks.filter((s) => s.category_tag === activeSeg)),
-    [activeSeg, allStocks],
+    () => (effectiveSeg === ALL ? allStocks : allStocks.filter((s) => s.category_tag === effectiveSeg)),
+    [effectiveSeg, allStocks],
   )
 
   /* ---------- 交互 ---------- */
@@ -216,7 +214,7 @@ export default function DashboardPage() {
             {/* 环节筛选 chip */}
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 22 }}>
               {segments.map((seg) => {
-                const on = activeSeg === seg
+                const on = effectiveSeg === seg
                 const c = segCount(seg)
                 return (
                   <button
