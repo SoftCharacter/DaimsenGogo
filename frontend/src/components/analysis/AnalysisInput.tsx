@@ -12,6 +12,10 @@ const EXAMPLE_QUERIES = [
   '比亚迪智能驾驶产业链',
 ]
 
+/**
+ * AI 分析输入条（高保真重构）
+ * .panel 容器 + ✦ 前缀 + 占位输入框 + 渐变「开始分析」按钮；下方「试试：」推荐 chip。
+ */
 export default function AnalysisInput({ onSubmit, isRunning }: AnalysisInputProps) {
   const [query, setQuery] = useState('')
   const [submitLocked, setSubmitLocked] = useState(false)
@@ -38,56 +42,78 @@ export default function AnalysisInput({ onSubmit, isRunning }: AnalysisInputProp
     [handleSubmit],
   )
 
-  const handleExampleClick = useCallback((text: string) => {
-    if (disabled) return
-    setQuery(text)
-  }, [disabled])
-
   return (
-    <div className="rounded-lg border p-5 bg-[#151c2c] border-[#1e293b]">
-      <h3 className="text-sm font-medium mb-3 text-[#94a3b8]">
-        描述产品、技术或事件，AI将分析其全供应链
-      </h3>
-
-      <div className="flex gap-3">
+    <div>
+      <div
+        className="panel fade-in"
+        style={{
+          padding: 10,
+          display: 'flex',
+          gap: 10,
+          alignItems: 'center',
+          maxWidth: 760,
+          margin: '0 auto',
+        }}
+      >
+        <span style={{ paddingLeft: 10, color: 'var(--text-faint)', fontSize: 18 }}>✦</span>
         <input
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={handleKeyDown}
           disabled={disabled}
-          placeholder="例如：华为昇腾950芯片全供应链"
-          className="flex-1 px-4 py-2.5 rounded-md text-sm outline-none
-                     bg-[#0a0e17] text-[#e2e8f0] border border-[#1e293b]
-                     placeholder-[#475569]
-                     focus:border-[#6366f1] transition-colors
-                     disabled:opacity-50 disabled:cursor-not-allowed"
+          placeholder="例如：华为昇腾 950 芯片全供应链"
+          style={{
+            flex: 1,
+            border: 'none',
+            background: 'transparent',
+            outline: 'none',
+            color: 'var(--text)',
+            fontFamily: 'var(--font-cjk)',
+            fontSize: 15,
+            padding: '10px 0',
+            opacity: disabled ? 0.6 : 1,
+          }}
         />
         <button
           onClick={handleSubmit}
           disabled={disabled || !query.trim()}
-          className="px-5 py-2.5 rounded-md text-sm font-medium
-                     bg-[#6366f1] text-white
-                     hover:bg-[#5558e6] transition-colors
-                     disabled:opacity-50 disabled:cursor-not-allowed
-                     whitespace-nowrap"
+          style={{
+            cursor: disabled || !query.trim() ? 'not-allowed' : 'pointer',
+            border: 'none',
+            borderRadius: 'var(--r-sm)',
+            padding: '12px 24px',
+            fontFamily: 'var(--font-cjk)',
+            fontWeight: 700,
+            fontSize: 14,
+            color: '#fff',
+            background: 'linear-gradient(135deg, var(--accent-bright), var(--accent))',
+            boxShadow: '0 10px 24px -12px var(--accent)',
+            opacity: disabled || !query.trim() ? 0.5 : 1,
+            whiteSpace: 'nowrap',
+          }}
         >
           {isRunning ? '分析中...' : '开始分析'}
         </button>
       </div>
 
-      <div className="flex flex-wrap gap-2 mt-3">
-        <span className="text-xs text-[#64748b]">试试:</span>
+      <div style={{ display: 'flex', gap: 9, flexWrap: 'wrap', justifyContent: 'center', marginTop: 16 }}>
+        <span style={{ fontSize: 12.5, color: 'var(--text-faint)', alignSelf: 'center' }}>试试：</span>
         {EXAMPLE_QUERIES.map((text) => (
           <button
             key={text}
-            onClick={() => handleExampleClick(text)}
+            onClick={() => !disabled && setQuery(text)}
             disabled={disabled}
-            className="px-2.5 py-1 rounded text-xs
-                       bg-[#0a0e17] text-[#94a3b8] border border-[#1e293b]
-                       hover:border-[#6366f1] hover:text-[#e2e8f0]
-                       transition-colors cursor-pointer
-                       disabled:opacity-50 disabled:cursor-not-allowed"
+            className="card"
+            style={{
+              cursor: disabled ? 'not-allowed' : 'pointer',
+              fontFamily: 'var(--font-cjk)',
+              fontSize: 12.5,
+              color: 'var(--text-dim)',
+              background: 'var(--surface)',
+              padding: '7px 13px',
+              opacity: disabled ? 0.5 : 1,
+            }}
           >
             {text}
           </button>
