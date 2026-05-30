@@ -1,0 +1,331 @@
+{
+  "id": "4a1c3fef248d",
+  "name": "比亚迪智能驾驶产业链",
+  "description": "比亚迪智能驾驶产业链涵盖从芯片设计、传感器制造到系统集成的全链条，涉及自动驾驶所需的硬件和软件供应商，聚焦A股上市公司在核心组件、制造、封测、设备、材料及软件生态等环节的布局。",
+  "source_task_id": "analysis_6ceb20b8f4f2",
+  "created_at": "2026-05-30T11:36:25.876186+00:00",
+  "updated_at": "2026-05-30T11:36:25.876186+00:00",
+  "categories": [
+    {
+      "id": "chip_design",
+      "name": "智能驾驶芯片设计",
+      "order": 1,
+      "stocks": [
+        {
+          "code": "SZ:300458",
+          "name": "全志科技",
+          "name_en": "",
+          "percentage": 85,
+          "description": "智能驾驶芯片设计，提供智能车载终端芯片及解决方案。",
+          "category_tag": "智能驾驶芯片设计"
+        },
+        {
+          "code": "SH:603893",
+          "name": "瑞芯微",
+          "name_en": "",
+          "percentage": 85,
+          "description": "智能座舱与边缘计算芯片设计，产品应用于车载信息娱乐及智能驾驶。",
+          "category_tag": "智能驾驶芯片设计"
+        }
+      ]
+    },
+    {
+      "id": "power_management_ic",
+      "name": "电源管理芯片",
+      "order": 2,
+      "stocks": [
+        {
+          "code": "SZ:300661",
+          "name": "圣邦股份",
+          "name_en": "",
+          "percentage": 85,
+          "description": "电源管理芯片设计，产品广泛应用于汽车电子，包括智能驾驶系统。",
+          "category_tag": "电源管理芯片"
+        }
+      ]
+    },
+    {
+      "id": "storage_mcu_ic",
+      "name": "存储芯片与MCU",
+      "order": 3,
+      "stocks": [
+        {
+          "code": "SH:603986",
+          "name": "兆易创新",
+          "name_en": "",
+          "percentage": 85,
+          "description": "存储芯片与MCU设计，为车载存储（NOR Flash，DRAM）及控制单元提供关键芯片。",
+          "category_tag": "存储芯片与MCU"
+        }
+      ]
+    },
+    {
+      "id": "wafer_fabrication",
+      "name": "晶圆制造",
+      "order": 4,
+      "stocks": [
+        {
+          "code": "SH:688981",
+          "name": "中芯国际",
+          "name_en": "",
+          "percentage": 90,
+          "description": "领先的晶圆代工企业，为智能驾驶相关芯片提供制造服务。",
+          "category_tag": "晶圆制造"
+        }
+      ]
+    },
+    {
+      "id": "semiconductor_testing",
+      "name": "半导体封测",
+      "order": 5,
+      "stocks": [
+        {
+          "code": "SH:600584",
+          "name": "长电科技",
+          "name_en": "",
+          "percentage": 85,
+          "description": "全球领先的半导体封装测试企业，服务于汽车级芯片。",
+          "category_tag": "半导体封测"
+        },
+        {
+          "code": "SZ:002156",
+          "name": "通富微电",
+          "name_en": "",
+          "percentage": 85,
+          "description": "半导体封装测试企业，提供汽车电子芯片封装服务。",
+          "category_tag": "半导体封测"
+        },
+        {
+          "code": "SZ:002185",
+          "name": "华天科技",
+          "name_en": "",
+          "percentage": 85,
+          "description": "半导体封装测试企业，产品应用于汽车电子领域。",
+          "category_tag": "半导体封测"
+        }
+      ]
+    },
+    {
+      "id": "pcb_substrate",
+      "name": "高端PCB与载板",
+      "order": 6,
+      "stocks": [
+        {
+          "code": "SZ:002916",
+          "name": "深南电路",
+          "name_en": "",
+          "percentage": 85,
+          "description": "高端印制电路板与IC载板制造商，产品用于车载计算平台及雷达系统。",
+          "category_tag": "高端PCB与载板"
+        },
+        {
+          "code": "SZ:002463",
+          "name": "沪电股份",
+          "name_en": "",
+          "percentage": 85,
+          "description": "高端PCB制造商，汽车电子是其核心应用领域之一。",
+          "category_tag": "高端PCB与载板"
+        },
+        {
+          "code": "SZ:002436",
+          "name": "兴森科技",
+          "name_en": "",
+          "percentage": 85,
+          "description": "提供PCB样板、快件及IC载板，服务于汽车电子研发与制造。",
+          "category_tag": "高端PCB与载板"
+        }
+      ]
+    },
+    {
+      "id": "semiconductor_equipment",
+      "name": "半导体设备",
+      "order": 7,
+      "stocks": [
+        {
+          "code": "SZ:002371",
+          "name": "北方华创",
+          "name_en": "",
+          "percentage": 85,
+          "description": "国内半导体设备龙头，产品涵盖刻蚀、清洗、氧化等设备，支撑上游芯片制造。",
+          "category_tag": "半导体设备"
+        }
+      ]
+    },
+    {
+      "id": "key_materials",
+      "name": "关键材料",
+      "order": 8,
+      "stocks": [
+        {
+          "code": "SZ:300666",
+          "name": "江丰电子",
+          "name_en": "",
+          "percentage": 85,
+          "description": "高纯溅射靶材制造商，是芯片制造中物理气相沉积工艺的关键材料。",
+          "category_tag": "关键材料"
+        },
+        {
+          "code": "SH:600206",
+          "name": "有研新材",
+          "name_en": "",
+          "percentage": 85,
+          "description": "稀土材料、集成电路用薄膜材料等关键材料供应商。",
+          "category_tag": "关键材料"
+        }
+      ]
+    },
+    {
+      "id": "sensor_modules",
+      "name": "车载传感器模组",
+      "order": 9,
+      "stocks": [
+        {
+          "code": "SZ:002456",
+          "name": "欧菲光",
+          "name_en": "",
+          "percentage": 85,
+          "description": "车载摄像头模组与光学传感器供应商，产品用于智能驾驶视觉感知系统。",
+          "category_tag": "车载传感器模组"
+        },
+        {
+          "code": "SZ:002036",
+          "name": "联创电子",
+          "name_en": "",
+          "percentage": 85,
+          "description": "车载光学镜头与摄像头模组制造商，是ADAS的重要供应商。",
+          "category_tag": "车载传感器模组"
+        }
+      ]
+    },
+    {
+      "id": "high_speed_connectors",
+      "name": "高速连接器",
+      "order": 10,
+      "stocks": [
+        {
+          "code": "SH:688800",
+          "name": "瑞可达",
+          "name_en": "",
+          "percentage": 85,
+          "description": "高速连接器制造商，产品用于车载以太网、域控制器等高速互连场景。",
+          "category_tag": "高速连接器"
+        }
+      ]
+    },
+    {
+      "id": "optical_modules",
+      "name": "光模块",
+      "order": 11,
+      "stocks": [
+        {
+          "code": "SZ:300308",
+          "name": "中际旭创",
+          "name_en": "",
+          "percentage": 85,
+          "description": "高速光模块供应商，产品可用于数据中心及智能驾驶车载网络（如激光雷达）。",
+          "category_tag": "光模块"
+        },
+        {
+          "code": "SZ:300502",
+          "name": "新易盛",
+          "name_en": "",
+          "percentage": 85,
+          "description": "光模块制造商，布局高速光通信产品，服务于车载与云端数据交互。",
+          "category_tag": "光模块"
+        }
+      ]
+    },
+    {
+      "id": "thermal_solutions",
+      "name": "散热解决方案",
+      "order": 12,
+      "stocks": [
+        {
+          "code": "SZ:300684",
+          "name": "中石科技",
+          "name_en": "",
+          "percentage": 85,
+          "description": "导热材料及散热解决方案提供商，产品可用于高功率智能驾驶计算单元散热。",
+          "category_tag": "散热解决方案"
+        }
+      ]
+    },
+    {
+      "id": "ai_computing_platform",
+      "name": "AI计算平台",
+      "order": 13,
+      "stocks": [
+        {
+          "code": "SZ:000977",
+          "name": "浪潮信息",
+          "name_en": "",
+          "percentage": 85,
+          "description": "AI计算平台（服务器）提供商，为智能驾驶算法训练及仿真提供算力支持。",
+          "category_tag": "AI计算平台"
+        }
+      ]
+    },
+    {
+      "id": "system_integration",
+      "name": "智能驾驶计算平台与系统集成",
+      "order": 14,
+      "stocks": [
+        {
+          "code": "SZ:002920",
+          "name": "德赛西威",
+          "name_en": "",
+          "percentage": 90,
+          "description": "国内领先的智能驾驶计算平台与解决方案提供商，是比亚迪智能驾驶系统的核心供应商之一。",
+          "category_tag": "智能驾驶计算平台与系统集成"
+        },
+        {
+          "code": "SH:600741",
+          "name": "华域汽车",
+          "name_en": "",
+          "percentage": 85,
+          "description": "汽车零部件龙头，旗下公司提供智能驾驶相关传感器及系统集成方案。",
+          "category_tag": "智能驾驶计算平台与系统集成"
+        },
+        {
+          "code": "SH:688326",
+          "name": "经纬恒润",
+          "name_en": "",
+          "percentage": 85,
+          "description": "汽车电子系统供应商，提供智能驾驶域控制器、ADAS及相关的系统集成服务。",
+          "category_tag": "智能驾驶计算平台与系统集成"
+        },
+        {
+          "code": "SH:600699",
+          "name": "均胜电子",
+          "name_en": "",
+          "percentage": 85,
+          "description": "全球领先的汽车电子与安全系统供应商，在智能座舱、智能驾驶领域有深入布局。",
+          "category_tag": "智能驾驶计算平台与系统集成"
+        }
+      ]
+    },
+    {
+      "id": "software_algorithm",
+      "name": "软件、算法与数据服务",
+      "order": 15,
+      "stocks": [
+        {
+          "code": "SZ:002405",
+          "name": "四维图新",
+          "name_en": "",
+          "percentage": 85,
+          "description": "高精度地图、导航及智能驾驶数据服务提供商，是智能驾驶定位与感知的关键数据来源。",
+          "category_tag": "软件、算法与数据服务"
+        },
+        {
+          "code": "SZ:300496",
+          "name": "中科创达",
+          "name_en": "",
+          "percentage": 85,
+          "description": "智能操作系统与智能驾驶软件平台提供商，为汽车厂商提供从底层OS到上层算法的解决方案。",
+          "category_tag": "软件、算法与数据服务"
+        }
+      ]
+    }
+  ]
+}

@@ -1,19 +1,14 @@
 {
   "provider": {
-    "name": "",
-    "base_url": "",
+    "name": "deepseek",
+    "base_url": "https://api.deepseek.com",
     "api_key": ""
   },
-  "selected_model": "gpt-5.4",
+  "selected_model": "deepseek-v4-pro",
   "available_models": [
-    "codex-auto-review",
-    "gpt-5.2",
-    "gpt-5.3",
-    "gpt-5.3-spark",
-    "gpt-5.4",
-    "gpt-5.4-mini",
-    "gpt-5.4-pro",
-    "gpt-5.5"
+    "deepseek-v4-flash",
+    "deepseek-v4-pro",
+    "gpt-5.4"
   ],
   "settings": {
     "temperature": 0.3,
