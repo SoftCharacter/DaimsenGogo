@@ -12,7 +12,7 @@ import SettingsMenu from './SettingsMenu'
  */
 const NAV_ITEMS = [
   { key: 'dashboard', to: '/dashboard', label: '供应链看板' },
-  { key: 'analysis', to: '/analysis', label: 'AI 分析' },
+  { key: 'analysis', to: '/analysis', label: 'DG 分析' },
   { key: 'config', to: '/config', label: '模型配置' },
 ]
 

@@ -263,7 +263,7 @@ export default function AnalysisPage() {
           <h1 style={{ fontSize: 32, fontWeight: 700, letterSpacing: '-0.02em', margin: '12px 0 8px' }}>
             描述产品、技术或事件，
             <br />
-            AI 为你拆解<span style={{ color: 'var(--accent-bright)' }}>全链路</span>投资图谱
+            DG 为你拆解<span style={{ color: 'var(--accent-bright)' }}>全链路</span>投资图谱
           </h1>
           <p style={{ fontSize: 14, color: 'var(--text-dim)' }}>
             从上游原材料到下游整机集成，自动识别 A 股成分股并生成盘面洞察
