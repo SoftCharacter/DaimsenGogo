@@ -103,6 +103,13 @@ async def _run_task_stream(task: AnalysisTask):
             mark_task_failed(loaded, f"分析过程发生异常: {exc}")
         yield {"event": "error", "data": json.dumps({"message": f"分析过程发生异常: {exc}"}, ensure_ascii=False)}
         yield {"event": "done", "data": json.dumps({}, ensure_ascii=False)}
+    finally:
+        # 安全网：客户端断开（刷新/关页/导航）会让 SSE 生成器被取消（抛出
+        # CancelledError/GeneratorExit，不被上面的 except Exception 捕获），
+        # 若不处理任务会永远卡在 running。这里统一复位为 paused，断点保留可继续。
+        loaded = load_task(task.id)
+        if loaded and loaded.status == AnalysisTaskStatus.RUNNING:
+            mark_task_paused(loaded, "执行已中断（连接断开或服务重启），可点击「继续」从断点恢复")
 
 
 @router.get("/")
