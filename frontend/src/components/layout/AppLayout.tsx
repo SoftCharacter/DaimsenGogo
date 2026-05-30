@@ -53,7 +53,7 @@ export default function AppLayout() {
         >
           {/* 左：品牌 */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 11, minWidth: 240 }}>
-            <Logo size={24} />
+            <Logo size={40} />
             <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.1 }}>
               <span
                 style={{
@@ -63,7 +63,7 @@ export default function AppLayout() {
                   letterSpacing: '-0.01em',
                 }}
               >
-                Daimsen<span style={{ color: 'var(--accent-bright)' }}>Gogo</span>
+                Daimsen<span style={{ color: 'var(--brand-logo)' }}>Gogo</span>
               </span>
               <span style={{ fontSize: 10.5, color: 'var(--text-faint)', letterSpacing: '0.32em', marginTop: 1 }}>
                 供应链股票大屏
