@@ -178,12 +178,15 @@ body {
 .cosmos { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
 .cosmos > * { position: absolute; inset: 0; }
 .cosmos-img {
-  /* 底部锚定：保证左右下角吉祥物与中央冰川完整可见（与浅色沙丘一致） */
-  background: url("/scenes/cosmos.png") center bottom / cover no-repeat;
+  /* 轻微放大 + 下移，把吉祥物压到与浅色沙丘一致的视口底部位置，切主题时人物几乎不偏移 */
+  background: url("/scenes/cosmos.png") center center / cover no-repeat;
   animation: cosmosDrift 38s ease-in-out infinite alternate;
-  transform-origin: 50% 100%;
+  transform-origin: 50% 50%;
 }
-@keyframes cosmosDrift { from { transform: scale(1); } to { transform: scale(1.035); } }
+@keyframes cosmosDrift {
+  from { transform: scale(1.12) translateY(5%); }
+  to { transform: scale(1.145) translateY(5%); }
+}
 .cosmos-scrim {
   /* 底部仅轻微压暗，避免糊掉吉祥物与冰川 */
   background:
