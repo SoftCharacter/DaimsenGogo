@@ -35,7 +35,7 @@ export default function CosmosBackground() {
       const rad = Math.pow(r(), 0.6) * 7.2
       return {
         x: 49.5 + Math.cos(ang) * rad,
-        y: 30 + Math.sin(ang) * rad * 0.92,
+        y: 26 + Math.sin(ang) * rad * 0.92,
         dur: 1.6 + r() * 2.6,
         delay: -r() * 4,
       }

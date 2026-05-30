@@ -178,15 +178,12 @@ body {
 .cosmos { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
 .cosmos > * { position: absolute; inset: 0; }
 .cosmos-img {
-  /* 轻微放大 + 下移，把吉祥物压到与浅色沙丘一致的视口底部位置，切主题时人物几乎不偏移 */
+  /* 底图已裁掉星球与人物间的空白带（2.0:1），直接 cover 即可同时完整呈现星球与吉祥物 */
   background: url("/scenes/cosmos.png") center center / cover no-repeat;
   animation: cosmosDrift 38s ease-in-out infinite alternate;
   transform-origin: 50% 50%;
 }
-@keyframes cosmosDrift {
-  from { transform: scale(1.12) translateY(5%); }
-  to { transform: scale(1.145) translateY(5%); }
-}
+@keyframes cosmosDrift { from { transform: scale(1.02); } to { transform: scale(1.05); } }
 .cosmos-scrim {
   /* 底部仅轻微压暗，避免糊掉吉祥物与冰川 */
   background:
@@ -195,7 +192,7 @@ body {
 }
 /* earth glow */
 .cosmos-earth {
-  left: 49%; top: 29%; width: 34vw; height: 34vw; max-width: 620px; max-height: 620px;
+  left: 49%; top: 26%; width: 34vw; height: 34vw; max-width: 620px; max-height: 620px;
   transform: translate(-50%, -50%);
   background: radial-gradient(circle, rgba(150,205,255,0.28) 0%, rgba(120,180,255,0.10) 42%, transparent 66%);
   mix-blend-mode: screen; animation: earthBreathe 7s ease-in-out infinite;
@@ -203,7 +200,7 @@ body {
 @keyframes earthBreathe { 0%,100% { opacity: 0.55; transform: translate(-50%,-50%) scale(1); } 50% { opacity: 1; transform: translate(-50%,-50%) scale(1.07); } }
 /* ice central reflection */
 .cosmos-ice-glow {
-  left: 50%; top: 80%; width: 50vw; height: 22vh; transform: translate(-50%,-50%);
+  left: 50%; top: 78%; width: 50vw; height: 22vh; transform: translate(-50%,-50%);
   background: radial-gradient(ellipse at center, rgba(180,215,255,0.22), transparent 70%);
   mix-blend-mode: screen; animation: glowPulse 5.5s ease-in-out infinite;
 }
