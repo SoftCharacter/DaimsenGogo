@@ -1,0 +1,186 @@
+{
+  "id": "309226c8de50",
+  "name": "张雪机车供应链",
+  "description": "A股摩托车整车制造商及其核心零部件、原材料供应商组成的供应链体系。涵盖整车、动力系统、行走系统、传动系统、电气系统、车身外观及基础原材料等环节。",
+  "source_task_id": "analysis_f0521656b660",
+  "created_at": "2026-05-30T12:01:07.328956+00:00",
+  "updated_at": "2026-05-30T12:01:07.328956+00:00",
+  "categories": [
+    {
+      "id": "vehicle_manufacturing",
+      "name": "整车制造与品牌",
+      "order": 1,
+      "stocks": [
+        {
+          "code": "SZ:000913",
+          "name": "钱江摩托",
+          "name_en": "",
+          "percentage": 100,
+          "description": "A股摩托车整车制造商，处于供应链下游。",
+          "category_tag": "整车制造与品牌"
+        }
+      ]
+    },
+    {
+      "id": "power_system",
+      "name": "动力系统",
+      "order": 2,
+      "stocks": [
+        {
+          "code": "SH:603129",
+          "name": "春风动力",
+          "name_en": "",
+          "percentage": 34,
+          "description": "主营摩托车发动机等动力产品。",
+          "category_tag": "动力系统"
+        },
+        {
+          "code": "SZ:001696",
+          "name": "宗申动力",
+          "name_en": "",
+          "percentage": 33,
+          "description": "主营摩托车发动机等动力产品。",
+          "category_tag": "动力系统"
+        },
+        {
+          "code": "SZ:002074",
+          "name": "国轩高科",
+          "name_en": "",
+          "percentage": 33,
+          "description": "新能源电池供应商，可应用于电动摩托车。",
+          "category_tag": "动力系统"
+        }
+      ]
+    },
+    {
+      "id": "tires",
+      "name": "行走系统 - 轮胎",
+      "order": 3,
+      "stocks": [
+        {
+          "code": "SH:601058",
+          "name": "赛轮轮胎",
+          "name_en": "",
+          "percentage": 25,
+          "description": "轮胎行业头部企业，产品可应用于摩托车。",
+          "category_tag": "行走系统 - 轮胎"
+        },
+        {
+          "code": "SH:601163",
+          "name": "三角轮胎",
+          "name_en": "",
+          "percentage": 25,
+          "description": "轮胎行业头部企业，产品可应用于摩托车。",
+          "category_tag": "行走系统 - 轮胎"
+        },
+        {
+          "code": "SH:601966",
+          "name": "玲珑轮胎",
+          "name_en": "",
+          "percentage": 25,
+          "description": "轮胎行业头部企业，产品可应用于摩托车。",
+          "category_tag": "行走系统 - 轮胎"
+        },
+        {
+          "code": "SZ:000589",
+          "name": "贵州轮胎",
+          "name_en": "",
+          "percentage": 25,
+          "description": "轮胎行业企业，产品可应用于摩托车。",
+          "category_tag": "行走系统 - 轮胎"
+        }
+      ]
+    },
+    {
+      "id": "braking_system",
+      "name": "行走系统 - 制动",
+      "order": 4,
+      "stocks": [
+        {
+          "code": "SZ:002284",
+          "name": "亚太股份",
+          "name_en": "",
+          "percentage": 100,
+          "description": "制动系统供应商，产品可应用于摩托车。",
+          "category_tag": "行走系统 - 制动"
+        }
+      ]
+    },
+    {
+      "id": "transmission_system",
+      "name": "传动系统",
+      "order": 5,
+      "stocks": [
+        {
+          "code": "SZ:000559",
+          "name": "万向钱潮",
+          "name_en": "",
+          "percentage": 50,
+          "description": "提供减震及传动部件，可应用于摩托车。",
+          "category_tag": "传动系统"
+        },
+        {
+          "code": "SZ:300258",
+          "name": "精锻科技",
+          "name_en": "",
+          "percentage": 50,
+          "description": "齿轮及传动部件供应商，产品可应用于摩托车。",
+          "category_tag": "传动系统"
+        }
+      ]
+    },
+    {
+      "id": "electrical_system",
+      "name": "电气与电子系统",
+      "order": 6,
+      "stocks": [
+        {
+          "code": "SZ:002920",
+          "name": "德赛西威",
+          "name_en": "",
+          "percentage": 100,
+          "description": "电子控制系统供应商，产品可应用于摩托车智能化系统。",
+          "category_tag": "电气与电子系统"
+        }
+      ]
+    },
+    {
+      "id": "body_and_appearance",
+      "name": "车身与外观",
+      "order": 7,
+      "stocks": [
+        {
+          "code": "SH:601799",
+          "name": "星宇股份",
+          "name_en": "",
+          "percentage": 50,
+          "description": "车灯系统供应商，产品可应用于摩托车。",
+          "category_tag": "车身与外观"
+        },
+        {
+          "code": "SH:600741",
+          "name": "华域汽车",
+          "name_en": "",
+          "percentage": 50,
+          "description": "车身部件供应商，产品可应用于摩托车。",
+          "category_tag": "车身与外观"
+        }
+      ]
+    },
+    {
+      "id": "raw_materials",
+      "name": "原材料与基础零部件",
+      "order": 8,
+      "stocks": [
+        {
+          "code": "SH:600019",
+          "name": "宝钢股份",
+          "name_en": "",
+          "percentage": 100,
+          "description": "钢材原材料供应商，为摩托车制造提供基础材料。",
+          "category_tag": "原材料与基础零部件"
+        }
+      ]
+    }
+  ]
+}

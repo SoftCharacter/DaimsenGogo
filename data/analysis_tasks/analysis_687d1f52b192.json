@@ -3,7 +3,7 @@
   "query": "苹果Vision Pro产业链",
   "status": "completed",
   "created_at": "2026-05-23T06:06:29.089730+00:00",
-  "updated_at": "2026-05-23T06:32:38.832869+00:00",
+  "updated_at": "2026-05-30T08:27:05.279757+00:00",
   "started_at": "2026-05-23T06:06:29.091729+00:00",
   "finished_at": "2026-05-23T06:18:18.313778+00:00",
   "current_step": 7,
@@ -2379,7 +2379,7 @@
     ]
   },
   "error": "",
-  "saved_theme_id": "6004f7f496f9",
+  "saved_theme_id": "2001b2ee9cfb",
   "checkpoint": {
     "step": 7,
     "max_steps": 6,
