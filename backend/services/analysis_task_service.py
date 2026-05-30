@@ -203,6 +203,26 @@ def set_task_saved_theme(task_id: str, theme_id: str) -> AnalysisTask | None:
     return save_task(task)
 
 
+def reconcile_running_tasks() -> int:
+    """启动时复位残留的 running 任务。
+
+    进程重启后不会有真正在执行的任务，任何仍标记为 running 的都是上次
+    异常退出/连接中断遗留的孤儿，统一复位为 paused，断点保留以便继续执行，
+    避免前端因状态卡在 running 而无法「继续/删除」。返回复位的任务数量。
+    """
+    ensure_dirs()
+    count = 0
+    for path in TASKS_DIR.glob("*.json"):
+        try:
+            task = AnalysisTask.model_validate_json(path.read_text(encoding="utf-8"))
+        except Exception:
+            continue
+        if task.status == AnalysisTaskStatus.RUNNING:
+            mark_task_paused(task, "服务重启时检测到中断的任务，已暂停，可点击「继续」从断点恢复")
+            count += 1
+    return count
+
+
 def mark_task_cancelled(task: AnalysisTask, error: str = "") -> AnalysisTask:
     """标记任务取消。"""
     now = _now()
