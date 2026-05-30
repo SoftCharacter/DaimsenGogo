@@ -178,15 +178,17 @@ body {
 .cosmos { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
 .cosmos > * { position: absolute; inset: 0; }
 .cosmos-img {
-  background: url("/scenes/cosmos.png") center top / cover no-repeat;
+  /* 底部锚定：保证左右下角吉祥物与中央冰川完整可见（与浅色沙丘一致） */
+  background: url("/scenes/cosmos.png") center bottom / cover no-repeat;
   animation: cosmosDrift 38s ease-in-out infinite alternate;
-  transform-origin: 50% 30%;
+  transform-origin: 50% 100%;
 }
-@keyframes cosmosDrift { from { transform: scale(1.04) translateY(0); } to { transform: scale(1.08) translateY(-1.2%); } }
+@keyframes cosmosDrift { from { transform: scale(1); } to { transform: scale(1.035); } }
 .cosmos-scrim {
+  /* 底部仅轻微压暗，避免糊掉吉祥物与冰川 */
   background:
-    radial-gradient(120% 80% at 50% 8%, transparent 40%, rgba(4,7,22,0.35) 100%),
-    linear-gradient(180deg, rgba(4,7,22,0.30) 0%, rgba(4,7,22,0.12) 32%, rgba(4,7,22,0.30) 70%, rgba(4,7,22,0.55) 100%);
+    radial-gradient(120% 80% at 50% 8%, transparent 45%, rgba(4,7,22,0.28) 100%),
+    linear-gradient(180deg, rgba(4,7,22,0.28) 0%, rgba(4,7,22,0.10) 34%, rgba(4,7,22,0.14) 72%, rgba(4,7,22,0.22) 100%);
 }
 /* earth glow */
 .cosmos-earth {
