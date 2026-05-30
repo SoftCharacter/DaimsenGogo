@@ -172,6 +172,29 @@ function ChipDistributionChart({ data }: { data: ChipDistribution | null }) {
     { label: '压力位', value: selected.pressure_price, color: 'var(--ma120)' },
   ]
 
+  /**
+   * 标记价位标签去重叠：当平均成本/支撑位/压力位价位接近时，右侧文字会碰撞。
+   * 先按真实 y 排序，自上而下强制最小间距错开标签位置；若整体超出底部则向上平移，
+   * 最后 clamp 在绘图区内。价位虚线仍画在真实位置，并用引导线连回标签。
+   */
+  const MARKER_GAP = 17
+  const markerLabels = markerRows
+    .filter((m): m is { label: string; value: number; color: string } => m.value !== null)
+    .map((m) => ({ ...m, y: chart.yFor(m.value), labelY: chart.yFor(m.value) }))
+    .sort((a, b) => a.y - b.y)
+  for (let i = 1; i < markerLabels.length; i += 1) {
+    if (markerLabels[i].labelY - markerLabels[i - 1].labelY < MARKER_GAP) {
+      markerLabels[i].labelY = markerLabels[i - 1].labelY + MARKER_GAP
+    }
+  }
+  const maxLabelY = chart.height - 8
+  const overflow = markerLabels.length ? markerLabels[markerLabels.length - 1].labelY - maxLabelY : 0
+  if (overflow > 0) markerLabels.forEach((m) => (m.labelY -= overflow))
+  const minLabelY = chart.top + 6
+  markerLabels.forEach((m) => {
+    if (m.labelY < minLabelY) m.labelY = minLabelY
+  })
+
   return (
     <div>
       <div
@@ -200,7 +223,7 @@ function ChipDistributionChart({ data }: { data: ChipDistribution | null }) {
         <span>日期：{selected.date}</span>
       </div>
 
-      <svg viewBox={`0 0 ${chart.width} ${chart.height}`} style={{ width: '100%', height: 360 }}>
+      <svg viewBox={`0 0 ${chart.width + 60} ${chart.height}`} style={{ width: '100%', height: 360 }}>
         {[0, 0.25, 0.5, 0.75, 1].map((tick) => {
           const x = chart.left + tick * (chart.right - chart.left)
           return (
@@ -218,16 +241,15 @@ function ChipDistributionChart({ data }: { data: ChipDistribution | null }) {
           const barWidth = Math.max(1, chart.xFor(item.percent) - chart.left)
           return <rect key={`${selected.date}-${item.price}`} x={chart.left} y={y - 1} width={barWidth} height={2} fill={item.profitable ? 'var(--up)' : 'var(--down)'} opacity={0.92} />
         })}
-        {markerRows.map((marker) => {
-          if (marker.value === null) return null
-          const y = chart.yFor(marker.value)
-          return (
-            <g key={marker.label}>
-              <line x1={chart.left} y1={y} x2={chart.right + 110} y2={y} stroke="var(--text-faint)" strokeDasharray="5 5" opacity={0.55} />
-              <text x={chart.right + 118} y={y + 4} fill={marker.color} fontSize="14" fontWeight="600">{marker.value.toFixed(2)}</text>
-            </g>
-          )
-        })}
+        {markerLabels.map((marker) => (
+          <g key={marker.label}>
+            {/* 真实价位虚线 */}
+            <line x1={chart.left} y1={marker.y} x2={chart.right} y2={marker.y} stroke="var(--text-faint)" strokeDasharray="5 5" opacity={0.55} />
+            {/* 引导线：真实价位 → 错开后的标签 */}
+            <line x1={chart.right} y1={marker.y} x2={chart.right + 110} y2={marker.labelY} stroke={marker.color} strokeDasharray="4 4" opacity={0.4} />
+            <text x={chart.right + 118} y={marker.labelY + 4} fill={marker.color} fontSize="14" fontWeight="600">{marker.value.toFixed(2)}</text>
+          </g>
+        ))}
         <text x={chart.left} y={chart.height - 8} fill="var(--text-dim)" fontSize="12">{selected.interpretation}</text>
       </svg>
 
@@ -268,6 +290,38 @@ function NetProfitChart({ data }: { data: NetProfitPoint[] }) {
   const labelBottom = plotBottom - 8
   const yoyPath = linePath(yoyData, (item) => item.yoy_percent as number, yoyMin, yoyMax, leftPad, rightPad)
 
+  /**
+   * 预计算每根柱子两个标签（归母净利润 / 同比）的纵向位置，避免在同一个 x 上
+   * 因价位接近而文字重叠：先放各自的自然位置，若间距 < minGap 则把同比标签移到
+   * 数据点另一侧，仍冲突则与利润标签错开堆叠，最后整体 clamp 在绘图区内。
+   */
+  const LABEL_GAP = 13
+  const layout = data.map((item) => {
+    const centerX = leftPad + groupWidth * data.indexOf(item) + groupWidth / 2
+    const profitY = scaleY(item.net_profit_atsopc, profitMin, profitMax)
+    let profitLabelY =
+      item.net_profit_atsopc >= 0 ? Math.min(profitY, profitZero) - 8 : Math.max(profitY, profitZero) + 14
+    const hasYoy = item.yoy_percent !== null
+    const yoyY = hasYoy ? scaleY(item.yoy_percent as number, yoyMin, yoyMax) : null
+    let yoyLabelY = yoyY !== null ? yoyY - 10 : null
+    if (yoyY !== null && yoyLabelY !== null && Math.abs(yoyLabelY - profitLabelY) < LABEL_GAP) {
+      const below = yoyY + 17
+      if (Math.abs(below - profitLabelY) >= LABEL_GAP) {
+        yoyLabelY = below
+      } else {
+        yoyLabelY = profitLabelY <= yoyLabelY ? profitLabelY + LABEL_GAP + 2 : profitLabelY - LABEL_GAP - 2
+      }
+    }
+    profitLabelY = clamp(profitLabelY, labelTop, labelBottom)
+    yoyLabelY = yoyLabelY !== null ? clamp(yoyLabelY, labelTop, labelBottom) : null
+    // clamp 后再校正一次，避免双双被夹到边界后重叠
+    if (yoyLabelY !== null && Math.abs(yoyLabelY - profitLabelY) < LABEL_GAP) {
+      yoyLabelY = clamp(profitLabelY + LABEL_GAP + 2, labelTop, labelBottom)
+      if (Math.abs(yoyLabelY - profitLabelY) < LABEL_GAP) yoyLabelY = clamp(profitLabelY - LABEL_GAP - 2, labelTop, labelBottom)
+    }
+    return { centerX, profitY, profitLabelY, yoyY, yoyLabelY }
+  })
+
   return (
     <svg viewBox={`0 0 ${CHART_WIDTH} ${CHART_HEIGHT}`} style={{ width: '100%', height: 220 }}>
       <line x1={leftPad} y1={PAD_TOP} x2={leftPad} y2={CHART_HEIGHT - PAD_BOTTOM} stroke="var(--grid)" />
@@ -279,14 +333,8 @@ function NetProfitChart({ data }: { data: NetProfitPoint[] }) {
       {yoyTicks.map((tick) => (
         <text key={`yoy-${tick}`} x={CHART_WIDTH - rightPad + 8} y={scaleY(tick, yoyMin, yoyMax) + 4} textAnchor="start" fill="var(--text-dim)" fontSize="10">{tick.toFixed(0)}%</text>
       ))}
-      {data.map((item) => {
-        const centerX = leftPad + groupWidth * data.indexOf(item) + groupWidth / 2
-        const profitY = scaleY(item.net_profit_atsopc, profitMin, profitMax)
-        const profitLabelY = clamp(
-          item.net_profit_atsopc >= 0 ? Math.min(profitY, profitZero) - 8 : Math.max(profitY, profitZero) + 14,
-          labelTop,
-          labelBottom,
-        )
+      {data.map((item, index) => {
+        const { centerX, profitY, profitLabelY } = layout[index]
         return (
           <g key={item.report_name}>
             <rect x={centerX - barWidth / 2} y={Math.min(profitY, profitZero)} width={barWidth} height={Math.max(1, Math.abs(profitZero - profitY))} fill="var(--up)" opacity={0.78} />
@@ -296,14 +344,13 @@ function NetProfitChart({ data }: { data: NetProfitPoint[] }) {
         )
       })}
       {yoyPath && <path d={yoyPath} fill="none" stroke="var(--ma20)" strokeWidth="2.2" />}
-      {yoyData.map((item) => {
-        const dataIndex = data.findIndex((point) => point.timestamp === item.timestamp)
-        const centerX = leftPad + groupWidth * dataIndex + groupWidth / 2
-        const y = scaleY(item.yoy_percent as number, yoyMin, yoyMax)
+      {data.map((item, index) => {
+        const { centerX, yoyY, yoyLabelY } = layout[index]
+        if (yoyY === null || yoyLabelY === null) return null
         return (
           <g key={`${item.report_name}-yoy`}>
-            <circle cx={centerX} cy={y} r="3.5" fill="var(--ma20)" />
-            <text x={centerX} y={y - 10} textAnchor="middle" fill="var(--ma20)" fontSize="11">{(item.yoy_percent as number).toFixed(1)}%</text>
+            <circle cx={centerX} cy={yoyY} r="3.5" fill="var(--ma20)" />
+            <text x={centerX} y={yoyLabelY} textAnchor="middle" fill="var(--ma20)" fontSize="11">{(item.yoy_percent as number).toFixed(1)}%</text>
           </g>
         )
       })}
