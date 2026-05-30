@@ -340,8 +340,10 @@ export default function AnalysisPage() {
           {!loadingTasks && tasks.length === 0 && <p style={{ fontSize: 12.5, color: 'var(--text-faint)' }}>暂无历史任务</p>}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: 14 }}>
             {tasks.map((task, i) => {
-              const status = statusMeta(task.status)
-              const canContinue = !isRunning && ['paused', 'failed'].includes(task.status)
+              const stale = isStaleRunning(task)
+              const status = stale ? STALE_META : statusMeta(task.status)
+              // 双保险：已停滞（长时间无更新）的 running 任务也放开「继续/删除」
+              const canContinue = !isRunning && (['paused', 'failed'].includes(task.status) || stale)
               return (
                 <div
                   key={task.id}
@@ -425,6 +427,20 @@ export default function AnalysisPage() {
       </div>
     </div>
   )
+}
+
+/** running 但超过该时长无更新即视为「已停滞」（与后端阈值一致，双保险放开继续/删除） */
+const STALE_RUNNING_MS = 8 * 60 * 1000
+
+/** 已停滞徽标样式 */
+const STALE_META = { label: '已停滞', color: 'var(--text-dim)', bg: 'var(--surface-3)' }
+
+/** 判断任务是否为「停滞的 running」：状态 running 且 updated_at 已超过阈值 */
+function isStaleRunning(task: AnalysisTaskSummary): boolean {
+  if (task.status !== 'running') return false
+  const t = Date.parse(task.updated_at)
+  if (Number.isNaN(t)) return true
+  return Date.now() - t > STALE_RUNNING_MS
 }
 
 /** 任务状态 → 徽标文案与配色 */
