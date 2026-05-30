@@ -258,7 +258,7 @@ export default function AnalysisPage() {
         {/* Hero */}
         <div className="fade-in" style={{ textAlign: 'center', marginBottom: 14 }}>
           <span style={{ fontSize: 11.5, fontWeight: 700, letterSpacing: '0.22em', color: 'var(--accent-bright)' }}>
-            AI 供应链分析
+            DG 供应链分析
           </span>
           <h1 style={{ fontSize: 32, fontWeight: 700, letterSpacing: '-0.02em', margin: '12px 0 8px' }}>
             描述产品、技术或事件，
