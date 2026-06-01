@@ -1,23 +1,27 @@
 {
   "provider": {
-    "name": "tokenflux",
-    "base_url": "https://tokenflux.dev/v1",
-    "api_key": "sk-34d7e13c794f205da64827cdd4023101febc6831e720435f418ab1bb28c6ab82"
+    "name": "",
+    "base_url": "",
+    "api_key": ""
   },
-  "selected_model": "gpt-5.4",
+  "selected_model": "",
   "available_models": [
-    "codex-auto-review",
-    "gpt-5.2",
-    "gpt-5.3",
-    "gpt-5.3-spark",
-    "gpt-5.4",
-    "gpt-5.4-mini",
-    "gpt-5.4-pro",
-    "gpt-5.5"
+    "mimo-v2-omni",
+    "mimo-v2-pro",
+    "mimo-v2-tts",
+    "mimo-v2.5",
+    "mimo-v2.5-pro",
+    "mimo-v2.5-tts",
+    "mimo-v2.5-tts-voiceclone",
+    "mimo-v2.5-tts-voicedesign"
   ],
   "settings": {
     "temperature": 0.3,
     "max_tokens": 4096,
     "stock_refresh_interval_seconds": 30
+  },
+  "web_search": {
+    "enabled": true,
+    "tavily_api_key": ""
   }
 }

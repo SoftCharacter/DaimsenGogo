@@ -28,6 +28,105 @@ export interface KLinePoint {
   volume: number; // 成交量
 }
 
+export interface MacdPoint {
+  date: string;
+  timestamp: number;
+  close: number;
+  dif: number;
+  dea: number;
+  macd: number;
+}
+
+export interface MovingAveragePoint {
+  date: string;
+  timestamp: number;
+  close: number;
+  ma5: number | null;
+  ma20: number | null;
+  ma120: number | null;
+  ma240: number | null;
+}
+
+export interface ShareholderPoint {
+  date: string;
+  timestamp: number;
+  ashare_holder: number;
+  change_percent: number | null;
+  price: number | null;
+  per_amount: number | null;
+  top_holder_ratio: number | null;
+}
+
+export interface NetProfitPoint {
+  report_name: string;
+  report_date: string;
+  timestamp: number;
+  net_profit_atsopc: number;
+  yoy_percent: number | null;
+}
+
+export interface StockEventPoint {
+  date: string;
+  timestamp: number;
+  category: string | null;
+  title: string;
+  message: string;
+  subtype: number | null;
+  sentiment: string | null;
+}
+
+export interface ChipHistogramBin {
+  price: number;
+  percent: number;
+  profitable: boolean;
+}
+
+export interface ChipDistributionSnapshot {
+  date: string;
+  timestamp: number;
+  close: number;
+  benefit_ratio: number;
+  avg_cost: number;
+  cost_90_low: number;
+  cost_90_high: number;
+  cost_90_concentration: number;
+  cost_70_low: number;
+  cost_70_high: number;
+  cost_70_concentration: number;
+  support_price: number | null;
+  pressure_price: number | null;
+  relative_price_trend: string;
+  concentration_trend: string;
+  interpretation: string;
+}
+
+export interface ChipDistribution {
+  source: string;
+  params: Record<string, number>;
+  snapshots: ChipDistributionSnapshot[];
+  latest: ChipDistributionSnapshot | null;
+  histogram: ChipHistogramBin[];
+  histograms: Record<string, ChipHistogramBin[]>;
+}
+
+export interface StockDiagnosis {
+  code: string;
+  name: string;
+  generated_at: string;
+  source: string;
+  timings_ms: Record<string, number>;
+  moving_averages: MovingAveragePoint[];
+  macd: MacdPoint[];
+  shareholders: ShareholderPoint[];
+  net_profit: NetProfitPoint[];
+  events: StockEventPoint[];
+  chip_distribution: ChipDistribution | null;
+  event_summary: string;
+  diagnosis_report: string;
+  llm_status: string;
+  data_errors: Record<string, string>;
+}
+
 /**
  * SSE事件类型 - 分析执行流
  * 与后端 _make_event() 生成的事件结构一一对应

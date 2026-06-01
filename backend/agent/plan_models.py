@@ -39,6 +39,8 @@ class AnalysisPlan(BaseModel):
     description: str = ""
     candidate_search_terms: list[str] = Field(default_factory=list)
     category_hypotheses: list[str] = Field(default_factory=list)
+    planning_evidence: list[dict[str, Any]] = Field(default_factory=list)
+    planning_errors: list[str] = Field(default_factory=list)
     steps: list[PlanStep] = Field(default_factory=list)
 
 

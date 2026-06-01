@@ -17,6 +17,7 @@ from backend.models.config_models import (
     FetchModelsRequest,
     PublicAppConfig,
     PublicProvider,
+    PublicWebSearchConfig,
     SelectModelRequest,
 )
 
@@ -38,6 +39,10 @@ def _public_config(config: AppConfig) -> PublicAppConfig:
         selected_model=config.selected_model,
         available_models=config.available_models,
         settings=config.settings,
+        web_search=PublicWebSearchConfig(
+            enabled=config.web_search.enabled,
+            has_tavily_api_key=bool(config.web_search.tavily_api_key),
+        ),
     )
 
 
@@ -81,6 +86,9 @@ async def update_config(body: AppConfig) -> PublicAppConfig:
     if body.provider.api_key:
         current.provider.api_key = body.provider.api_key
     current.settings = body.settings
+    current.web_search.enabled = body.web_search.enabled
+    if body.web_search.tavily_api_key:
+        current.web_search.tavily_api_key = body.web_search.tavily_api_key
     # 持久化到文件
     save_config(current)
     return _public_config(current)

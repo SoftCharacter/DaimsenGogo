@@ -108,12 +108,19 @@ Final Answer:
 """
 
 
-def get_planner_prompt(query: str) -> str:
+def get_planner_prompt(query: str, web_context: str = "") -> str:
     """构建Plan-and-Execute规划阶段提示词。"""
+    web_context_block = ""
+    if web_context.strip():
+        web_context_block = f"""
+规划前网页证据（用于校准主题实体、行业边界和候选优先级，优先采信公告、年报、互动记录、权威媒体等直接证据）：
+{web_context.strip()}
+"""
     return f"""\
 你是一位A股供应链分析规划器。请为主题生成执行提示信息，但不要决定执行步骤顺序。
 
 主题："{query}"
+{web_context_block}
 
 后端系统会固定执行以下SOP：候选发现 → 业务确认 → 候选补全 → 结果分组 → 代码校验 → 最终组装。
 你只需要提供候选搜索词、分类假设和主题描述，不能调用工具，不能输出Markdown。
@@ -129,10 +136,14 @@ def get_planner_prompt(query: str) -> str:
 }}
 
 要求：
+- 先识别主题中的真实实体、产品形态和行业边界，再规划供应链；如果主题是二轮摩托车、赛事品牌、消费品牌或新兴公司，不要套用四轮新能源车、油车或通用芯片链模板。
 - candidate_search_terms 必须偏向上市公司简称、股票简称或明确企业名。
+- 如果规划前网页证据中出现A股公司名或股票代码，必须把这些候选放在 candidate_search_terms 前列，并优先于泛产业链龙头。
+- 候选优先级：直接持股/投资/基金穿透持股 > 年报或公告披露客户/供应商/量产项目 > 官方技术合作伙伴/战略合作伙伴 > 明确供货品类的供应商 > 泛行业上游公司。
 - 不要使用“芯片”“光模块”“服务器”这类泛行业词作为主要搜索词。
-- candidate_search_terms 请给出15-30个最可能相关的A股公司简称或股票简称，覆盖核心芯片/模组、晶圆制造、封测、PCB/载板、先进封装、光模块/连接器、服务器/整机、存储、电源、散热、设备、材料、软件生态等上下游方向。
-- category_hypotheses 请给出8-15个细分供应链环节；像“芯片设计、晶圆制造、HBM存储、长鑫存储生态、先进封装、OCS光交换、光模块、高速连接器、散热/基板、存储、整机集成”这样的粒度优先于宽泛分类。
+- 不要把用户主题原文（如“某某供应链”）当成唯一候选搜索词；candidate_search_terms 必须是可在A股名称/代码中命中的公司简称、股票简称或股票代码。
+- candidate_search_terms 请给出15-30个最可能相关的A股公司简称或股票简称，围绕主题实体的真实供应链、股权投资关系、客户/供应商披露、合作伙伴和关键零部件展开。
+- category_hypotheses 请给出8-15个细分供应链环节；粒度应贴合主题实体的产品形态和商业关系，例如“股权投资/间接持股、车载智能终端、传动系统、进气系统、电控/控制器、地图导航方案、核心零部件、整车协同、销售服务”等，而不是无关的通用模板。
 """
 
 
@@ -145,8 +156,27 @@ def get_step_react_prompt(
 ) -> str:
     """构建单个SOP步骤的局部ReAct提示词。"""
     allowed_tools = step.get("allowed_tools", [])
+    tool_notes = ["search_stocks(keyword) 搜索A股名称/代码", "get_company_info(code) 获取公司信息", "verify_stock_code(codes) 校验股票代码"]
+    if "web_search" in allowed_tools:
+        tool_notes.insert(2, "web_search(query) 搜索公开网页证据")
+    rule_lines = [
+        "- search_stocks 每次只能输入一个公司简称、股票简称或股票代码，不能把多个公司名拼成一个 Action Input。",
+        "- 候选发现和候选补全必须优先实际调用 search_stocks，不能只凭行业常识输出候选。",
+        "- 候选发现必须优先覆盖全局计划 candidate_search_terms 前列候选，尤其是规划前网页证据命中的公司名或股票代码。",
+        "- 如果 search_stocks 对用户主题原文、非上市主体或品牌名返回0，不要继续搜索泛行业词；应改搜全局计划中网页证据命中的A股公司简称或代码。",
+        "- 候选发现应尽量覆盖规划中的不同供应链环节，不要连续搜索同一环节的近似公司。",
+        "- 关联性判断必须把直接证据排在前面：直接持股/投资、公告/年报披露客户或量产、官方技术合作伙伴、明确供货品类，高于泛行业龙头或弱上游映射。",
+    ]
+    if "web_search" in allowed_tools:
+        rule_lines.extend([
+            "- web_search 只能在业务确认步骤作为证据补强，不能用于候选发现、候选补全、代码校验或最终组装。",
+            "- 业务确认必须优先使用已发现候选的股票代码调用 get_company_info，不要直接输入公司简称。",
+            "- 只有当 get_company_info 信息不足以判断公司与主题的真实关联时，才用 web_search 查询“公司名 + 用户主题关键词”。",
+            "- web_search 的结果只能作为业务关系证据，不能直接产生最终股票代码；股票代码仍必须来自 search_stocks 并经过 verify_stock_code 校验。",
+        ])
+    tool_notes_text = "；".join(tool_notes)
+    rule_lines_text = "\n".join(rule_lines)
     return f"""\
-你是一位A股供应链分析执行器。当前采用Plan-and-Execute架构：全局SOP由系统控制，你只能完成当前步骤。
 
 用户主题："{query}"
 当前步骤：{step.get("id")}. {step.get("name")}
@@ -181,12 +211,11 @@ Step Result:
 - 不能输出 Final Answer。
 - 不能自己输出 Observation。
 - Action Input 不要JSON、不要代码块、不要解释。
-- search_stocks 每次只能输入一个公司简称、股票简称或股票代码，不能把多个公司名拼成一个 Action Input。
-- 候选发现和候选补全必须优先实际调用 search_stocks，不能只凭行业常识输出候选。
-- 候选发现应尽量覆盖规划中的不同供应链环节，不要连续搜索同一环节的近似公司。
-- 业务确认必须优先使用已发现候选的股票代码调用 get_company_info，不要直接输入公司简称。
+- 可用工具说明：{tool_notes_text}
+{rule_lines_text}
 - 候选补全应围绕已完成步骤中的供应链缺口逐个补搜明确公司简称或股票简称。
 - 分组步骤应输出8-15个细分门类，并把同一股票放到最匹配的主环节。
+- 分组和确认步骤必须保留每只股票与主题的关联强弱依据；弱关联公司只能后置或剔除。
 - Step Result 必须是合法JSON。
 """
 
@@ -243,6 +272,8 @@ Final Answer:
 - code 只能来自已验证股票代码列表。
 - categories 优先输出8-15个细分供应链门类；只要有匹配股票，不要合并为粗分类。
 - 每个分类至少1只股票。
-- percentage 必须在0-100之间。
+- percentage 必须在0-100之间，表示“与当前主题的关联强度/证据强度”，不是持股比例或营收占比。
+- 关联强度评分参考：直接持股/投资/基金穿透持股为90-100；公告、年报、投资者关系披露的客户/供应商/量产项目为82-95；官方技术合作伙伴或明确供货品类为78-92；泛行业上游或只具备同产业链逻辑为40-70。
+- categories 按该分类中最高 percentage 从高到低设置 order；每个分类内 stocks 也按 percentage 从高到低排列，最强关联股票必须位于看板前列。
 - Final Answer 必须是合法JSON，不要在JSON外添加解释。
 """

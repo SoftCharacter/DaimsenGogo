@@ -1,0 +1,27 @@
+.DS_Store
+.env
+.env.*
+!.env.example
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+node_modules/
+dist/
+build/
+*.log
+.runlogs/
+
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# Claude Code / 技能工具产物（非项目代码）
+.agents/
+.claude/
+skills-lock.json

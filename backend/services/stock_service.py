@@ -1,14 +1,17 @@
 """
 行情服务
-通过AkShare获取实时行情和近一个月日K数据。
-AkShare是同步库，本服务层使用 asyncio.to_thread 避免阻塞FastAPI事件循环。
+通过雪球优先获取实时行情和近一个月日K数据，AkShare作为部分兜底数据源。
+外部同步库调用统一使用 asyncio.to_thread 避免阻塞FastAPI事件循环。
 """
 import asyncio
 import time
 import logging
 
-from backend.models.stock_models import StockQuote, KLinePoint
+from backend.models.stock_models import StockQuote, KLinePoint, ClosePricePoint
 from backend.services.akshare_adapter import (
+    format_stock_code,
+    extract_numeric_code,
+    fetch_close_history_sync,
     fetch_quote_xq_sync,
     fetch_recent_daily_kline_sync,
     get_stock_list,
@@ -22,11 +25,13 @@ logger = logging.getLogger(__name__)
 _quote_cache: dict[str, tuple[float, list[StockQuote]]] = {}
 _kline_cache: dict[str, tuple[float, list[KLinePoint]]] = {}
 _stock_search_cache: dict[str, tuple[float, list[dict]]] = {}
+_close_history_cache: dict[str, tuple[float, list[ClosePricePoint], float]] = {}
 
 # 缓存过期时间(秒)
 QUOTE_TTL = 5          # 实时行情缓存5秒
 KLINE_TTL = 3600       # 近一个月日K缓存1小时
 STOCK_LIST_TTL = 3600  # 股票列表缓存1小时
+CLOSE_HISTORY_TTL = 3600  # 历史收盘价缓存1小时
 QUOTE_CONCURRENCY = 5  # 雪球实时行情并发上限
 KLINE_CONCURRENCY = 3  # K线外部请求并发上限
 _quote_semaphore = asyncio.Semaphore(QUOTE_CONCURRENCY)
@@ -76,7 +81,7 @@ async def fetch_quotes(codes: list[str], task_id: str | None = None) -> list[Sto
         if isinstance(result, StockQuote):
             quotes.append(result)
         elif isinstance(result, Exception):
-            logger.warning("雪球获取单只实时行情失败: %s", result)
+            logger.warning("获取单只实时行情失败: %s", result)
 
     if quotes:
         _quote_cache[key] = (time.time(), quotes)
@@ -95,6 +100,7 @@ async def fetch_kline(
     """
     获取近一个月日K数据
     为保证大屏展示一致性，忽略period/count差异，固定返回最近22个交易日日K。
+    数据源优先使用雪球K线接口，失败时在适配层回退到AkShare腾讯日线。
     """
     cache_key = f"{_scope_key(task_id)}|{code}|daily|month"
     cached = _kline_cache.get(cache_key)
@@ -107,7 +113,7 @@ async def fetch_kline(
         async with _kline_semaphore:
             points = await asyncio.to_thread(fetch_recent_daily_kline_sync, code, task_id)
     except Exception as exc:
-        logger.error("akshare获取近一个月日K失败 [%s]: %s", code, exc)
+        logger.error("获取近一个月日K失败 [%s]: %s", code, exc)
         if cached:
             return cached[1]
         return []
@@ -115,6 +121,30 @@ async def fetch_kline(
     if points:
         _kline_cache[cache_key] = (time.time(), points)
     return points
+
+
+async def fetch_close_history(
+    code: str,
+    count: int = 250,
+) -> tuple[str, list[ClosePricePoint], float]:
+    """
+    获取历史收盘价，并返回本次外部接口/缓存耗时毫秒。
+    默认250个交易日，近似1年日线。
+    """
+    formatted_code = format_stock_code(extract_numeric_code(code))
+    cache_key = f"{formatted_code}|day|close|{count}"
+    cached = _close_history_cache.get(cache_key)
+    if cached:
+        ts, data, elapsed_ms = cached
+        if time.time() - ts < CLOSE_HISTORY_TTL:
+            return formatted_code, data, elapsed_ms
+
+    start = time.perf_counter()
+    raw_points = await asyncio.to_thread(fetch_close_history_sync, formatted_code, count)
+    elapsed_ms = round((time.perf_counter() - start) * 1000, 2)
+    points = [ClosePricePoint.model_validate(item) for item in raw_points]
+    _close_history_cache[cache_key] = (time.time(), points, elapsed_ms)
+    return formatted_code, points, elapsed_ms
 
 
 async def search_stocks(keyword: str, task_id: str | None = None) -> list[dict]:

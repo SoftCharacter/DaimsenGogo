@@ -48,21 +48,21 @@ export default function ReasoningStream({
   if (displayEvents.length === 0 && !error) return null
 
   return (
-    <div className="rounded-lg border p-5 bg-[#151c2c] border-[#1e293b]">
+    <div className="panel" style={{ padding: 20, background: 'var(--surface)', border: '1px solid var(--border)' }}>
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-medium text-[#e2e8f0]">推理过程</h3>
+        <h3 className="text-sm font-bold" style={{ color: 'var(--text)' }}>推理过程</h3>
         {maxSteps > 0 && (
-          <span className="text-xs text-[#94a3b8]">
+          <span className="text-xs mono" style={{ color: 'var(--text-dim)' }}>
             步骤 {currentStep} / {maxSteps}
           </span>
         )}
       </div>
 
       {maxSteps > 0 && (
-        <div className="h-1 rounded-full mb-4 bg-[#1e293b] overflow-hidden">
+        <div className="h-1 rounded-full mb-4 overflow-hidden" style={{ background: 'var(--surface-3)' }}>
           <div
-            className="h-full rounded-full bg-[#6366f1] transition-all duration-300"
-            style={{ width: `${progressPercent}%` }}
+            className="h-full rounded-full transition-all duration-300"
+            style={{ width: `${progressPercent}%`, background: 'var(--accent)' }}
           />
         </div>
       )}
@@ -71,17 +71,18 @@ export default function ReasoningStream({
         {displayEvents.map((event, index) => (
           <div
             key={getEventKey(event as SSEEvent & { seq?: number }, index)}
-            className="border-l-2 pl-4 py-1 border-[#1e293b]"
+            className="pl-4 py-1"
+            style={{ borderLeft: '2px solid var(--border)' }}
           >
             <EventItem event={event} />
           </div>
         ))}
 
         {error && !repeatedError && (
-          <div className="border-l-2 pl-4 py-1 border-[#ef4444]">
+          <div className="pl-4 py-1" style={{ borderLeft: '2px solid var(--up)' }}>
             <div className="flex gap-3 items-start">
               <span className="text-base mt-0.5 shrink-0">错误</span>
-              <p className="text-sm text-[#ef4444]">{error}</p>
+              <p className="text-sm" style={{ color: 'var(--up)' }}>{error}</p>
             </div>
           </div>
         )}

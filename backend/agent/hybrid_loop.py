@@ -3,9 +3,11 @@ Plan-and-Execute + 局部ReAct混合主循环
 全局SOP由后端固定控制，单个步骤内部使用有界ReAct处理局部不确定性。
 """
 import json
+import logging
 import re
 from dataclasses import dataclass
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any, AsyncGenerator
 
 from backend.agent.output_parser import ParsedAction, ParsedFinalAnswer, ParsedStepResult, parse_llm_output
@@ -24,18 +26,28 @@ from backend.agent.react_loop import (
 )
 from backend.models.analysis_task_models import AnalysisCheckpoint
 from backend.models.config_models import AppConfig
-from backend.services.akshare_adapter import format_stock_code
+from backend.services.akshare_adapter import format_stock_code, get_stock_list
 from backend.services.llm_client import create_client
 
+logger = logging.getLogger(__name__)
 _ARCHITECTURE = "plan_execute_react_v1"
 _STEP_ATTEMPTS = 3
 _FORMAT_REPAIR_ATTEMPTS = 2
 _FINAL_ATTEMPTS = 3
+_PLANNING_WEB_SEARCH_LIMIT = 26
+_PLANNING_WEB_CONTEXT_CHARS = 1200
+_PLANNING_WEB_STOCK_LIMIT = 20
+_PLANNING_WEB_ENTRY_LIMIT = 30
+_NEGATIVE_KEYWORDS = ("暂未", "否认", "不构成重大影响", "未采购", "无合作", "未合作", "不涉及", "传闻不实")
+_STRONG_SOURCE_DOMAINS = ("cninfo.com.cn", "sse.com.cn", "szse.cn", "static.cninfo.com.cn")
+_SECURITIES_SOURCE_DOMAINS = ("stcn.com", "cs.com.cn", "cnstock.com", "证券时报", "中国证券报", "上海证券报")
+_SHARED_STOCK_LIST_CACHE = Path(__file__).resolve().parents[2] / "data" / "task_cache" / "_shared" / "stock_list.json"
 _CODE_FIELD_NAMES = {"code", "stock_code", "symbol", "股票代码", "证券代码"}
 _NAME_FIELD_NAMES = {"name", "stock_name", "股票名称", "股票简称", "证券简称"}
 _CANDIDATE_STEP_KEYS = {"candidate_discovery", "candidate_expansion"}
 _MIN_CANDIDATE_CODES = 18
 _MARKET_CODE_PATTERN = re.compile(r"\b(?:SH|SZ|BJ)[:：]?\s*(\d{6})\b", re.IGNORECASE)
+_SUFFIX_CODE_PATTERN = re.compile(r"(?<!\d)(\d{6})\s*[.．]\s*(SH|SZ|BJ)(?![A-Za-z0-9])", re.IGNORECASE)
 _DIGIT_CODE_PATTERN = re.compile(r"(?<!\d)(\d{6})(?!\d)")
 _SEARCH_KEYWORD_SPLIT_PATTERN = re.compile(r"[,，、;；\n\r\t ]+")
 
@@ -114,9 +126,12 @@ def _checkpoint_payload(
     }
 
 
-def _fixed_steps(planner_data: dict[str, Any]) -> list[PlanStep]:
+def _fixed_steps(planner_data: dict[str, Any], web_search_enabled: bool = False) -> list[PlanStep]:
     search_hints = [str(item) for item in planner_data.get("candidate_search_terms", []) if str(item).strip()]
     category_hints = [str(item) for item in planner_data.get("category_hypotheses", []) if str(item).strip()]
+    business_confirmation_tools = ["get_company_info"]
+    if web_search_enabled:
+        business_confirmation_tools.append("web_search")
     return [
         PlanStep(
             id=1,
@@ -124,7 +139,7 @@ def _fixed_steps(planner_data: dict[str, Any]) -> list[PlanStep]:
             name="候选发现",
             objective="根据规划提示中的公司简称、股票简称或明确企业名搜索A股候选标的。",
             allowed_tools=["search_stocks"],
-            max_actions=14,
+            max_actions=20,
             required_outputs=["candidate_stocks"],
             hints=search_hints,
         ),
@@ -133,7 +148,7 @@ def _fixed_steps(planner_data: dict[str, Any]) -> list[PlanStep]:
             key="business_confirmation",
             name="业务确认",
             objective="对核心候选调用公司信息工具，确认主营业务和供应链角色。",
-            allowed_tools=["get_company_info"],
+            allowed_tools=business_confirmation_tools,
             max_actions=12,
             required_outputs=["confirmed_stocks"],
         ),
@@ -178,11 +193,45 @@ def _fixed_steps(planner_data: dict[str, Any]) -> list[PlanStep]:
     ]
 
 
-def _build_plan(query: str, planner_data: dict[str, Any]) -> AnalysisPlan:
+def _sanitize_plan_for_config(plan: AnalysisPlan, web_search_enabled: bool) -> AnalysisPlan:
+    if web_search_enabled:
+        return plan
+    for step in plan.steps:
+        if step.allowed_tools:
+            step.allowed_tools = [tool for tool in step.allowed_tools if tool != "web_search"]
+    return plan
+
+
+def _dedupe_preserve_order(values: list[str]) -> list[str]:
+    seen: set[str] = set()
+    deduped: list[str] = []
+    for value in values:
+        text = str(value).strip()
+        if not text or text in seen:
+            continue
+        seen.add(text)
+        deduped.append(text)
+    return deduped
+
+
+def _build_plan(
+    query: str,
+    planner_data: dict[str, Any],
+    web_search_enabled: bool = False,
+    planning_evidence: list[dict[str, Any]] | None = None,
+    planning_errors: list[str] | None = None,
+) -> AnalysisPlan:
     topic_name = str(planner_data.get("topic_name") or query)
     description = str(planner_data.get("description") or f"{query}供应链分析")
     candidate_search_terms = [str(item) for item in planner_data.get("candidate_search_terms", []) if str(item).strip()]
     category_hypotheses = [str(item) for item in planner_data.get("category_hypotheses", []) if str(item).strip()]
+    evidence = planning_evidence or []
+    evidence_terms = [
+        str(item.get("name") or item.get("code") or "").strip()
+        for item in evidence
+        if isinstance(item, dict)
+    ]
+    candidate_search_terms = _dedupe_preserve_order(evidence_terms + candidate_search_terms)
     if not candidate_search_terms:
         candidate_search_terms = [query]
     return AnalysisPlan(
@@ -191,10 +240,12 @@ def _build_plan(query: str, planner_data: dict[str, Any]) -> AnalysisPlan:
         description=description,
         candidate_search_terms=candidate_search_terms,
         category_hypotheses=category_hypotheses,
+        planning_evidence=evidence,
+        planning_errors=planning_errors or [],
         steps=_fixed_steps({
             "candidate_search_terms": candidate_search_terms,
             "category_hypotheses": category_hypotheses,
-        }),
+        }, web_search_enabled=web_search_enabled),
     )
 
 
@@ -261,6 +312,12 @@ def _search_action_count(observations: list[dict[str, Any]]) -> int:
     return sum(1 for observation in observations if observation.get("tool") == "search_stocks")
 
 
+def _minimum_candidate_codes(state: HybridExecutionState, step: PlanStep) -> int:
+    if step.key == "candidate_discovery" and state.plan and state.plan.planning_evidence:
+        return max(3, min(8, len(state.plan.planning_evidence)))
+    return _MIN_CANDIDATE_CODES
+
+
 def _stock_name_code_map(state: HybridExecutionState) -> dict[str, str]:
     name_code_map: dict[str, str] = {}
 
@@ -301,15 +358,265 @@ def _normalize_company_info_input(action_input: str, state: HybridExecutionState
     return None
 
 
+def _planning_entity_terms(query: str) -> list[str]:
+    """从用户主题中生成主体/别名候选，避免直接拿“供应链”去搜本地股票名。"""
+    topic = query.strip()
+    if not topic:
+        return []
+    cleaned = re.sub(r"(供应链|产业链|概念股|概念|分析|相关股票|股票)$", "", topic).strip()
+    terms = [topic]
+    if cleaned and cleaned != topic:
+        terms.append(cleaned)
+    if cleaned and 2 <= len(cleaned) <= 12:
+        terms.append(f"{cleaned} 工业有限公司")
+        if not cleaned.startswith("重庆"):
+            terms.append(f"重庆{cleaned}工业有限公司")
+    return _dedupe_preserve_order(terms)
+
+
+def _planning_web_query_specs(query: str) -> list[dict[str, str]]:
+    """构造分层规划检索词：主体/股权/供应链/零部件/负向验证。"""
+    entities = _planning_entity_terms(query)
+    entity = entities[1] if len(entities) > 1 else entities[0] if entities else query.strip()
+    company_entity = next((item for item in entities if "有限公司" in item), entity)
+    specs: list[dict[str, str]] = []
+
+    def add(group: str, text: str, topic: str = "general") -> None:
+        if text.strip():
+            specs.append({"group": group, "query": text.strip(), "topic": topic})
+
+    # Entity Resolve：先锁定非上市主体、股东、融资与别名。
+    add("entity_resolve", f"{entity} 工商 股东 A轮 融资", "general")
+    add("entity_resolve", f"{company_entity} 股东 投资方 A轮 估值", "general")
+    add("entity_resolve", f"{entity} 创始人 品牌 工商 主体", "general")
+
+    # Capital Graph：寻找基金、LP、上市公司公告和穿透持股。
+    add("capital_graph", f"{entity} A股 上市公司 投资 入股 公告", "finance")
+    add("capital_graph", f"{entity} 基金 LP 上市公司 持股", "finance")
+    add("capital_graph", f"{entity} 浙创投 金华浙创 金义智控 A股", "finance")
+    add("capital_graph", f"金华浙创金义智控 {entity} 宏昌科技", "finance")
+    add("capital_graph", f"宏昌科技 金华浙创金义智控 {entity}", "finance")
+
+    # Supply Graph：找客户、供应商、技术合作伙伴、量产项目。
+    add("supply_graph", f"{entity} 供应商 A股", "general")
+    add("supply_graph", f"{entity} 官方技术合作伙伴", "general")
+    add("supply_graph", f"{entity} 战略合作伙伴 供应商", "general")
+    add("supply_graph", f"{entity} 量产 项目 A股", "general")
+    add("supply_graph", f"{entity} 客户 年报", "finance")
+    add("supply_graph", f"{entity} 客户 量产 项目", "general")
+
+    # Part Supply Graph：按摩托车/二轮车关键部件枚举，避免泛“概念股”。
+    for part in ["链传动", "轮毂", "进气系统", "智能仪表", "T-BOX", "BCM", "车身控制器", "芯片 仪表", "机油泵", "发动机"]:
+        add("part_supply_graph", f"{entity} {part}", "general")
+
+    # Negative Check：抓否认、弱口径和不构成重大影响，用于降权。
+    add("negative_check", f"{entity} 暂未 采购 发动机", "general")
+    add("negative_check", f"{entity} 不构成重大影响", "finance")
+    add("negative_check", f"{entity} 否认 供应商", "general")
+    add("negative_check", f"隆鑫通用 {entity} 暂未 大批量采购", "finance")
+
+    deduped: list[dict[str, str]] = []
+    seen: set[str] = set()
+    for spec in specs:
+        if spec["query"] in seen:
+            continue
+        seen.add(spec["query"])
+        deduped.append(spec)
+    return deduped[:_PLANNING_WEB_SEARCH_LIMIT]
+
+
+def _load_stock_list_for_planning(task_id: str | None) -> list[dict[str, Any]]:
+    """规划阶段优先读共享缓存，避免网页证据提取因行情源网络抖动变慢。"""
+    try:
+        cached = json.loads(_SHARED_STOCK_LIST_CACHE.read_text(encoding="utf-8"))
+        if isinstance(cached, list) and cached:
+            return [item for item in cached if isinstance(item, dict)]
+    except Exception:
+        pass
+    try:
+        return get_stock_list(task_id=task_id)
+    except Exception as exc:
+        logger.warning("规划阶段加载股票列表失败: %s", exc)
+        return []
+
+
+def _extract_web_stock_terms(entries: list[dict[str, Any]], task_id: str | None) -> list[dict[str, str]]:
+    """从网页标题/摘要中提取直接出现的A股名称或代码，作为规划阶段强提示。"""
+    chunks: list[str] = []
+    for entry in entries:
+        chunks.append(str(entry.get("title", "")))
+        chunks.append(str(entry.get("content", "")))
+        chunks.append(str(entry.get("raw_content", "")))
+        chunks.append(str(entry.get("url", "")))
+    text = "\n".join(chunks)
+    if not text.strip():
+        return []
+
+    stock_list = _load_stock_list_for_planning(task_id=task_id)
+
+    code_map = {str(item.get("code")): str(item.get("name")) for item in stock_list if item.get("code") and item.get("name")}
+    name_map = {str(item.get("name")): str(item.get("code")) for item in stock_list if item.get("code") and item.get("name")}
+    hits: list[dict[str, str]] = []
+    seen_codes: set[str] = set()
+
+    def source_grade(url: str) -> str:
+        lowered = url.lower()
+        if any(domain in lowered for domain in _STRONG_SOURCE_DOMAINS):
+            return "exchange_or_disclosure"
+        if any(domain in lowered for domain in _SECURITIES_SOURCE_DOMAINS):
+            return "securities_media"
+        return "web"
+
+    def relation_hint(entry_text: str, group: str) -> str:
+        if group == "negative_check" or any(keyword in entry_text for keyword in _NEGATIVE_KEYWORDS):
+            return "negative_or_weak"
+        if any(keyword in entry_text for keyword in ("持股", "入股", "投资", "LP", "有限合伙", "基金", "股东")):
+            return "capital"
+        if any(keyword in entry_text for keyword in ("年报", "公告", "客户", "供应商", "量产", "项目", "供货")):
+            return "supply_disclosure"
+        if any(keyword in entry_text for keyword in ("技术合作伙伴", "战略合作伙伴", "官方合作伙伴")):
+            return "partner"
+        return group or "web_match"
+
+    def add_hit(code: str, name: str, source: str, entry: dict[str, Any] | None = None) -> None:
+        if not code or code in seen_codes:
+            return
+        seen_codes.add(code)
+        entry = entry or {}
+        entry_text = " ".join([
+            str(entry.get("title", "")),
+            str(entry.get("content", "")),
+            str(entry.get("raw_content", ""))[:_PLANNING_WEB_CONTEXT_CHARS],
+        ])
+        hits.append({
+            "code": code,
+            "name": name or code_map.get(code, "") or code,
+            "source": source,
+            "group": str(entry.get("group", "")),
+            "relation_hint": relation_hint(entry_text, str(entry.get("group", ""))),
+            "source_grade": source_grade(str(entry.get("url", ""))),
+            "url": str(entry.get("url", "")),
+            "title": str(entry.get("title", "")),
+        })
+
+    for entry in entries:
+        entry_text = "\n".join([
+            str(entry.get("title", "")),
+            str(entry.get("content", "")),
+            str(entry.get("raw_content", "")),
+            str(entry.get("url", "")),
+        ])
+        for match in _SUFFIX_CODE_PATTERN.finditer(entry_text):
+            code = f"{match.group(2).upper()}:{match.group(1)}"
+            add_hit(code, code_map.get(code, ""), "web_code", entry)
+        for name, code in name_map.items():
+            if len(name) < 2 or code in seen_codes:
+                continue
+            if name in entry_text:
+                add_hit(code, name, "web_name", entry)
+            if len(hits) >= _PLANNING_WEB_STOCK_LIMIT:
+                break
+        if len(hits) >= _PLANNING_WEB_STOCK_LIMIT:
+            break
+
+    return hits[:_PLANNING_WEB_STOCK_LIMIT]
+
+
+def _format_planning_web_context(payload: dict[str, Any]) -> str:
+    stock_terms = payload.get("stock_terms") if isinstance(payload, dict) else None
+    entries = payload.get("entries") if isinstance(payload, dict) else None
+    lines: list[str] = []
+    if isinstance(stock_terms, list) and stock_terms:
+        formatted_terms = []
+        for item in stock_terms[:_PLANNING_WEB_STOCK_LIMIT]:
+            if not isinstance(item, dict):
+                continue
+            name = str(item.get("name") or item.get("code") or "").strip()
+            code = str(item.get("code") or "").strip()
+            if name and code:
+                relation = str(item.get("relation_hint") or "").strip()
+                grade = str(item.get("source_grade") or "").strip()
+                formatted_terms.append(f"{name}({code}, {relation}, {grade})")
+        if formatted_terms:
+            lines.append("网页直接命中的A股候选：" + "、".join(formatted_terms))
+
+    if isinstance(entries, list):
+        for index, entry in enumerate(entries[:_PLANNING_WEB_ENTRY_LIMIT], start=1):
+            if not isinstance(entry, dict):
+                continue
+            title = str(entry.get("title", "")).strip()
+            url = str(entry.get("url", "")).strip()
+            group = str(entry.get("group", "")).strip()
+            content_source = str(entry.get("raw_content") or entry.get("content") or "")
+            content = content_source.strip().replace("\n", " ")
+            if len(content) > _PLANNING_WEB_CONTEXT_CHARS:
+                content = content[:_PLANNING_WEB_CONTEXT_CHARS] + "..."
+            lines.append(f"[{index}] {group} | {title} | {url} | {content}")
+    return "\n".join(lines)
+
+
+async def _collect_planning_web_context(query: str, task_id: str | None) -> dict[str, Any]:
+    """在规划前执行网页检索，让planner先看到新事件的真实边界和直接候选。"""
+    entries: list[dict[str, Any]] = []
+    errors: list[str] = []
+    query_specs = _planning_web_query_specs(query)
+    for spec in query_specs:
+        search_query = spec["query"]
+        action_input = json.dumps({
+            "query": search_query,
+            "search_depth": "advanced",
+            "max_results": 20,
+            "topic": spec.get("topic", "general"),
+            "include_raw_content": True,
+            "chunks_per_source": 3,
+        }, ensure_ascii=False)
+        action = ParsedAction(thought="规划前网页检索校准候选。", action="web_search", action_input=action_input)
+        try:
+            result = await _execute_tool(action, task_id=task_id)
+        except Exception as exc:
+            logger.warning("规划阶段网页检索异常 [%s]: %s", search_query, exc)
+            continue
+        payload = _parse_tool_payload(result)
+        if not payload or payload.get("error"):
+            error_message = str(payload.get("error") if payload else "非JSON")
+            errors.append(error_message)
+            logger.info("规划阶段网页检索不可用 [%s]: %s", search_query, error_message)
+            if "TAVILY_API_KEY" in error_message:
+                break
+            continue
+        for item in payload.get("results", []):
+            if isinstance(item, dict):
+                entries.append({
+                    "query": search_query,
+                    "group": spec.get("group", ""),
+                    "title": str(item.get("title", "")),
+                    "url": str(item.get("url", "")),
+                    "content": str(item.get("content", "")),
+                    "raw_content": str(item.get("raw_content", "")),
+                    "score": item.get("score"),
+                })
+
+    stock_terms = _extract_web_stock_terms(entries, task_id=task_id)
+    return {"queries": query_specs, "entries": entries, "stock_terms": stock_terms, "errors": errors}
+
+
 async def _create_plan(
     query: str,
     client,
     model: str,
     temperature: float,
     max_tokens: int,
+    web_search_enabled: bool = False,
+    task_id: str | None = None,
 ) -> AnalysisPlan:
+    planning_web_context: dict[str, Any] = {}
+    if web_search_enabled:
+        planning_web_context = await _collect_planning_web_context(query, task_id=task_id)
+    planning_evidence = planning_web_context.get("stock_terms", []) if planning_web_context else []
+    planning_errors = planning_web_context.get("errors", []) if planning_web_context else []
+    web_context_text = _format_planning_web_context(planning_web_context)
     messages = [
-        {"role": "system", "content": get_planner_prompt(query)},
+        {"role": "system", "content": get_planner_prompt(query, web_context=web_context_text)},
         {"role": "user", "content": "请输出规划JSON。"},
     ]
     try:
@@ -322,7 +629,13 @@ async def _create_plan(
             "candidate_search_terms": [query],
             "category_hypotheses": [],
         }
-    return _build_plan(query, planner_data)
+    return _build_plan(
+        query,
+        planner_data,
+        web_search_enabled=web_search_enabled,
+        planning_evidence=planning_evidence,
+        planning_errors=planning_errors,
+    )
 
 
 async def _run_bounded_react_step(
@@ -409,10 +722,11 @@ async def _run_bounded_react_step(
                     _validate_step_result(step, data)
                     candidate_count = _candidate_count_from_observations(observations)
                     search_count = _search_action_count(observations)
-                    if step.key in _CANDIDATE_STEP_KEYS and candidate_count < _MIN_CANDIDATE_CODES and state.local_action_count < step.max_actions:
+                    min_candidate_codes = _minimum_candidate_codes(state, step)
+                    if step.key in _CANDIDATE_STEP_KEYS and candidate_count < min_candidate_codes and state.local_action_count < step.max_actions:
                         state.current_step_messages = repair_messages + [
                             {"role": "assistant", "content": llm_output},
-                            {"role": "user", "content": "当前步骤候选覆盖不足。请继续使用单个公司简称调用 search_stocks；不要把多个公司名合并到一个 Action Input，也不要直接输出 Step Result。"},
+                            {"role": "user", "content": f"当前步骤候选覆盖不足，至少需要{min_candidate_codes}个已搜索到的A股候选。请优先使用全局计划 candidate_search_terms 前列的公司简称或股票代码调用 search_stocks；不要搜索泛行业词，也不要直接输出 Step Result。"},
                         ]
                         continue
                     if step.key in _CANDIDATE_STEP_KEYS and search_count == 0:
@@ -641,15 +955,21 @@ async def plan_execute_react_loop(
     temperature = config.settings.temperature
     max_tokens = config.settings.max_tokens
     state = _state_from_checkpoint(checkpoint)
+    if state.plan:
+        state.plan = _sanitize_plan_for_config(state.plan, config.web_search.enabled)
 
     if not state.plan:
-        yield _make_event("thinking", content="正在生成全局执行计划，SOP步骤将由系统固定控制。", step=0, task_id=task_id)
-        state.plan = await _create_plan(query, client, model, temperature, max_tokens)
+        yield _make_event("thinking", content="正在生成全局执行计划，SOP步骤将由系统固定控制；如已启用网页搜索，会先检索公开证据校准候选。", step=0, task_id=task_id)
+        state.plan = await _create_plan(query, client, model, temperature, max_tokens, config.web_search.enabled, task_id=task_id)
         state.current_plan_step = 1
         state.step_attempt = 1
         await _save_checkpoint(save_checkpoint, _checkpoint_payload(state, model, temperature, max_tokens))
         step_names = " → ".join(step.name for step in state.plan.steps)
-        yield _make_event("thinking", content=f"已生成全局SOP计划：{step_names}。", step=0, task_id=task_id)
+        evidence_count = len(state.plan.planning_evidence)
+        evidence_note = f"；规划前网页命中{evidence_count}个A股候选" if evidence_count else ""
+        errors = state.plan.planning_errors if not evidence_count and config.web_search.enabled else []
+        error_note = f"；规划前网页搜索不可用或未命中：{errors[0]}" if errors else ""
+        yield _make_event("thinking", content=f"已生成全局SOP计划：{step_names}{evidence_note}{error_note}。", step=0, task_id=task_id)
 
     while state.plan and state.current_plan_step <= len(state.plan.steps):
         step = state.plan.steps[state.current_plan_step - 1]

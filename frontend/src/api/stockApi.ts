@@ -1,5 +1,5 @@
 import client from './client'
-import type { StockQuote, KLinePoint } from '../types/stock'
+import type { StockQuote, KLinePoint, StockDiagnosis } from '../types/stock'
 
 /**
  * 行情数据API模块
@@ -49,6 +49,28 @@ export async function fetchKline(
   })
   // 后端返回 { data: [...] } 结构，提取内层data
   return res.data.data
+}
+
+export async function fetchStockDiagnosis(
+  code: string,
+  name?: string,
+): Promise<StockDiagnosis> {
+  const res = await client.get<StockDiagnosis>('/stocks/diagnosis', {
+    params: { code, name: name || undefined },
+    timeout: 180000,
+  })
+  return res.data
+}
+
+export async function fetchEnhancedStockDiagnosis(
+  code: string,
+  name?: string,
+): Promise<StockDiagnosis> {
+  const res = await client.post<StockDiagnosis>('/stocks/diagnosis/enhance', null, {
+    params: { code, name: name || undefined },
+    timeout: 180000,
+  })
+  return res.data
 }
 
 /**

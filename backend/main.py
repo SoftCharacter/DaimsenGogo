@@ -28,6 +28,14 @@ async def lifespan(app: FastAPI):
     """
     global _last_heartbeat
     ensure_dirs()
+    # 复位上次异常退出/连接中断遗留的孤儿分析任务（running → paused），可继续执行
+    try:
+        from backend.services.analysis_task_service import reconcile_running_tasks
+        recovered = reconcile_running_tasks()
+        if recovered:
+            logger.info("启动复位中断的分析任务：%d 个", recovered)
+    except Exception as exc:
+        logger.warning("复位中断分析任务失败：%s", exc)
     _last_heartbeat = time.time()
 
     # 功能可用优先：不再因心跳超时自动关闭后端，避免浏览器后台节流导致误杀进程。

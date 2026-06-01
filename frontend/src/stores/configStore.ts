@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { AppConfig, Provider, Settings } from '../types/config'
+import type { AppConfig, Provider, Settings, WebSearchConfig } from '../types/config'
 import * as configApi from '../api/configApi'
 
 /**
@@ -18,6 +18,8 @@ interface ConfigState {
   updateProvider: (provider: Provider) => Promise<void>
   /** 更新应用设置 */
   updateSettings: (settings: Settings) => Promise<void>
+  /** 更新网页搜索配置 */
+  updateWebSearch: (webSearch: WebSearchConfig) => Promise<void>
   /** 获取可用模型列表 */
   fetchModels: (baseUrl: string, apiKey: string) => Promise<string[]>
   /** 选择指定模型 */
@@ -40,7 +42,7 @@ export const useConfigStore = create<ConfigState>((set, get) => ({
    * 设置loading状态，失败时记录错误信息
    */
   loadConfig: async () => {
-    set({ loading: true, error: null })
+    set({ loading: !get().config, error: null })
     try {
       const config = await configApi.getConfig()
       set({ config, loading: false })
@@ -74,6 +76,23 @@ export const useConfigStore = create<ConfigState>((set, get) => ({
     const current = get().config
     if (!current) return
     const updated = { ...current, settings }
+    try {
+      const result = await configApi.updateConfig(updated)
+      set({ config: result })
+    } catch (e: any) {
+      set({ error: e.message })
+    }
+  },
+
+  /**
+   * 更新网页搜索配置
+   * 保存启用开关，密钥为空时沿用后端已保存值
+   * @param webSearch - 新的网页搜索配置
+   */
+  updateWebSearch: async (webSearch: WebSearchConfig) => {
+    const current = get().config
+    if (!current) return
+    const updated = { ...current, web_search: webSearch }
     try {
       const result = await configApi.updateConfig(updated)
       set({ config: result })

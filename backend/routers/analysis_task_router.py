@@ -5,6 +5,7 @@
 import json
 import logging
 import uuid
+from datetime import datetime, timezone
 from typing import Any
 
 from fastapi import APIRouter, HTTPException
@@ -31,6 +32,22 @@ from backend.services.file_service import load_config
 logger = logging.getLogger(__name__)
 router = APIRouter()
 _MAX_QUERY_LENGTH = 120
+# 任务超过该时长无更新即视为「停滞」（孤儿）。活跃任务每次 LLM 调用后都会写断点
+# 刷新 updated_at（单次调用最多 ~3 分钟），8 分钟阈值不会误判正在执行的任务。
+_STALE_RUNNING_SECONDS = 8 * 60
+
+
+def _is_stale_running(task: AnalysisTask) -> bool:
+    """判断一个 running 任务是否已停滞（长时间无更新，疑似孤儿）。"""
+    if task.status != AnalysisTaskStatus.RUNNING:
+        return False
+    try:
+        updated = datetime.fromisoformat(task.updated_at)
+    except (TypeError, ValueError):
+        return True
+    if updated.tzinfo is None:
+        updated = updated.replace(tzinfo=timezone.utc)
+    return (datetime.now(timezone.utc) - updated).total_seconds() > _STALE_RUNNING_SECONDS
 
 
 class CreateAnalysisTaskRequest(BaseModel):
@@ -103,6 +120,13 @@ async def _run_task_stream(task: AnalysisTask):
             mark_task_failed(loaded, f"分析过程发生异常: {exc}")
         yield {"event": "error", "data": json.dumps({"message": f"分析过程发生异常: {exc}"}, ensure_ascii=False)}
         yield {"event": "done", "data": json.dumps({}, ensure_ascii=False)}
+    finally:
+        # 安全网：客户端断开（刷新/关页/导航）会让 SSE 生成器被取消（抛出
+        # CancelledError/GeneratorExit，不被上面的 except Exception 捕获），
+        # 若不处理任务会永远卡在 running。这里统一复位为 paused，断点保留可继续。
+        loaded = load_task(task.id)
+        if loaded and loaded.status == AnalysisTaskStatus.RUNNING:
+            mark_task_paused(loaded, "执行已中断（连接断开或服务重启），可点击「继续」从断点恢复")
 
 
 @router.get("/")
@@ -153,7 +177,11 @@ async def continue_analysis_task(task_id: str):
     if not task:
         raise HTTPException(status_code=404, detail="分析任务不存在")
     if task.status == AnalysisTaskStatus.RUNNING:
-        raise HTTPException(status_code=409, detail="任务正在执行中")
-    if task.status not in {AnalysisTaskStatus.PAUSED, AnalysisTaskStatus.FAILED}:
+        if not _is_stale_running(task):
+            raise HTTPException(status_code=409, detail="任务正在执行中")
+        # 停滞的孤儿任务：先复位为 paused，再从断点继续（双保险，避免卡死无法恢复）
+        mark_task_paused(task, "检测到任务长时间无更新，已暂停后从断点继续")
+        task = load_task(task_id) or task
+    elif task.status not in {AnalysisTaskStatus.PAUSED, AnalysisTaskStatus.FAILED}:
         raise HTTPException(status_code=400, detail="当前任务状态不支持继续执行")
     return EventSourceResponse(_run_task_stream(task))

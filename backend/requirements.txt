@@ -6,3 +6,4 @@ sse-starlette>=2.1
 pydantic>=2.10
 akshare>=1.14
 python-multipart>=0.0.9
+python-dotenv>=1.0

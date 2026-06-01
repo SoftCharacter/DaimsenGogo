@@ -12,6 +12,12 @@ class Provider(BaseModel):
     api_key: str = ""        # API密钥
 
 
+class WebSearchConfig(BaseModel):
+    """网页搜索配置"""
+    enabled: bool = False
+    tavily_api_key: str = ""
+
+
 class Settings(BaseModel):
     """应用全局设置"""
     temperature: float = 0.3           # LLM温度参数，越低越确定
@@ -25,6 +31,7 @@ class AppConfig(BaseModel):
     selected_model: str = ""                  # 当前选中的模型ID
     available_models: list[str] = []          # 可用模型列表
     settings: Settings = Settings()           # 全局设置
+    web_search: WebSearchConfig = WebSearchConfig()  # 网页搜索配置
 
 
 class PublicProvider(BaseModel):
@@ -35,12 +42,20 @@ class PublicProvider(BaseModel):
     has_api_key: bool = False
 
 
+class PublicWebSearchConfig(BaseModel):
+    """返回给前端的网页搜索配置，隐藏Tavily密钥明文。"""
+    enabled: bool = False
+    tavily_api_key: str = Field(default="", exclude=True)
+    has_tavily_api_key: bool = False
+
+
 class PublicAppConfig(BaseModel):
     """返回给前端的应用配置，避免泄露api_key。"""
     provider: PublicProvider = PublicProvider()
     selected_model: str = ""
     available_models: list[str] = []
     settings: Settings = Settings()
+    web_search: PublicWebSearchConfig = PublicWebSearchConfig()
 
 
 class FetchModelsRequest(BaseModel):

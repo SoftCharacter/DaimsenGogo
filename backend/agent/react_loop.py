@@ -13,7 +13,7 @@ from typing import Any, AsyncGenerator, Iterable
 
 from backend.agent.output_parser import ParsedAction, ParsedFinalAnswer, parse_llm_output
 from backend.agent.prompts import get_system_prompt
-from backend.agent.tools import get_company_info, search_stocks, verify_stock_code
+from backend.agent.tools import get_company_info, search_stocks, verify_stock_code, web_search
 from backend.models.config_models import AppConfig
 from backend.models.theme_models import Theme
 from backend.services.llm_client import chat_complete, create_client
@@ -31,6 +31,7 @@ _TOOL_MAP = {
     "search_stocks": search_stocks,
     "get_company_info": get_company_info,
     "verify_stock_code": verify_stock_code,
+    "web_search": web_search,
 }
 
 
@@ -53,6 +54,26 @@ def _validate_theme(theme: Theme) -> None:
             category_codes.add(stock.code)
 
 
+def _sort_theme_by_relevance(theme: Theme) -> Theme:
+    """按关联强度稳定排序，保证最终看板最强关联标的靠前。"""
+    for category in theme.categories:
+        category.stocks = sorted(
+            category.stocks,
+            key=lambda stock: (-stock.percentage, stock.name, stock.code),
+        )
+    theme.categories = sorted(
+        theme.categories,
+        key=lambda category: (
+            -max((stock.percentage for stock in category.stocks), default=0),
+            category.order or 999,
+            category.name,
+        ),
+    )
+    for index, category in enumerate(theme.categories, start=1):
+        category.order = index
+    return theme
+
+
 def _build_theme_from_json(raw_json: str) -> Theme:
     data = json.loads(raw_json)
     now = datetime.now(timezone.utc).isoformat()
@@ -62,7 +83,7 @@ def _build_theme_from_json(raw_json: str) -> Theme:
     data.setdefault("updated_at", now)
     theme = Theme.model_validate(data)
     _validate_theme(theme)
-    return theme
+    return _sort_theme_by_relevance(theme)
 
 
 def _parse_tool_payload(tool_result: str) -> dict[str, Any] | None:

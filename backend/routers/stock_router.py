@@ -8,7 +8,12 @@ from fastapi import APIRouter, Query, HTTPException
 from backend.services.stock_service import (
     fetch_quotes,
     fetch_kline,
+    fetch_close_history,
     search_stocks,
+)
+from backend.services.stock_diagnosis_service import (
+    build_enhanced_stock_diagnosis,
+    build_stock_diagnosis,
 )
 
 # 创建路由器实例
@@ -72,6 +77,83 @@ async def get_kline(
     # 调用行情服务获取K线
     points = await fetch_kline(code, period, count, task_id=task_id)
     return {"data": [p.model_dump() for p in points]}
+
+
+@router.get("/close-history")
+async def get_close_history(
+    code: str = Query(
+        ...,
+        description="股票代码，如 SZ:000725 或 000725",
+    ),
+    count: int = Query(
+        250,
+        ge=1,
+        le=500,
+        description="交易日数量，默认250个交易日，近似1年",
+    ),
+):
+    """
+    获取历史收盘价。
+    当前用于功能测试：为后续MACD/DIF/DEA本地计算准备收盘价序列。
+    """
+    formatted_code, points, elapsed_ms = await fetch_close_history(code, count=count)
+    return {
+        "code": formatted_code,
+        "source": "xueqiu",
+        "period": "day",
+        "count": len(points),
+        "elapsed_ms": elapsed_ms,
+        "data": [point.model_dump() for point in points],
+    }
+
+
+@router.get("/diagnosis")
+async def get_stock_diagnosis(
+    code: str = Query(
+        ...,
+        description="股票代码，如 SZ:000725 或 000725",
+    ),
+    name: str = Query(
+        "",
+        description="股票名称，可选，用于诊断报告展示",
+    ),
+):
+    """
+    按需生成个股诊断。
+    用户点击股票后才拉取历史行情、股东人数、财报和公司大事，先返回纯数据本地诊断。
+    """
+    try:
+        diagnosis = await build_stock_diagnosis(code, name=name)
+    except Exception as exc:
+        raise HTTPException(
+            status_code=502,
+            detail=f"生成个股诊断失败: {exc}",
+        ) from exc
+    return diagnosis.model_dump()
+
+
+@router.post("/diagnosis/enhance")
+async def enhance_stock_diagnosis(
+    code: str = Query(
+        ...,
+        description="股票代码，如 SZ:000725 或 000725",
+    ),
+    name: str = Query(
+        "",
+        description="股票名称，可选，用于诊断报告展示",
+    ),
+):
+    """
+    按用户点击触发大模型强化诊断。
+    """
+    try:
+        diagnosis = await build_enhanced_stock_diagnosis(code, name=name)
+    except Exception as exc:
+        raise HTTPException(
+            status_code=502,
+            detail=f"生成强化诊断失败: {exc}",
+        ) from exc
+    return diagnosis.model_dump()
 
 
 @router.get("/search")

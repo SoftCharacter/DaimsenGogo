@@ -1,40 +1,308 @@
 @import "tailwindcss";
 
-/* 深色主题CSS变量 */
+/* ============================================================
+   DaimsenGogo · Design tokens (handoff: design_handoff_dashboard_redesign)
+   theme: dark | light    ×    dir(ection): aurora | terminal
+   accent set inline via --accent-h (hue) / --accent-c (chroma) on :root
+   Convention: 涨=红(up)  跌=绿(down)
+   ============================================================ */
+
 :root {
-  --color-bg-primary: #0a0e17;
-  --color-bg-card: #151c2c;
-  --color-bg-hover: #1a2236;
-  --color-border: #1e293b;
-  --color-stock-up: #ef4444;
-  --color-stock-down: #22c55e;
-  --color-accent: #6366f1;
-  --color-accent-hover: #818cf8;
-  --color-text-primary: #e2e8f0;
-  --color-text-secondary: #94a3b8;
-  --color-text-muted: #64748b;
+  --accent-h: 278;            /* indigo by default; tweakable */
+  --accent-c: 0.17;
+  --accent: oklch(0.64 var(--accent-c) var(--accent-h));
+  --accent-bright: oklch(0.72 var(--accent-c) var(--accent-h));
+  --accent-soft: oklch(0.64 var(--accent-c) var(--accent-h) / 0.14);
+  --accent-line: oklch(0.64 var(--accent-c) var(--accent-h) / 0.4);
+
+  --font-sans: "Space Grotesk", "PingFang SC", "Microsoft YaHei", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-cjk: "PingFang SC", "Microsoft YaHei", "Hiragino Sans GB", -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", "SF Mono", ui-monospace, monospace;
+
+  --r: 14px;     /* base radius (direction overrides) */
+  --r-sm: 9px;
+  --r-pill: 999px;
+  --sidebar-w: 260px;
+  --nav-h: 60px;
+  --card-min: 330px;
+  --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
 }
 
-/* 全局基础样式 */
+/* ---------------- DARK (default) ---------------- */
+[data-theme="dark"] {
+  --bg: oklch(0.16 0.018 268);
+  --bg-grad-a: oklch(0.18 0.03 280);
+  --bg-grad-b: oklch(0.145 0.015 255);
+  --surface: oklch(0.205 0.02 268);
+  --surface-2: oklch(0.235 0.022 268);
+  --surface-3: oklch(0.275 0.025 268);
+  --border: oklch(0.32 0.02 268 / 0.7);
+  --border-strong: oklch(0.42 0.03 268 / 0.9);
+  --text: oklch(0.96 0.006 268);
+  --text-dim: oklch(0.74 0.015 268);
+  --text-faint: oklch(0.56 0.018 268);
+  --grid: oklch(0.45 0.02 268 / 0.16);
+  --up: oklch(0.68 0.2 24);
+  --up-soft: oklch(0.68 0.2 24 / 0.16);
+  --down: oklch(0.76 0.16 158);
+  --down-soft: oklch(0.76 0.16 158 / 0.16);
+  --shadow: 0 18px 50px -22px rgba(0,0,0,0.8);
+  --ma5: oklch(0.78 0.16 55);
+  --ma20: oklch(0.74 0.13 232);
+  --ma120: oklch(0.7 0.15 305);
+  --ma240: oklch(0.78 0.15 158);
+  --price-line: oklch(0.96 0.006 268);
+  /* 品牌标志色（深色主题 = 亮紫），随主题切换，不跟随用户可调强调色 */
+  --brand-logo: #a99bf8;
+}
+
+/* ---------------- LIGHT ---------------- */
+[data-theme="light"] {
+  --bg: oklch(0.97 0.006 268);
+  --bg-grad-a: oklch(0.99 0.008 280);
+  --bg-grad-b: oklch(0.95 0.008 255);
+  --surface: oklch(1 0 0);
+  --surface-2: oklch(0.975 0.006 268);
+  --surface-3: oklch(0.95 0.008 268);
+  --border: oklch(0.9 0.008 268);
+  --border-strong: oklch(0.84 0.012 268);
+  --text: oklch(0.24 0.02 268);
+  --text-dim: oklch(0.45 0.02 268);
+  --text-faint: oklch(0.62 0.018 268);
+  --grid: oklch(0.55 0.02 268 / 0.12);
+  --up: oklch(0.56 0.21 26);
+  --up-soft: oklch(0.56 0.21 26 / 0.1);
+  --down: oklch(0.56 0.14 158);
+  --down-soft: oklch(0.56 0.14 158 / 0.1);
+  --shadow: 0 16px 40px -24px rgba(20,25,60,0.35);
+  --ma5: oklch(0.6 0.17 55);
+  --ma20: oklch(0.55 0.15 232);
+  --ma120: oklch(0.52 0.18 305);
+  --ma240: oklch(0.52 0.15 158);
+  --price-line: oklch(0.3 0.02 268);
+  /* 品牌标志色（浅色主题 = 深紫） */
+  --brand-logo: #4b3bc4;
+}
+
+/* ============================================================
+   DIRECTION A — AURORA  (glassy, glowing, futuristic 大屏)
+   ============================================================ */
+[data-dir="aurora"] {
+  --r: 16px; --r-sm: 10px;
+}
+[data-dir="aurora"] body {
+  background:
+    radial-gradient(1200px 700px at 78% -8%, var(--accent-soft), transparent 60%),
+    radial-gradient(900px 600px at 8% 110%, oklch(0.64 0.13 232 / 0.12), transparent 60%),
+    linear-gradient(155deg, var(--bg-grad-a), var(--bg-grad-b));
+}
+[data-dir="aurora"] .panel {
+  background: linear-gradient(180deg, color-mix(in oklab, var(--surface) 92%, var(--accent) 8%), var(--surface));
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(8px);
+}
+[data-dir="aurora"] .card:hover {
+  border-color: var(--accent-line);
+  box-shadow: 0 0 0 1px var(--accent-line), 0 24px 60px -30px var(--accent);
+}
+[data-dir="aurora"] .card::after {  /* top glow accent */
+  content: ""; position: absolute; inset: 0 0 auto 0; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--accent-line), transparent);
+  opacity: 0; transition: opacity 0.3s var(--ease);
+}
+[data-dir="aurora"] .card:hover::after { opacity: 1; }
+
+/* ============================================================
+   DIRECTION B — TERMINAL  (sharp, dense, grid, mono, pro)
+   ============================================================ */
+[data-dir="terminal"] {
+  --r: 4px; --r-sm: 3px;
+}
+[data-dir="terminal"] body {
+  background:
+    linear-gradient(var(--grid) 1px, transparent 1px) 0 0 / 100% 38px,
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px) 0 0 / 38px 100%,
+    var(--bg);
+  background-attachment: fixed;
+}
+[data-dir="terminal"] .panel {
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  box-shadow: none;
+}
+[data-dir="terminal"] .card {
+  border-radius: var(--r);
+}
+[data-dir="terminal"] .card:hover {
+  border-color: var(--accent);
+  background: color-mix(in oklab, var(--surface) 88%, var(--accent) 12%);
+}
+[data-dir="terminal"] .ticker,
+[data-dir="terminal"] .num { letter-spacing: -0.01em; }
+[data-dir="terminal"] .card-name { letter-spacing: 0; }
+
+/* ============================================================
+   Base
+   ============================================================ */
+* { box-sizing: border-box; }
+html, body, #root { height: 100%; }
 body {
   margin: 0;
-  background-color: var(--color-bg-primary);
-  color: var(--color-text-primary);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  font-family: var(--font-cjk);
+  color: var(--text);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+.num, .ticker, .mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+::selection { background: var(--accent-soft); }
+
+/* scrollbars */
+*::-webkit-scrollbar { width: 10px; height: 10px; }
+*::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 99px; border: 3px solid transparent; background-clip: content-box; }
+*::-webkit-scrollbar-thumb:hover { background: var(--text-faint); background-clip: content-box; }
+
+.up { color: var(--up); }
+.down { color: var(--down); }
+
+.panel { border-radius: var(--r); position: relative; }
+.card { border-radius: var(--r); border: 1px solid var(--border); position: relative; transition: all 0.25s var(--ease); overflow: hidden; }
+
+/* utility */
+.fade-in { animation: fadeIn 0.45s var(--ease) both; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.stagger > * { animation: fadeIn 0.5s var(--ease) both; }
+@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+@keyframes modalIn { from { opacity: 0; transform: translateY(18px) scale(0.985); } to { opacity: 1; transform: none; } }
+
+/* ============================================================
+   COSMOS background (night earth + ice) with motion layers
+   ============================================================ */
+.cosmos { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+.cosmos > * { position: absolute; inset: 0; }
+.cosmos-img {
+  /* 底图已裁掉星球与人物间的空白带（2.0:1），直接 cover 即可同时完整呈现星球与吉祥物 */
+  background: url("/scenes/cosmos.png") center center / cover no-repeat;
+  animation: cosmosDrift 38s ease-in-out infinite alternate;
+  transform-origin: 50% 50%;
+}
+@keyframes cosmosDrift { from { transform: scale(1.02); } to { transform: scale(1.05); } }
+.cosmos-scrim {
+  /* 底部仅轻微压暗，避免糊掉吉祥物与冰川 */
+  background:
+    radial-gradient(120% 80% at 50% 8%, transparent 45%, rgba(4,7,22,0.28) 100%),
+    linear-gradient(180deg, rgba(4,7,22,0.28) 0%, rgba(4,7,22,0.10) 34%, rgba(4,7,22,0.14) 72%, rgba(4,7,22,0.22) 100%);
+}
+/* earth glow */
+.cosmos-earth {
+  left: 49%; top: 26%; width: 34vw; height: 34vw; max-width: 620px; max-height: 620px;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle, rgba(150,205,255,0.28) 0%, rgba(120,180,255,0.10) 42%, transparent 66%);
+  mix-blend-mode: screen; animation: earthBreathe 7s ease-in-out infinite;
+}
+@keyframes earthBreathe { 0%,100% { opacity: 0.55; transform: translate(-50%,-50%) scale(1); } 50% { opacity: 1; transform: translate(-50%,-50%) scale(1.07); } }
+/* ice central reflection */
+.cosmos-ice-glow {
+  left: 50%; top: 78%; width: 50vw; height: 22vh; transform: translate(-50%,-50%);
+  background: radial-gradient(ellipse at center, rgba(180,215,255,0.22), transparent 70%);
+  mix-blend-mode: screen; animation: glowPulse 5.5s ease-in-out infinite;
+}
+@keyframes glowPulse { 0%,100% { opacity: 0.5; } 50% { opacity: 0.95; } }
+/* ice shimmer sweep */
+.cosmos-ice-sweep {
+  top: 62%; left: -30%; width: 60%; height: 40%;
+  background: linear-gradient(105deg, transparent, rgba(200,225,255,0.16) 45%, rgba(220,235,255,0.22) 50%, transparent 56%);
+  filter: blur(6px); mix-blend-mode: screen; transform: skewX(-18deg);
+  animation: iceSweep 9s ease-in-out infinite;
+}
+@keyframes iceSweep { 0% { left: -35%; opacity: 0; } 12% { opacity: 1; } 60% { opacity: 1; } 80% { left: 95%; opacity: 0; } 100% { left: 95%; opacity: 0; } }
+
+.cosmos-star { position: absolute; border-radius: 50%; background: #eaf2ff; box-shadow: 0 0 4px rgba(190,215,255,0.9); animation: twinkle ease-in-out infinite; }
+@keyframes twinkle { 0%,100% { opacity: 0.15; transform: scale(0.7); } 50% { opacity: 1; transform: scale(1.15); } }
+
+.cosmos-city { position: absolute; width: 2px; height: 2px; border-radius: 50%; background: #ffd9a0; box-shadow: 0 0 5px 1px rgba(255,200,130,0.9); animation: cityFlicker ease-in-out infinite; }
+@keyframes cityFlicker { 0%,100% { opacity: 0.2; } 35% { opacity: 1; } 55% { opacity: 0.4; } 75% { opacity: 0.9; } }
+
+.cosmos-meteor { position: absolute; height: 2px; width: 170px; transform: rotate(28deg); transform-origin: left center;
+  background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(190,220,255,0.9) 80%, #ffffff 100%);
+  border-radius: 99px; opacity: 0; filter: drop-shadow(0 0 6px rgba(180,215,255,0.8));
+  animation: meteorFly linear infinite; }
+.cosmos-meteor::after { content: ""; position: absolute; right: -2px; top: -1.5px; width: 5px; height: 5px; border-radius: 50%; background: #fff; box-shadow: 0 0 8px 2px rgba(200,225,255,0.95); }
+@keyframes meteorFly {
+  0% { transform: rotate(28deg) translateX(0); opacity: 0; }
+  4% { opacity: 1; }
+  18% { opacity: 1; }
+  26% { transform: rotate(28deg) translateX(620px); opacity: 0; }
+  100% { transform: rotate(28deg) translateX(620px); opacity: 0; }
 }
 
-/* 自定义滚动条样式 */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+/* glass panels when cosmos active */
+body.cosmos-on {
+  --surface: rgba(15,21,44,0.60);
+  --surface-2: rgba(22,30,58,0.55);
+  --surface-3: rgba(34,45,78,0.62);
+  --border: rgba(150,180,240,0.14);
+  --border-strong: rgba(160,190,245,0.24);
 }
-::-webkit-scrollbar-track {
-  background: var(--color-bg-primary);
+body.cosmos-on .panel, body.cosmos-on .card { backdrop-filter: blur(13px) saturate(1.2); -webkit-backdrop-filter: blur(13px) saturate(1.2); }
+body.cosmos-on aside { backdrop-filter: blur(16px) saturate(1.2); -webkit-backdrop-filter: blur(16px) saturate(1.2); }
+body.cosmos-on h1, body.cosmos-on h2 { text-shadow: 0 2px 18px rgba(4,8,22,0.8); }
+body.cosmos-on #app-shell p { text-shadow: 0 1px 10px rgba(4,8,22,0.7); }
+#app-shell { position: relative; z-index: 1; }
+
+/* ============================================================
+   DAY scene (warm dune + planet) — light theme background
+   ============================================================ */
+.dayscene { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+.dayscene > * { position: absolute; }
+.dayscene-img { inset: 0; background: url("/scenes/day.png") center center / cover no-repeat;
+  animation: dayDrift 54s ease-in-out infinite alternate; transform-origin: 50% 32%; }
+@keyframes dayDrift { from { transform: scale(1.03); } to { transform: scale(1.075); } }
+.dayscene-scrim { inset: 0; background: linear-gradient(180deg, rgba(222,236,250,0.10), transparent 26%, transparent 68%, rgba(208,224,243,0.28)); }
+.dayscene-skyglow { inset: 0; mix-blend-mode: screen; animation: skyBreathe 8.5s ease-in-out infinite;
+  background: radial-gradient(58vh 46vh at 50% 23%, rgba(255,245,216,0.55), rgba(255,240,205,0.12) 46%, transparent 72%); }
+@keyframes skyBreathe { 0%,100% { opacity: 0.55; } 50% { opacity: 1; } }
+
+.day-cloud { left: -25vw; border-radius: 50%; mix-blend-mode: screen; filter: blur(7px);
+  background: radial-gradient(ellipse at center, rgba(255,255,255,0.98), rgba(255,255,255,0) 66%);
+  animation: cloudDrift linear infinite; }
+@keyframes cloudDrift { from { transform: translateX(0); } to { transform: translateX(150vw); } }
+
+.day-planet { left: 50%; top: 30%; width: 52vh; height: 52vh; transform: translate(-50%, -50%); }
+.day-planet-disk { position: absolute; inset: 0; border-radius: 50%; overflow: hidden; }
+.day-planet-bands { position: absolute; left: -30%; top: 0; width: 160%; height: 100%; filter: blur(5px); mix-blend-mode: soft-light;
+  background: linear-gradient(102deg, transparent 30%, rgba(208,170,108,0.45) 47%, rgba(255,238,198,0.5) 52%, rgba(206,166,104,0.4) 57%, transparent 72%);
+  animation: bandFlow 30s linear infinite; }
+@keyframes bandFlow { from { transform: translateX(-16%); } to { transform: translateX(16%); } }
+.day-planet-rim { position: absolute; inset: -9%; border-radius: 50%; mix-blend-mode: screen; animation: rimGlow 7s ease-in-out infinite;
+  background: radial-gradient(circle, transparent 58%, rgba(255,228,168,0.0) 74%, rgba(255,222,150,0.55) 86%, rgba(255,240,210,0) 100%); }
+@keyframes rimGlow { 0%,100% { opacity: 0.5; transform: scale(1); } 50% { opacity: 1; transform: scale(1.02); } }
+
+.day-sandsweep { top: 62%; left: -35%; width: 58%; height: 42%; filter: blur(8px); mix-blend-mode: screen; transform: skewX(-16deg);
+  background: linear-gradient(102deg, transparent, rgba(255,244,214,0.26) 48%, rgba(255,250,234,0.34) 52%, transparent 58%);
+  animation: sandSweep 13s ease-in-out infinite; }
+@keyframes sandSweep { 0% { left: -38%; opacity: 0; } 16% { opacity: 1; } 60% { opacity: 1; } 84% { left: 96%; opacity: 0; } 100% { left: 96%; opacity: 0; } }
+
+.day-sand { border-radius: 50%; background: rgba(208,170,110,0.85); box-shadow: 0 0 4px rgba(230,200,150,0.7); animation: sandFloat ease-in-out infinite; }
+@keyframes sandFloat {
+  0% { opacity: 0; transform: translate(0,0); }
+  22% { opacity: 0.75; }
+  50% { opacity: 0.5; transform: translate(var(--dx), -11px); }
+  80% { opacity: 0.6; }
+  100% { opacity: 0; transform: translate(calc(var(--dx) * 1.7), -5px); }
 }
-::-webkit-scrollbar-thumb {
-  background: var(--color-border);
-  border-radius: 3px;
+
+/* light glass when day scene active */
+body.day-on {
+  --surface: rgba(255,255,255,0.68);
+  --surface-2: rgba(255,255,255,0.55);
+  --surface-3: rgba(244,248,253,0.82);
+  --border: rgba(60,92,152,0.16);
+  --border-strong: rgba(50,82,142,0.30);
 }
-::-webkit-scrollbar-thumb:hover {
-  background: var(--color-text-muted);
-}
+body.day-on .panel, body.day-on .card { backdrop-filter: blur(14px) saturate(1.12); -webkit-backdrop-filter: blur(14px) saturate(1.12);
+  box-shadow: 0 16px 42px -28px rgba(46,64,112,0.5); }
+body.day-on aside { backdrop-filter: blur(16px) saturate(1.12); -webkit-backdrop-filter: blur(16px) saturate(1.12); }
+body.day-on #app-shell p { text-shadow: 0 1px 10px rgba(255,255,255,0.6); }
+body.day-on h1, body.day-on h2 { text-shadow: 0 1px 12px rgba(255,255,255,0.7); }
