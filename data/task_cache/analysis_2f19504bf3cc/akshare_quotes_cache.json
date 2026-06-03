@@ -1,0 +1,58 @@
+{
+  "SZ:000061": {
+    "code": "SZ:000061",
+    "name": "农产品",
+    "current_price": 6.32,
+    "prev_close": 6.34,
+    "open_price": 6.34,
+    "high": 6.37,
+    "low": 6.23,
+    "change": -0.02,
+    "change_percent": -0.32,
+    "volume": 87496810.69,
+    "volume_display": "8749.68万",
+    "timestamp": "2026-06-03 22:07:49"
+  },
+  "SH:600029": {
+    "code": "SH:600029",
+    "name": "南方航空",
+    "current_price": 5.2,
+    "prev_close": 5.35,
+    "open_price": 5.28,
+    "high": 5.3,
+    "low": 5.19,
+    "change": -0.15,
+    "change_percent": -2.8,
+    "volume": 870400590.0,
+    "volume_display": "8.70亿",
+    "timestamp": "2026-06-03 22:07:49"
+  },
+  "SZ:001696": {
+    "code": "SZ:001696",
+    "name": "宗申动力",
+    "current_price": 14.56,
+    "prev_close": 14.6,
+    "open_price": 14.6,
+    "high": 14.77,
+    "low": 14.41,
+    "change": -0.04,
+    "change_percent": -0.27,
+    "volume": 223505728.17,
+    "volume_display": "2.24亿",
+    "timestamp": "2026-06-03 22:07:49"
+  },
+  "SH:600717": {
+    "code": "SH:600717",
+    "name": "天津港",
+    "current_price": 4.47,
+    "prev_close": 4.53,
+    "open_price": 4.53,
+    "high": 4.54,
+    "low": 4.42,
+    "change": -0.06,
+    "change_percent": -1.32,
+    "volume": 111097704.0,
+    "volume_display": "1.11亿",
+    "timestamp": "2026-06-03 22:07:50"
+  }
+}

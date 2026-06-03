@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>DaimsenGogo · 供应链股票大屏</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script src="data.js"></script>
+<script type="text/babel" src="tweaks-panel.jsx"></script>
+<script type="text/babel" src="cosmos.jsx"></script>
+<script type="text/babel" src="dayscene.jsx"></script>
+<script type="text/babel" src="charts.jsx"></script>
+<script type="text/babel" src="components.jsx"></script>
+<script type="text/babel" src="screens.jsx"></script>
+<script type="text/babel" src="screens2.jsx"></script>
+
+<script type="text/babel">
+const { useState, useEffect } = React;
+
+const ACCENTS = {
+  '靛蓝': { h: 278, c: 0.17, hex: '#7b6bf0' },
+  '科技蓝': { h: 232, c: 0.15, hex: '#3a92e6' },
+  '青碧': { h: 196, c: 0.13, hex: '#27b6c9' },
+  '琥珀': { h: 70,  c: 0.15, hex: '#c79a2a' },
+  '品红': { h: 350, c: 0.16, hex: '#e0578f' },
+};
+
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "dir": "aurora",
+  "theme": "light",
+  "accent": "靛蓝",
+  "cardMin": 290,
+  "cosmos": true
+}/*EDITMODE-END*/;
+
+function App() {
+  const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
+  const [route, setRoute] = useState('dashboard');
+  const [activeTheme, setActiveTheme] = useState(0);
+  const [insight, setInsight] = useState(null);
+
+  const showCosmos = t.cosmos && t.theme === 'dark';
+  const showDay = t.cosmos && t.theme === 'light';
+
+  // apply tweaks to root
+  useEffect(() => {
+    const r = document.documentElement;
+    r.setAttribute('data-theme', t.theme);
+    r.setAttribute('data-dir', t.dir);
+    const a = ACCENTS[t.accent] || ACCENTS['靛蓝'];
+    r.style.setProperty('--accent-h', a.h);
+    r.style.setProperty('--accent-c', a.c);
+    r.style.setProperty('--card-min', (t.cardMin || 330) + 'px');
+    document.body.classList.toggle('cosmos-on', showCosmos);
+    document.body.classList.toggle('day-on', showDay);
+  }, [t.theme, t.dir, t.accent, t.cardMin, showCosmos, showDay]);
+
+  const themes = window.DG.THEMES;
+  const stocks = window.DG.STOCKS;
+
+  return (
+    <React.Fragment>
+    {showCosmos && <CosmosBackground />}
+    {showDay && <DayScene />}
+    <div id="app-shell" style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
+      <Nav route={route} setRoute={(r) => { setRoute(r); }} />
+      <div style={{ flex: 1, display: 'flex', minHeight: 0 }}>
+        {route === 'dashboard' && (
+          <>
+            <Sidebar themes={themes} active={activeTheme} setActive={setActiveTheme} />
+            <Dashboard theme={themes[activeTheme]} stocks={stocks} onOpen={setInsight} />
+          </>
+        )}
+        {route === 'analysis' && <AIAnalysis />}
+        {route === 'config' && <ModelConfig />}
+      </div>
+
+      {insight && <InsightModal stock={insight} onClose={() => setInsight(null)} />}
+    </div>
+
+      <TweaksPanel>
+        <TweakSection label="背景" />
+        <TweakToggle label="场景背景（深色星空 / 浅色沙丘）" value={t.cosmos} onChange={(v) => setTweak('cosmos', v)} />
+        <TweakSection label="设计方向" />
+        <TweakRadio label="风格" value={t.dir}
+          options={[{ label: 'Aurora 大屏', value: 'aurora' }, { label: 'Terminal 终端', value: 'terminal' }]}
+          onChange={(v) => setTweak('dir', v)} />
+        <TweakRadio label="主题" value={t.theme}
+          options={[{ label: '深色', value: 'dark' }, { label: '浅色', value: 'light' }]}
+          onChange={(v) => setTweak('theme', v)} />
+        <TweakSection label="强调色" />
+        <AccentSwatches value={t.accent} onChange={(v) => setTweak('accent', v)} />
+        <TweakSection label="布局" />
+        <TweakRadio label="卡片密度" value={t.cardMin}
+          options={[{ label: '紧凑', value: 290 }, { label: '标准', value: 330 }, { label: '宽松', value: 390 }]}
+          onChange={(v) => setTweak('cardMin', v)} />
+      </TweaksPanel>
+    </React.Fragment>
+  );
+}
+
+function AccentSwatches({ value, onChange }) {
+  return (
+    <div style={{ display: 'flex', gap: 8, padding: '4px 0 8px', flexWrap: 'wrap' }}>
+      {Object.entries(ACCENTS).map(([name, a]) => {
+        const on = value === name;
+        return (
+          <button key={name} onClick={() => onChange(name)} title={name}
+            style={{ cursor: 'pointer', width: 30, height: 30, borderRadius: 8, background: a.hex,
+              border: on ? '2px solid #fff' : '2px solid transparent',
+              boxShadow: on ? '0 0 0 2px ' + a.hex : 'none', transition: 'all 0.15s' }} />
+        );
+      })}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+
+<!-- card grid responds to density tweak -->
+<style>
+  div[style*="auto-fill"] { }
+  .panel, .card { will-change: auto; }
+</style>
+</body>
+</html>
