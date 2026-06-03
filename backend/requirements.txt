@@ -7,3 +7,4 @@ pydantic>=2.10
 akshare>=1.14
 python-multipart>=0.0.9
 python-dotenv>=1.0
+baostock==0.9.1
