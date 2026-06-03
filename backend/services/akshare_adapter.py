@@ -37,6 +37,33 @@ _XQ_HEADERS = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 "
     "(KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1",
 }
+
+
+def _warm_xq_cookie(session: requests.Session, headers: dict[str, str], symbol: str) -> None:
+    """通过雪球行情页预热 xq_a_token，失败或缺失时继续原请求流程。"""
+    try:
+        session.get("https://xueqiu.com/hq", headers=headers, timeout=10)
+    except Exception as exc:
+        logger.debug("雪球 hq 预热失败，继续原请求流程 [%s]: %s", symbol, exc)
+    if not session.cookies.get("xq_a_token"):
+        logger.debug("雪球 hq 预热未获取 xq_a_token，继续原请求流程 [%s]", symbol)
+
+
+def _xq_token_cookies(session: requests.Session) -> dict[str, str] | None:
+    """仅在已解析到 xq_a_token 时为后续雪球接口显式追加 Cookie。"""
+    token = session.cookies.get("xq_a_token")
+    return {"xq_a_token": token} if token else None
+
+
+_STOCK_LIST_REMOTE_ATTEMPTS = 2
+# Baostock 子进程整体超时（秒）。子进程需冷启动全新解释器并重新 import baostock
+# （连带 pandas/numpy），叠加 login 与 query_stock_basic 遍历全量股票的网络耗时，
+# warm 查询虽 <10s，但冷启动+网络抖动易顶破 15s。初始化已改后台线程不阻塞启动，
+# 故放宽到 40s 给足余量，避免误判超时。
+_BAOSTOCK_SUBPROCESS_TIMEOUT_SECONDS = 40
+_stock_list_memory_cache: list[dict] = []
+_stock_list_initialized = False
+_stock_list_lock = threading.Lock()
 _AKSHARE_SPOT_CACHE_TTL = 60
 _akshare_spot_cache: tuple[float, list[dict]] | None = None
 _akshare_spot_lock = threading.Lock()
@@ -239,7 +266,7 @@ def _stock_list_from_akshare() -> list[dict]:
     """通过AkShare获取股票列表，带有限重试和退避。"""
     import akshare as ak
 
-    for attempt in range(3):
+    for attempt in range(_STOCK_LIST_REMOTE_ATTEMPTS):
         try:
             df = _run_without_proxy(lambda: _run_quietly(ak.stock_zh_a_spot_em))
             result: list[dict] = []
@@ -257,8 +284,8 @@ def _stock_list_from_akshare() -> list[dict]:
     return []
 
 
-def _stock_list_from_baostock() -> list[dict]:
-    """通过Baostock子进程获取股票列表，避免login卡死阻塞主进程。"""
+def _stock_list_from_baostock_once() -> list[dict]:
+    """通过Baostock子进程获取一次股票列表，避免login卡死阻塞主进程。"""
     script = r'''
 import json
 import sys
@@ -299,32 +326,77 @@ while rs.error_code == "0" and rs.next():
 bs.logout()
 print(json.dumps(items, ensure_ascii=False))
 '''
-    try:
-        completed = subprocess.run(
-            [sys.executable, "-c", script],
-            capture_output=True,
-            text=True,
-            encoding="utf-8",
-            errors="replace",
-            timeout=15,
-            check=False,
-        )
-    except subprocess.TimeoutExpired:
-        logger.warning("Baostock股票列表获取超时")
-        return []
-
+    completed = subprocess.run(
+        [sys.executable, "-c", script],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        timeout=_BAOSTOCK_SUBPROCESS_TIMEOUT_SECONDS,
+        check=False,
+    )
     if completed.returncode != 0:
-        logger.warning("Baostock股票列表获取失败: %s", completed.stderr.strip())
-        return []
+        raise RuntimeError(completed.stderr.strip() or f"子进程退出码 {completed.returncode}")
 
     stdout = completed.stdout.strip()
     json_start = stdout.rfind("[")
     try:
         stock_list = json.loads(stdout[json_start:] if json_start >= 0 else "[]")
-    except json.JSONDecodeError:
-        logger.warning("Baostock股票列表返回无法解析")
-        return []
-    return stock_list if _is_valid_stock_list(stock_list) else []
+    except json.JSONDecodeError as exc:
+        raise ValueError("返回无法解析") from exc
+    if not _is_valid_stock_list(stock_list):
+        raise ValueError("股票列表为空或结构无效")
+    return stock_list
+
+
+def _stock_list_from_baostock() -> list[dict]:
+    """通过Baostock获取股票列表，带有限重试和退避。"""
+    for attempt in range(_STOCK_LIST_REMOTE_ATTEMPTS):
+        try:
+            return _stock_list_from_baostock_once()
+        except subprocess.TimeoutExpired:
+            logger.warning("Baostock股票列表获取超时，第%d次", attempt + 1)
+        except ValueError as exc:
+            message = str(exc)
+            if message == "返回无法解析":
+                logger.warning("Baostock股票列表返回无法解析，第%d次", attempt + 1)
+            else:
+                logger.warning("Baostock股票列表为空或结构无效，第%d次", attempt + 1)
+        except Exception as exc:
+            logger.warning("Baostock股票列表获取失败，第%d次: %s", attempt + 1, exc)
+        time.sleep((2 ** attempt) + random.uniform(0, 1.5))
+    return []
+
+
+def _load_stock_list_cache() -> list[dict]:
+    """读取共享股票列表缓存，缓存无效时返回空列表。"""
+    cached = _read_json_cache(_stock_list_cache_path(), [])
+    return cached if _is_valid_stock_list(cached) else []
+
+
+def initialize_stock_list_cache(task_id: str | None = None) -> None:
+    """后端启动时初始化股票列表；仅当天缓存无效时才远程刷新。"""
+    global _stock_list_initialized, _stock_list_memory_cache
+    cache_path = _stock_list_cache_path(task_id)
+    with _stock_list_lock:
+        cached = _load_stock_list_cache()
+        if _is_valid_stock_list(cached):
+            _stock_list_memory_cache = cached
+        if _is_valid_stock_list(cached) and _is_stock_list_cache_fresh(cache_path):
+            _stock_list_initialized = True
+            return
+
+        stock_list = _stock_list_from_akshare()
+        if not _is_valid_stock_list(stock_list):
+            stock_list = _stock_list_from_baostock()
+        if _is_valid_stock_list(stock_list):
+            _write_stock_list_cache(stock_list, task_id=task_id)
+            _stock_list_memory_cache = stock_list
+        elif _is_valid_stock_list(cached):
+            _stock_list_memory_cache = cached
+        else:
+            _stock_list_memory_cache = []
+        _stock_list_initialized = True
 
 
 def get_stock_list(task_id: str | None = None) -> list[dict]:
@@ -332,33 +404,25 @@ def get_stock_list(task_id: str | None = None) -> list[dict]:
     获取A股股票列表
     返回项目统一结构: [{"code": "SH:601138", "name": "工业富联"}]。
     """
-    cache_path = _stock_list_cache_path(task_id)
-    cached = _read_json_cache(cache_path, [])
-    if _is_valid_stock_list(cached) and _is_stock_list_cache_fresh(cache_path):
-        return cached
-
-    stock_list = _stock_list_from_akshare()
-    if _is_valid_stock_list(stock_list):
-        _write_stock_list_cache(stock_list, task_id=task_id)
-        return stock_list
-
-    stock_list = _stock_list_from_baostock()
-    if _is_valid_stock_list(stock_list):
-        _write_stock_list_cache(stock_list, task_id=task_id)
-        return stock_list
-
-    return cached if _is_valid_stock_list(cached) else []
+    with _stock_list_lock:
+        if _is_valid_stock_list(_stock_list_memory_cache):
+            return list(_stock_list_memory_cache)
+        cached = _load_stock_list_cache()
+        if _is_valid_stock_list(cached):
+            return cached
+        return []
 
 
 def _fetch_xq_quote(symbol: str) -> dict:
     """直接请求雪球原始行情接口，返回 data.quote 字段。"""
     def request_quote() -> dict:
         session = requests.Session()
-        session.get(f"https://xueqiu.com/S/{symbol}", headers=_XQ_HEADERS, timeout=10)
+        _warm_xq_cookie(session, _XQ_HEADERS, symbol)
         resp = session.get(
             _XQ_QUOTE_URL,
             params={"symbol": symbol, "extend": "detail"},
             headers=_XQ_HEADERS,
+            cookies=_xq_token_cookies(session),
             timeout=10,
         )
         payload = resp.json()
@@ -376,8 +440,8 @@ def _fetch_xq_json_sync(symbol: str, url: str, params: dict, timeout: int = 20) 
     def request_json() -> dict:
         session = requests.Session()
         headers = {**_XQ_HEADERS, "Referer": f"https://xueqiu.com/S/{symbol}"}
-        session.get(f"https://xueqiu.com/S/{symbol}", headers=headers, timeout=10)
-        resp = session.get(url, params=params, headers=headers, timeout=timeout)
+        _warm_xq_cookie(session, headers, symbol)
+        resp = session.get(url, params=params, headers=headers, cookies=_xq_token_cookies(session), timeout=timeout)
         resp.raise_for_status()
         return resp.json()
 
@@ -398,7 +462,7 @@ def fetch_close_history_xq_sync(code: str, count: int = 250) -> list[dict]:
     def request_kline() -> dict:
         session = requests.Session()
         headers = {**_XQ_HEADERS, "Referer": f"https://xueqiu.com/S/{symbol}"}
-        session.get(f"https://xueqiu.com/S/{symbol}", headers=headers, timeout=10)
+        _warm_xq_cookie(session, headers, symbol)
         resp = session.get(
             _XQ_KLINE_URL,
             params={
@@ -410,6 +474,7 @@ def fetch_close_history_xq_sync(code: str, count: int = 250) -> list[dict]:
                 "indicator": "kline",
             },
             headers=headers,
+            cookies=_xq_token_cookies(session),
             timeout=20,
         )
         resp.raise_for_status()

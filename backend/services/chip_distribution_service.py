@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import math
 import subprocess
 import time
@@ -26,6 +27,7 @@ CYQ_WARMUP_COUNT = 210
 CYQ_SNAPSHOT_COUNT = 90
 EASTMONEY_KLINE_URL = "https://push2his.eastmoney.com/api/qt/stock/kline/get"
 XUEQIU_KLINE_URL = "https://stock.xueqiu.com/v5/stock/chart/kline.json"
+logger = logging.getLogger(__name__)
 XUEQIU_HEADERS = {
     "User-Agent": (
         "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 "
@@ -34,6 +36,20 @@ XUEQIU_HEADERS = {
 }
 
 
+def _warm_xueqiu_cookie(session: requests.Session, headers: dict[str, str], symbol: str) -> None:
+    """通过雪球行情页预热 xq_a_token，失败或缺失时继续原请求流程。"""
+    try:
+        session.get("https://xueqiu.com/hq", headers=headers, timeout=10)
+    except Exception as exc:
+        logger.debug("雪球 hq 预热失败，继续原请求流程 [%s]: %s", symbol, exc)
+    if not session.cookies.get("xq_a_token"):
+        logger.debug("雪球 hq 预热未获取 xq_a_token，继续原请求流程 [%s]", symbol)
+
+
+def _xueqiu_token_cookies(session: requests.Session) -> dict[str, str] | None:
+    """仅在已解析到 xq_a_token 时为后续雪球接口显式追加 Cookie。"""
+    token = session.cookies.get("xq_a_token")
+    return {"xq_a_token": token} if token else None
 def _market_code(code: str) -> str:
     formatted = format_stock_code(extract_numeric_code(code))
     market, pure_code = formatted.split(":", 1)
@@ -117,7 +133,7 @@ def _fetch_xueqiu_daily_kline(code: str, count: int = CYQ_WARMUP_COUNT) -> list[
     session = requests.Session()
     session.trust_env = False
     headers = {**XUEQIU_HEADERS, "Referer": f"https://xueqiu.com/S/{symbol}"}
-    session.get(f"https://xueqiu.com/S/{symbol}", headers=headers, timeout=10)
+    _warm_xueqiu_cookie(session, headers, symbol)
     resp = session.get(
         XUEQIU_KLINE_URL,
         params={
@@ -129,6 +145,7 @@ def _fetch_xueqiu_daily_kline(code: str, count: int = CYQ_WARMUP_COUNT) -> list[
             "indicator": "kline",
         },
         headers=headers,
+        cookies=_xueqiu_token_cookies(session),
         timeout=20,
     )
     resp.raise_for_status()

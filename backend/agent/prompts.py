@@ -172,6 +172,9 @@ def get_step_react_prompt(
             "- web_search 只能在业务确认步骤作为证据补强，不能用于候选发现、候选补全、代码校验或最终组装。",
             "- 业务确认必须优先使用已发现候选的股票代码调用 get_company_info，不要直接输入公司简称。",
             "- 只有当 get_company_info 信息不足以判断公司与主题的真实关联时，才用 web_search 查询“公司名 + 用户主题关键词”。",
+            "- web_search 每次只能查询一个明确公司名加一个主题关键词，不要搜索泛行业词、长句、多个公司名或宽泛概念。",
+            "- web_search 单步骤最多使用4次；如果返回 error、超时或 count 为0，应基于已有公司信息继续判断，不要反复搜索同一问题。",
+            "- 如果已有 get_company_info 足以说明主营业务和供应链角色，应直接输出 Step Result，不要为了补材料继续调用 web_search。",
             "- web_search 的结果只能作为业务关系证据，不能直接产生最终股票代码；股票代码仍必须来自 search_stocks 并经过 verify_stock_code 校验。",
         ])
     tool_notes_text = "；".join(tool_notes)

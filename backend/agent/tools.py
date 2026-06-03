@@ -9,10 +9,12 @@ Agent工具集
 所有工具返回JSON字符串，因为部分数据源是同步库，
 在ReAct循环中通过 asyncio.to_thread 异步调用。
 """
+import hashlib
 import json
 import logging
 import os
 import re
+from pathlib import Path
 from typing import Any
 
 import httpx
@@ -28,8 +30,10 @@ _MAX_SEARCH_RESULTS = 20
 _WEB_SEARCH_URL = "https://api.tavily.com/search"
 _WEB_SEARCH_LIMIT = 60
 _WEB_SEARCH_RESULT_LIMIT = 20
-_WEB_SEARCH_TIMEOUT_SECONDS = 35
+_WEB_SEARCH_DEFAULT_RESULT_LIMIT = 5
+_WEB_SEARCH_TIMEOUT_SECONDS = 20
 _WEB_SEARCH_RAW_CONTENT_LIMIT = 2500
+_WEB_SEARCH_CACHE_ROOT = Path(__file__).resolve().parents[2] / "data" / "task_cache"
 _web_search_usage: dict[str, int] = {}
 
 
@@ -47,6 +51,48 @@ def _claim_web_search_quota(task_id: str | None) -> tuple[bool, int]:
     used += 1
     _web_search_usage[key] = used
     return True, used
+
+
+def _safe_task_id(task_id: str | None) -> str | None:
+    """清理任务ID，确保网页搜索缓存目录不会越界。"""
+    if not task_id:
+        return None
+    cleaned = re.sub(r"[^A-Za-z0-9_.-]", "_", str(task_id).strip())[:80]
+    return cleaned or None
+
+
+def _web_search_cache_path(cache_key: str, task_id: str | None) -> Path | None:
+    """按任务和检索参数生成网页搜索缓存路径。"""
+    safe_task_id = _safe_task_id(task_id)
+    if not safe_task_id:
+        return None
+    query_hash = hashlib.sha256(cache_key.encode("utf-8")).hexdigest()[:16]
+    return _WEB_SEARCH_CACHE_ROOT / safe_task_id / f"web_search_{query_hash}.json"
+
+
+def _read_web_search_cache(cache_key: str, task_id: str | None) -> str | None:
+    """读取任务级网页搜索缓存，失败时回退为真实搜索。"""
+    path = _web_search_cache_path(cache_key, task_id)
+    if not path:
+        return None
+    try:
+        if path.exists():
+            return path.read_text(encoding="utf-8")
+    except Exception:
+        return None
+    return None
+
+
+def _write_web_search_cache(cache_key: str, task_id: str | None, payload: str) -> None:
+    """写入任务级网页搜索缓存，缓存失败不影响主流程。"""
+    path = _web_search_cache_path(cache_key, task_id)
+    if not path:
+        return
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(payload, encoding="utf-8")
+    except Exception:
+        pass
 
 
 def _is_valid_stock_list(stock_list: Any) -> bool:
@@ -216,19 +262,34 @@ def web_search(query: str, task_id: str | None = None) -> str:
             retryable=False,
         )
 
-    search_depth = str(options.get("search_depth") or "advanced")
+    search_depth = str(options.get("search_depth") or "basic")
     topic = str(options.get("topic") or "general")
-    include_raw_content = bool(options.get("include_raw_content", True))
+    include_raw_content = bool(options.get("include_raw_content", False))
     try:
-        max_results = int(options.get("max_results") or _WEB_SEARCH_RESULT_LIMIT)
+        max_results = int(options.get("max_results") or _WEB_SEARCH_DEFAULT_RESULT_LIMIT)
     except (TypeError, ValueError):
-        max_results = _WEB_SEARCH_RESULT_LIMIT
+        max_results = _WEB_SEARCH_DEFAULT_RESULT_LIMIT
     max_results = max(1, min(max_results, _WEB_SEARCH_RESULT_LIMIT))
     try:
-        chunks_per_source = int(options.get("chunks_per_source") or 3)
+        chunks_per_source = int(options.get("chunks_per_source") or 1)
     except (TypeError, ValueError):
-        chunks_per_source = 3
+        chunks_per_source = 1
     chunks_per_source = max(1, min(chunks_per_source, 3))
+    cache_key = json.dumps(
+        {
+            "query": cleaned_query,
+            "search_depth": search_depth,
+            "topic": topic,
+            "max_results": max_results,
+            "chunks_per_source": chunks_per_source,
+            "include_raw_content": include_raw_content,
+        },
+        ensure_ascii=False,
+        sort_keys=True,
+    )
+    cached = _read_web_search_cache(cache_key, task_id)
+    if cached is not None:
+        return cached
 
     try:
         response = httpx.post(
@@ -259,7 +320,7 @@ def web_search(query: str, task_id: str | None = None) -> str:
             for item in raw_results[:_WEB_SEARCH_RESULT_LIMIT]
             if isinstance(item, dict)
         ]
-        return json.dumps(
+        response_payload = json.dumps(
             {
                 "query": cleaned_query,
                 "search_depth": search_depth,
@@ -270,6 +331,8 @@ def web_search(query: str, task_id: str | None = None) -> str:
             },
             ensure_ascii=False,
         )
+        _write_web_search_cache(cache_key, task_id, response_payload)
+        return response_payload
     except Exception as e:
         logger.warning("网页搜索失败 [%s]: %s", cleaned_query, e)
         return _tool_error(

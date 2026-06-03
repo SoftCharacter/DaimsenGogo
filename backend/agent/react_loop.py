@@ -16,13 +16,24 @@ from backend.agent.prompts import get_system_prompt
 from backend.agent.tools import get_company_info, search_stocks, verify_stock_code, web_search
 from backend.models.config_models import AppConfig
 from backend.models.theme_models import Theme
-from backend.services.llm_client import chat_complete, create_client
+from backend.services.llm_client import LLMTruncationError, chat_complete_streaming, create_client
 
 logger = logging.getLogger(__name__)
 _MAX_ITERATIONS = 15
-_LLM_TIMEOUT_SECONDS = 60
+# 相邻增量之间允许的最大空闲秒数（默认）。只要模型持续吐字就不会被判超时，
+# 仅在连接真正停滞时中止，替代过去对长输出误判的整段60s墙钟超时。
+_LLM_IDLE_TIMEOUT_SECONDS = 30
+# 结果分组/最终组装等纯合成步骤输出长、首token前可能有较长思考，放宽空闲超时。
+_LLM_SYNTHESIS_IDLE_TIMEOUT_SECONDS = 60
+# 合成步骤输出预算下限。46只股票各带description的最终Theme JSON可达8000+token，
+# 默认 max_tokens=4096 会被硬截断。这里对合成步骤取配置值与下限的较大值，避免截断。
+_LLM_SYNTHESIS_MAX_TOKENS_FLOOR = 8192
+# 非超时类异常（瞬时网络、5xx）的重试次数：按常规重试，避免单点抖动中断任务。
 _LLM_RETRY_COUNT = 2
+# 超时类异常的重试次数：流式空闲超时多为稳定的慢或停滞，重试收益低，只重试1次快速失败。
+_LLM_TIMEOUT_RETRY_COUNT = 1
 _TOOL_TIMEOUT_SECONDS = 45
+_WEB_SEARCH_TOOL_TIMEOUT_SECONDS = 15
 _TOOL_ATTEMPTS = 3
 _FORMAT_REPAIR_ATTEMPTS = 2
 _FINAL_REPAIR_ATTEMPTS = 2
@@ -145,20 +156,60 @@ def _clone_messages(messages: Iterable[dict[str, Any]]) -> list[dict[str, Any]]:
     return [dict(item) for item in messages]
 
 
-async def _call_llm(client, model: str, messages: list[dict[str, Any]], temperature: float, max_tokens: int, step: int) -> str:
+async def _call_llm(
+    client,
+    model: str,
+    messages: list[dict[str, Any]],
+    temperature: float,
+    max_tokens: int,
+    step: int,
+    *,
+    idle_timeout: float | None = None,
+) -> str:
+    """
+    调用LLM并返回完整文本，使用流式空闲超时替代整段墙钟超时。
+
+    超时与非超时分别采用不同的重试预算：
+    - 超时（asyncio.TimeoutError）：连接停滞或模型稳定地慢，重试收益低，
+      只重试 _LLM_TIMEOUT_RETRY_COUNT 次，避免过去 60s×3 的无效放大。
+    - 其他异常（瞬时网络、5xx等）：按 _LLM_RETRY_COUNT 常规重试。
+
+    参数:
+        idle_timeout: 相邻增量之间允许的最大空闲秒数；为 None 时取默认值，
+                      合成类步骤可传更大值。
+    """
+    effective_idle_timeout = idle_timeout if idle_timeout is not None else _LLM_IDLE_TIMEOUT_SECONDS
     last_error: Exception | None = None
-    for attempt in range(_LLM_RETRY_COUNT + 1):
+    # 取两类重试预算的较大值作为循环上界，循环内再按异常类型判断是否继续。
+    max_attempts = max(_LLM_RETRY_COUNT, _LLM_TIMEOUT_RETRY_COUNT) + 1
+    for attempt in range(max_attempts):
         try:
-            return await asyncio.wait_for(
-                chat_complete(client, model, messages, temperature, max_tokens),
-                timeout=_LLM_TIMEOUT_SECONDS,
+            return await chat_complete_streaming(
+                client, model, messages, temperature, max_tokens, idle_timeout=effective_idle_timeout,
             )
+        except LLMTruncationError:
+            # 截断不重试：相同 max_tokens 必然再次截断，重试只会浪费时间。
+            # 原样抛出，让上层（如最终组装）据此走兜底或提示提高 max_tokens。
+            logger.warning("LLM输出被max_tokens截断 (第%d轮)，跳过重试，交由上层处理。", step)
+            raise
         except Exception as exc:
             last_error = exc
-            logger.warning("LLM调用失败 (第%d轮，第%d次): %s", step, attempt + 1, exc)
-            if attempt < _LLM_RETRY_COUNT:
-                await asyncio.sleep(1 + attempt)
-    raise RuntimeError(f"LLM调用失败，已重试{_LLM_RETRY_COUNT}次: {last_error}")
+            is_timeout = isinstance(exc, asyncio.TimeoutError)
+            error_name = type(exc).__name__
+            error_message = str(exc) or error_name
+            logger.warning(
+                "LLM调用失败 (第%d轮，第%d次，%s): %s",
+                step, attempt + 1, "超时" if is_timeout else "异常", error_message,
+            )
+            # 按异常类型选择该类允许的最大重试次数。
+            retry_budget = _LLM_TIMEOUT_RETRY_COUNT if is_timeout else _LLM_RETRY_COUNT
+            if attempt >= retry_budget:
+                break
+            await asyncio.sleep(1 + attempt)
+    error_name = type(last_error).__name__ if last_error else "UnknownError"
+    error_message = str(last_error) if last_error else ""
+    detail = f"{error_name}: {error_message}" if error_message else error_name
+    raise RuntimeError(f"LLM调用失败: {detail}")
 
 
 async def _execute_tool(action: ParsedAction, task_id: str | None = None) -> str:
@@ -171,11 +222,13 @@ async def _execute_tool(action: ParsedAction, task_id: str | None = None) -> str
         return json.dumps({"error": "工具参数不能为空", "tool": action.action, "fatal": True, "retryable": False}, ensure_ascii=False)
 
     last_result = ""
-    for attempt in range(1, _TOOL_ATTEMPTS + 1):
+    timeout_seconds = _WEB_SEARCH_TOOL_TIMEOUT_SECONDS if action.action == "web_search" else _TOOL_TIMEOUT_SECONDS
+    attempts = 1 if action.action == "web_search" else _TOOL_ATTEMPTS
+    for attempt in range(1, attempts + 1):
         try:
             result = await asyncio.wait_for(
                 asyncio.to_thread(tool_fn, action_input, task_id),
-                timeout=_TOOL_TIMEOUT_SECONDS,
+                timeout=timeout_seconds,
             )
             if _parse_tool_payload(result) is not None:
                 return result
@@ -185,14 +238,19 @@ async def _execute_tool(action: ParsedAction, task_id: str | None = None) -> str
             )
         except asyncio.TimeoutError:
             logger.error("工具执行超时 [%s] 第%d次", action.action, attempt)
+            if action.action == "web_search":
+                return json.dumps(
+                    {"error": "网页搜索超时，已降级继续分析", "tool": action.action, "fatal": False, "retryable": False, "results": []},
+                    ensure_ascii=False,
+                )
             last_result = json.dumps(
-                {"error": "工具执行超时", "tool": action.action, "fatal": True, "retryable": attempt < _TOOL_ATTEMPTS},
+                {"error": "工具执行超时", "tool": action.action, "fatal": True, "retryable": attempt < attempts},
                 ensure_ascii=False,
             )
         except Exception as e:
             logger.error("工具执行失败 [%s] 第%d次: %s", action.action, attempt, e)
             last_result = json.dumps(
-                {"error": f"工具执行异常: {e}", "tool": action.action, "fatal": True, "retryable": attempt < _TOOL_ATTEMPTS},
+                {"error": f"工具执行异常: {e}", "tool": action.action, "fatal": True, "retryable": attempt < attempts},
                 ensure_ascii=False,
             )
     return last_result
