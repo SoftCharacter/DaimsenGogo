@@ -1,0 +1,37 @@
+.DS_Store
+.env
+.env.*
+!.env.example
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+node_modules/
+dist/
+build/
+.vite/
+frontend/.vite/
+*.log
+.runlogs/
+
+data/task_cache/
+data/analysis_tasks/
+data/themes/
+
+# Design handoff / brand source assets kept locally, not required to run the app
+design_handoff_dashboard_redesign/
+logo/
+
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# Claude Code / 技能工具产物（非项目代码）
+.agents/
+.claude/
+skills-lock.json
