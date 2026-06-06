@@ -8,7 +8,7 @@ import { useAnalysisStore } from '../stores/analysisStore'
 import { useThemeStore } from '../stores/themeStore'
 import type { Theme } from '../types/theme'
 import type { SSEEvent } from '../types/stock'
-import { deleteAnalysisTask, getAnalysisTask, listAnalysisTasks } from '../api/analysisTaskApi'
+import { deleteAnalysisTask, getAnalysisTask, listAnalysisTasks, pauseAnalysisTask } from '../api/analysisTaskApi'
 import type { AnalysisTask, AnalysisTaskEvent, AnalysisTaskSummary } from '../types/analysisTask'
 
 type DisplaySSEEvent = SSEEvent & { seq?: number; task_id?: string }
@@ -69,6 +69,7 @@ function taskToSummary(task: AnalysisTask): AnalysisTaskSummary {
     result_name: task.result?.name ?? '',
     error: task.error,
     saved_theme_id: task.saved_theme_id,
+    pause_requested: task.pause_requested,
   }
 }
 
@@ -133,6 +134,14 @@ export default function AnalysisPage() {
   }, [refreshTasks])
 
   useEffect(() => {
+    if (!tasks.some((task) => task.status === 'pending' || task.status === 'running')) return
+    const timer = window.setInterval(() => {
+      void refreshTasks()
+    }, 2500)
+    return () => window.clearInterval(timer)
+  }, [refreshTasks, tasks])
+
+  useEffect(() => {
     if (!taskId || refreshedTaskIdRef.current === taskId) return
     refreshedTaskIdRef.current = taskId
     void refreshTasks()
@@ -181,6 +190,17 @@ export default function AnalysisPage() {
     })()
   }, [startAnalysis, refreshTasks])
 
+  const handlePauseTask = useCallback(async (nextTaskId: string) => {
+    try {
+      await pauseAnalysisTask(nextTaskId)
+      await refreshTasks()
+      if (currentTask?.id === nextTaskId) await loadTask(nextTaskId)
+      toast.success('已请求暂停，当前环节完成后会停下')
+    } catch {
+      toast.error('暂停任务失败')
+    }
+  }, [currentTask, loadTask, refreshTasks])
+
   const handleConfirmResult = useCallback(() => {
     if (!displayResult) return
     setConfirmedTheme(displayResult)
@@ -204,7 +224,7 @@ export default function AnalysisPage() {
     } finally {
       setThemeSaving(false)
     }
-  }, [confirmedTheme, currentTask?.id, displayResult, createTheme, taskId])
+  }, [confirmedTheme, currentTask, displayResult, createTheme, taskId])
 
   const handleDeleteTask = useCallback(async (nextTaskId: string) => {
     try {
@@ -218,7 +238,7 @@ export default function AnalysisPage() {
     } catch {
       toast.error('删除任务失败')
     }
-  }, [currentTask?.id])
+  }, [currentTask])
 
   const handleContinueTask = useCallback(async (nextTaskId: string) => {
     setSavedThemeId(null)
@@ -232,7 +252,7 @@ export default function AnalysisPage() {
     } catch {
       toast.error('继续任务失败')
     }
-  }, [continueAnalysis, currentTask?.id, loadTask, refreshTasks])
+  }, [continueAnalysis, currentTask, loadTask, refreshTasks])
 
   if (isEditMode) {
     return (
@@ -272,7 +292,7 @@ export default function AnalysisPage() {
 
         {/* 输入条 */}
         <div style={{ marginTop: 26 }}>
-          <AnalysisInput onSubmit={handleStartAnalysis} isRunning={isRunning} />
+          <AnalysisInput onSubmit={handleStartAnalysis} />
         </div>
 
         {/* 执行流 / 结果 */}
@@ -341,9 +361,11 @@ export default function AnalysisPage() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: 14 }}>
             {tasks.map((task, i) => {
               const stale = isStaleRunning(task)
-              const status = stale ? STALE_META : statusMeta(task.status)
+              const status = stale ? STALE_META : statusMeta(task.status, task.pause_requested)
               // 双保险：已停滞（长时间无更新）的 running 任务也放开「继续/删除」
-              const canContinue = !isRunning && (['paused', 'failed'].includes(task.status) || stale)
+              const canContinue = ['paused', 'failed'].includes(task.status) || stale
+              const canPause = task.status === 'running' && !stale && !task.pause_requested
+              const canDelete = task.status !== 'running' || stale
               return (
                 <div
                   key={task.id}
@@ -376,6 +398,27 @@ export default function AnalysisPage() {
                     <span className="mono">{task.updated_at?.slice(0, 10)}</span>
                   </div>
                   <div style={{ display: 'flex', gap: 8 }}>
+                    {canPause && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          void handlePauseTask(task.id)
+                        }}
+                        style={{
+                          cursor: 'pointer',
+                          border: 'none',
+                          borderRadius: 'var(--r-sm)',
+                          padding: '8px 16px',
+                          fontFamily: 'var(--font-cjk)',
+                          fontWeight: 600,
+                          fontSize: 12.5,
+                          color: '#fff',
+                          background: 'var(--up)',
+                        }}
+                      >
+                        暂停
+                      </button>
+                    )}
                     <button
                       disabled={!canContinue}
                       onClick={(e) => {
@@ -398,14 +441,14 @@ export default function AnalysisPage() {
                       继续
                     </button>
                     <button
-                      disabled={isRunning}
+                      disabled={!canDelete}
                       onClick={(e) => {
                         e.stopPropagation()
                         void handleDeleteTask(task.id)
                       }}
                       className="card"
                       style={{
-                        cursor: isRunning ? 'not-allowed' : 'pointer',
+                        cursor: canDelete ? 'pointer' : 'not-allowed',
                         borderRadius: 'var(--r-sm)',
                         padding: '8px 16px',
                         fontFamily: 'var(--font-cjk)',
@@ -413,7 +456,7 @@ export default function AnalysisPage() {
                         fontSize: 12.5,
                         color: 'var(--text-dim)',
                         background: 'transparent',
-                        opacity: isRunning ? 0.4 : 1,
+                        opacity: canDelete ? 1 : 0.4,
                       }}
                     >
                       删除
@@ -444,11 +487,12 @@ function isStaleRunning(task: AnalysisTaskSummary): boolean {
 }
 
 /** 任务状态 → 徽标文案与配色 */
-function statusMeta(status: string): { label: string; color: string; bg: string } {
+function statusMeta(status: string, pauseRequested = false): { label: string; color: string; bg: string } {
   switch (status) {
     case 'completed':
       return { label: '已完成', color: 'var(--down)', bg: 'var(--down-soft)' }
     case 'running':
+      if (pauseRequested) return { label: '暂停中', color: 'var(--up)', bg: 'var(--up-soft)' }
       return { label: '执行中', color: 'var(--accent-bright)', bg: 'var(--accent-soft)' }
     case 'failed':
       return { label: '失败', color: 'var(--up)', bg: 'var(--up-soft)' }

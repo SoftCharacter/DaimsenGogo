@@ -50,6 +50,7 @@ export interface AnalysisTask {
   result: Theme | null
   error: string
   saved_theme_id: string
+  pause_requested: boolean
   checkpoint: AnalysisCheckpoint | null
 }
 
@@ -64,6 +65,7 @@ export interface AnalysisTaskSummary {
   result_name: string
   error: string
   saved_theme_id: string
+  pause_requested: boolean
 }
 
 export type AnalysisTaskSSEEvent = SSEEvent & { task_id?: string }

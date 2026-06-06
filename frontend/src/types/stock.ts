@@ -138,4 +138,6 @@ export type SSEEvent =
   | { type: 'progress'; step: number; max_steps: number; phase?: string; plan_step?: string; attempt?: number }
   | { type: 'result'; theme: import('./theme').Theme }
   | { type: 'error'; message: string }
+  | { type: 'queued'; task_id?: string }
+  | { type: 'paused'; message: string; step?: number; plan_step?: string }
   | { type: 'done' };

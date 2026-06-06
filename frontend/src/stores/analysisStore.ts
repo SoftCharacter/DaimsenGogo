@@ -82,6 +82,10 @@ function applyEvent(prev: AnalysisState, event: SSEEvent): Partial<AnalysisState
       next.error = event.message
       next.isRunning = false
       break
+    case 'paused':
+      next.error = event.message
+      next.isRunning = false
+      break
     case 'done':
       next.isRunning = false
       break

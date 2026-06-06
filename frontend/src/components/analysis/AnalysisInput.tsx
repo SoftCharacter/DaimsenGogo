@@ -1,8 +1,7 @@
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback } from 'react'
 
 interface AnalysisInputProps {
   onSubmit: (query: string) => void
-  isRunning: boolean
 }
 
 const EXAMPLE_QUERIES = [
@@ -16,20 +15,18 @@ const EXAMPLE_QUERIES = [
  * AI 分析输入条（高保真重构）
  * .panel 容器 + ✦ 前缀 + 占位输入框 + 渐变「开始分析」按钮；下方「试试：」推荐 chip。
  */
-export default function AnalysisInput({ onSubmit, isRunning }: AnalysisInputProps) {
+export default function AnalysisInput({ onSubmit }: AnalysisInputProps) {
   const [query, setQuery] = useState('')
   const [submitLocked, setSubmitLocked] = useState(false)
-  const disabled = isRunning || submitLocked
-
-  useEffect(() => {
-    if (!isRunning) setSubmitLocked(false)
-  }, [isRunning])
+  const disabled = submitLocked
 
   const handleSubmit = useCallback(() => {
     const trimmed = query.trim()
     if (!trimmed || disabled) return
     setSubmitLocked(true)
     onSubmit(trimmed)
+    setQuery('')
+    window.setTimeout(() => setSubmitLocked(false), 500)
   }, [query, disabled, onSubmit])
 
   const handleKeyDown = useCallback(
@@ -93,7 +90,7 @@ export default function AnalysisInput({ onSubmit, isRunning }: AnalysisInputProp
             whiteSpace: 'nowrap',
           }}
         >
-          {isRunning ? '分析中...' : '开始分析'}
+          {submitLocked ? '提交中...' : '开始分析'}
         </button>
       </div>
 

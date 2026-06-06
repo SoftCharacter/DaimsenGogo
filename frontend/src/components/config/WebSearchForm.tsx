@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useConfigStore } from '../../stores/configStore'
 import toast from 'react-hot-toast'
 
@@ -8,29 +8,19 @@ import toast from 'react-hot-toast'
  */
 export default function WebSearchForm() {
   const { config, updateWebSearch } = useConfigStore()
-  const [enabled, setEnabled] = useState(false)
   const [tavilyApiKey, setTavilyApiKey] = useState('')
-
-  /**
-   * 后端不会回显密钥明文，只同步开关状态并清空输入框。
-   */
-  useEffect(() => {
-    if (config?.web_search) {
-      setEnabled(config.web_search.enabled)
-      setTavilyApiKey('')
-    }
-  }, [config?.web_search])
 
   /**
    * 保存开关和可选的新 Tavily Key。
    */
   const handleSave = async () => {
-    if (enabled && !tavilyApiKey && !config?.web_search.has_tavily_api_key) {
-      toast.error('开启网页搜索时请填写 Tavily API Key')
+    if (!tavilyApiKey && !config?.web_search.has_tavily_api_key) {
+      toast.error('DG 分析必须填写 Tavily API Key')
       return
     }
-    await updateWebSearch({ enabled, tavily_api_key: tavilyApiKey })
-    toast.success(enabled ? '网页搜索已开启' : '网页搜索已关闭')
+    await updateWebSearch({ enabled: true, tavily_api_key: tavilyApiKey })
+    setTavilyApiKey('')
+    toast.success('网页搜索配置已保存')
   }
 
   return (
@@ -40,20 +30,28 @@ export default function WebSearchForm() {
         <h2 style={{ fontSize: 15, fontWeight: 700 }}>网页搜索</h2>
       </div>
 
-      <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 14, marginBottom: 15 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 14, marginBottom: 15 }}>
         <span>
-          <span style={{ display: 'block', fontSize: 13.5, fontWeight: 700, color: 'var(--text)' }}>启用 web_search</span>
+          <span style={{ display: 'block', fontSize: 13.5, fontWeight: 700, color: 'var(--text)' }}>web_search 必需</span>
           <span style={{ display: 'block', fontSize: 12, color: 'var(--text-faint)', marginTop: 4 }}>
-            在线索捕获、业务确证和递归补搜步骤作为公开网页证据补强，关闭后即使 .env 有 Key 也不会使用。
+            DG 分析会在线索捕获、业务确证和递归补搜步骤使用公开网页证据；未配置 Key 时无法开始分析。
           </span>
         </span>
-        <input
-          checked={enabled}
-          onChange={(e) => setEnabled(e.target.checked)}
-          type="checkbox"
-          style={{ width: 18, height: 18, accentColor: 'var(--accent)' }}
-        />
-      </label>
+        <span
+          style={{
+            flex: 'none',
+            fontSize: 11,
+            fontWeight: 700,
+            color: 'var(--accent-bright)',
+            background: 'var(--accent-soft)',
+            padding: '4px 9px',
+            borderRadius: 'var(--r-sm)',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          必选
+        </span>
+      </div>
 
       <label style={{ display: 'block', marginBottom: 15 }}>
         <span style={{ display: 'block', fontSize: 11.5, fontWeight: 600, color: 'var(--text-faint)', marginBottom: 7, letterSpacing: '0.04em' }}>
@@ -67,14 +65,13 @@ export default function WebSearchForm() {
           style={{
             width: '100%',
             border: '1px solid var(--border)',
-            background: enabled ? 'var(--surface-2)' : 'var(--surface)',
+            background: 'var(--surface-2)',
             borderRadius: 'var(--r-sm)',
             padding: '11px 13px',
             color: 'var(--text)',
             fontSize: 13.5,
             fontFamily: 'var(--font-mono)',
             outline: 'none',
-            opacity: enabled ? 1 : 0.65,
           }}
         />
       </label>

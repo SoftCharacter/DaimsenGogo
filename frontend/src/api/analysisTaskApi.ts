@@ -15,6 +15,10 @@ export async function deleteAnalysisTask(taskId: string): Promise<void> {
   await client.delete(`/analysis-tasks/${encodeURIComponent(taskId)}`)
 }
 
+export async function pauseAnalysisTask(taskId: string): Promise<void> {
+  await client.post(`/analysis-tasks/${encodeURIComponent(taskId)}/pause`)
+}
+
 export async function runAnalysisTask(query: string, signal?: AbortSignal): Promise<Response> {
   const response = await fetch('/api/analysis-tasks/run', {
     method: 'POST',

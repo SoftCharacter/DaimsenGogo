@@ -124,6 +124,7 @@ def list_tasks() -> list[AnalysisTaskSummary]:
                 result_name=task.result.name if task.result else "",
                 error=task.error,
                 saved_theme_id=task.saved_theme_id,
+                pause_requested=task.pause_requested,
             )
         )
     summaries.sort(key=lambda item: item.updated_at, reverse=True)
@@ -161,15 +162,36 @@ def mark_task_running(task: AnalysisTask) -> AnalysisTask:
     """标记任务运行中。"""
     now = _now()
     task.status = AnalysisTaskStatus.RUNNING
+    task.pause_requested = False
+    task.error = ""
     if not task.started_at:
         task.started_at = now
     task.updated_at = now
     return save_task(task)
 
 
+def mark_task_pending(task: AnalysisTask, error: str = "") -> AnalysisTask:
+    """标记任务等待队列调度。"""
+    task.status = AnalysisTaskStatus.PENDING
+    task.pause_requested = False
+    task.error = error
+    task.finished_at = ""
+    task.updated_at = _now()
+    return save_task(task)
+
+
+def request_task_pause(task: AnalysisTask) -> AnalysisTask:
+    """请求任务在当前SOP环节完成后暂停。"""
+    task.pause_requested = True
+    task.error = "已收到暂停请求，将在当前SOP环节完成后暂停"
+    task.updated_at = _now()
+    return save_task(task)
+
+
 def mark_task_paused(task: AnalysisTask, error: str = "") -> AnalysisTask:
     """标记任务暂停。"""
     task.status = AnalysisTaskStatus.PAUSED
+    task.pause_requested = False
     task.error = error
     task.updated_at = _now()
     return save_task(task)
@@ -179,6 +201,7 @@ def mark_task_failed(task: AnalysisTask, error: str) -> AnalysisTask:
     """标记任务失败。"""
     now = _now()
     task.status = AnalysisTaskStatus.FAILED
+    task.pause_requested = False
     task.error = error
     task.finished_at = now
     task.updated_at = now
@@ -189,6 +212,7 @@ def mark_task_completed(task: AnalysisTask) -> AnalysisTask:
     """标记任务完成。"""
     now = _now()
     task.status = AnalysisTaskStatus.COMPLETED
+    task.pause_requested = False
     task.finished_at = now
     task.updated_at = now
     return save_task(task)
@@ -227,6 +251,7 @@ def mark_task_cancelled(task: AnalysisTask, error: str = "") -> AnalysisTask:
     """标记任务取消。"""
     now = _now()
     task.status = AnalysisTaskStatus.CANCELLED
+    task.pause_requested = False
     task.error = error
     task.finished_at = now
     task.updated_at = now

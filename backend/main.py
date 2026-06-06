@@ -59,6 +59,11 @@ async def lifespan(app: FastAPI):
             logger.info("启动复位中断的分析任务：%d 个", recovered)
     except Exception as exc:
         logger.warning("复位中断分析任务失败：%s", exc)
+    try:
+        from backend.services.analysis_task_runner import enqueue_pending_tasks
+        await enqueue_pending_tasks()
+    except Exception as exc:
+        logger.warning("恢复等待中的分析任务失败：%s", exc)
     _last_heartbeat = time.time()
 
     # 功能可用优先：不再因心跳超时自动关闭后端，避免浏览器后台节流导致误杀进程。

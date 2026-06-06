@@ -127,6 +127,11 @@ async def run_analysis(body: AnalysisRequest):
             status_code=400,
             detail="请先在配置页面设置API地址",
         )
+    if not config.web_search.enabled or not config.web_search.tavily_api_key:
+        raise HTTPException(
+            status_code=400,
+            detail="DG 分析必须先配置并启用 web_search 的 Tavily API Key",
+        )
 
     logger.info("启动供应链分析: %s", query)
 

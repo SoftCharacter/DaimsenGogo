@@ -14,7 +14,7 @@ class Provider(BaseModel):
 
 class WebSearchConfig(BaseModel):
     """网页搜索配置"""
-    enabled: bool = False
+    enabled: bool = True
     tavily_api_key: str = ""
 
 

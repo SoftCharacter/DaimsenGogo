@@ -3076,6 +3076,7 @@ async def plan_execute_react_loop(
     checkpoint: AnalysisCheckpoint | None = None,
     task_id: str | None = None,
     save_checkpoint=None,
+    should_pause=None,
 ) -> AsyncGenerator[dict, None]:
     """Recursive Evidence-Planning Agent 主循环，单个SOP步骤内部使用有界ReAct或专用核验器。"""
     client = create_client(config)
@@ -3154,5 +3155,15 @@ async def plan_execute_react_loop(
                 task_id=task_id,
                 plan_step=step.name,
             )
+            if should_pause and should_pause() and state.current_plan_step <= len(state.plan.steps):
+                yield _make_event(
+                    "paused",
+                    message=f"已在「{step.name}」环节完成后暂停，可点击「继续」从下一环节恢复",
+                    task_id=task_id,
+                    step=step.id,
+                    plan_step=step.name,
+                )
+                yield _make_event("done", task_id=task_id)
+                return
 
     yield _make_event("done", task_id=task_id)
