@@ -1,0 +1,242 @@
+{
+  "id": "37bf0f36c0dc",
+  "name": "存储/HBM产业供应链",
+  "description": "聚焦于高带宽内存(HBM)及存储芯片产业的供应链分析，涵盖从设计、制造、封装到系统集成的完整环节，涉及DRAM存储器、先进封装技术（如TSV）及在高性能计算、AI服务器中的应用。",
+  "source_task_id": "analysis_c9658d91bd15",
+  "created_at": "2026-06-07T17:14:42.625625+00:00",
+  "updated_at": "2026-06-07T17:14:42.625625+00:00",
+  "categories": [
+    {
+      "id": "storage_device_supplier",
+      "name": "存储设备供应商",
+      "order": 1,
+      "stocks": [
+        {
+          "code": "SH:688072",
+          "name": "拓荆科技",
+          "name_en": "",
+          "percentage": 95,
+          "description": "高端半导体专用设备研发生产，产品包括PECVD、ALD等，应用于先进封装和HBM领域。；百度百科明确产品广泛应用于28nm及以上制程集成电路制造及先进封装、HBM等领域，是存储/HBM产业供应链的设备供应商；大基金投资其子公司拓荆键科。；公司产品直接应用于HBM制造，有公开证据支持强供应链关系。",
+          "category_tag": "存储设备供应商"
+        }
+      ]
+    },
+    {
+      "id": "core_memory_supplier",
+      "name": "存储器核心供应商",
+      "order": 2,
+      "stocks": [
+        {
+          "code": "SH:688525",
+          "name": "佰维存储",
+          "name_en": "",
+          "percentage": 90,
+          "description": "半导体存储器研发、封装测试、生产和销售。；百度百科显示是存储器公司，大基金投资，业绩受益于存储行业复苏和AI需求，是存储产业核心供应商。；公司直接从事存储器业务，是存储/HBM产业供应链的核心部分，有明确公开证据。",
+          "category_tag": "存储器核心供应商"
+        }
+      ]
+    },
+    {
+      "id": "capital_investment",
+      "name": "资本投资",
+      "order": 3,
+      "stocks": [
+        {
+          "code": "SH:688126",
+          "name": "沪硅产业",
+          "name_en": "",
+          "percentage": 65,
+          "description": "半导体硅片研发生产，产品包括300mm半导体硅片。；搜索结果显示大基金投资和减持，表明资本关系，但未明确与存储/HBM产业的直接业务关联。；有资本投资关系，但硅片是基础材料，关系间接，分数中等。",
+          "category_tag": "资本投资"
+        }
+      ]
+    },
+    {
+      "id": "memory_chip_design",
+      "name": "存储芯片设计",
+      "order": 4,
+      "stocks": [
+        {
+          "code": "SZ:001309",
+          "name": "德明利",
+          "name_en": "",
+          "percentage": 52,
+          "description": "公司主营专业存储控制芯片及解决方案，产品包括固态硬盘、内存条等存储产品。；公司业务直接涉及存储芯片和存储模组，与存储产业高度相关，但无公开证据显示与HBM的具体供应链或投资合作。；主营业务高度匹配存储产业，但搜索结果未找到与HBM或具体供应链的确认证据，因此归为弱关联。",
+          "category_tag": "存储芯片设计"
+        },
+        {
+          "code": "SH:603986",
+          "name": "兆易创新",
+          "name_en": "",
+          "percentage": 50,
+          "description": "存储器、微控制器、传感器和模拟芯片的研发和销售。；被列为存储芯片板块核心概念股，主营存储器业务直接涉及存储产业。；业务直接匹配存储产业，但缺乏HBM具体关联，仍为弱关联。",
+          "category_tag": "存储芯片设计"
+        },
+        {
+          "code": "SH:688110",
+          "name": "东芯股份",
+          "name_en": "",
+          "percentage": 45,
+          "description": "半导体芯片设计，产品包括NANDFlash、NORFlash、DRAM等存储芯片。；业务涉及存储芯片，直接相关，但补充搜索结果未提供具体与存储/HBM产业的供应链或投资证据。；产品为存储芯片，业务匹配，但公开证据不足，仅有板块文章提及。",
+          "category_tag": "存储芯片设计"
+        },
+        {
+          "code": "SH:688766",
+          "name": "普冉股份",
+          "name_en": "",
+          "percentage": 45,
+          "description": "非易失性存储器芯片设计与销售，产品包括NOR Flash、EEPROM等。；业务涉及存储芯片，但补充搜索未提供具体与存储/HBM产业的关联证据。；行业相关，但缺乏具体供应链或投资证据，仅有板块文章提及。",
+          "category_tag": "存储芯片设计"
+        },
+        {
+          "code": "SH:688123",
+          "name": "聚辰股份",
+          "name_en": "",
+          "percentage": 45,
+          "description": "集成电路产品设计，产品包括存储类芯片。；被列为存储芯片板块概念股，但补充搜索未提供具体与存储/HBM产业的关联证据。；业务有存储相关，但缺乏具体供应链或投资证据。",
+          "category_tag": "存储芯片设计"
+        }
+      ]
+    },
+    {
+      "id": "packaging_testing",
+      "name": "封装测试",
+      "order": 5,
+      "stocks": [
+        {
+          "code": "SZ:002185",
+          "name": "华天科技",
+          "name_en": "",
+          "percentage": 50,
+          "description": "公司主营集成电路封装测试，产品包括先进封装技术如TSV、2.5D/3D，适用于HBM等高带宽存储。；封装测试业务与存储/HBM产业链相关，尤其是先进封装技术，但无公开证据显示具体供应链或合作关系。；业务涉及存储相关封装技术，但缺少与HBM产业的直接证据，因此分数中等。",
+          "category_tag": "封装测试"
+        },
+        {
+          "code": "SZ:002156",
+          "name": "通富微电",
+          "name_en": "",
+          "percentage": 45,
+          "description": "提供集成电路封装测试服务，为全球客户提供设计仿真和封装测试一站式服务。；被列为HBM概念股，封装测试业务可能涉及存储芯片，但无具体关联证据。；仅行业相关，无明确供应链或资本证据，分数较低。",
+          "category_tag": "封装测试"
+        },
+        {
+          "code": "SH:600584",
+          "name": "长电科技",
+          "name_en": "",
+          "percentage": 45,
+          "description": "提供芯片成品制造解决方案，包括先进封装和传统封装服务。；被列为HBM概念股，业务涉及封装可能与HBM相关，但无具体供应链或投资证据。；仅概念关联，缺乏公开供应链或投资证据，因此判为弱关联。",
+          "category_tag": "封装测试"
+        }
+      ]
+    },
+    {
+      "id": "wafer_foundry",
+      "name": "晶圆代工",
+      "order": 6,
+      "stocks": [
+        {
+          "code": "SH:688981",
+          "name": "中芯国际",
+          "name_en": "",
+          "percentage": 50,
+          "description": "集成电路晶圆代工业务。；被列为存储芯片板块概念股，但补充搜索未提供与存储/HBM产业的具体关联证据。；晶圆代工可能用于存储芯片制造，但无直接证据，关系较弱。",
+          "category_tag": "晶圆代工"
+        }
+      ]
+    },
+    {
+      "id": "other_manufacturing",
+      "name": "其他制造服务",
+      "order": 7,
+      "stocks": [
+        {
+          "code": "SZ:000021",
+          "name": "深科技",
+          "name_en": "",
+          "percentage": 45,
+          "description": "公司主营电子产品制造服务，产品包括存储半导体，业务与存储产业部分相关。；业务画像显示产品包含存储半导体，但无公开证据显示与存储/HBM产业的具体供应链、投资或合作关系。；业务部分匹配存储产业，但搜索结果未提供具体关系证据，仅因行业相关给低分。",
+          "category_tag": "其他制造服务"
+        }
+      ]
+    },
+    {
+      "id": "semiconductor_equipment",
+      "name": "半导体设备",
+      "order": 8,
+      "stocks": [
+        {
+          "code": "SH:688082",
+          "name": "盛美上海",
+          "name_en": "",
+          "percentage": 45,
+          "description": "半导体专用设备研发生产，产品包括清洗设备、电镀设备等。；被列为存储芯片板块概念股，但补充搜索未提供与存储/HBM产业的具体供应链或投资证据。；行业相关，但缺乏具体关联证据，仅有泛行业提及。",
+          "category_tag": "半导体设备"
+        },
+        {
+          "code": "SH:688012",
+          "name": "中微公司",
+          "name_en": "",
+          "percentage": 42,
+          "description": "高端半导体设备及泛半导体设备的研发、生产和销售。；被列为存储芯片板块概念股，设备业务可能用于存储芯片制造。；概念相关但缺乏实质关联，分数较低。",
+          "category_tag": "半导体设备"
+        },
+        {
+          "code": "SZ:002371",
+          "name": "北方华创",
+          "name_en": "",
+          "percentage": 42,
+          "description": "半导体基础产品的研发、生产、销售，包括半导体装备等。；被列为存储芯片板块概念股，设备业务可能用于存储芯片制造，但缺乏具体证据。；概念相关但无实质供应链证据，判为弱关联。",
+          "category_tag": "半导体设备"
+        }
+      ]
+    },
+    {
+      "id": "interconnect_chip",
+      "name": "互连芯片",
+      "order": 9,
+      "stocks": [
+        {
+          "code": "SH:688008",
+          "name": "澜起科技",
+          "name_en": "",
+          "percentage": 44,
+          "description": "为云计算及AI基础设施提供互连类芯片解决方案。；被列为存储芯片板块概念股，互连芯片可能用于存储系统，但关联间接。；间接相关，无明确证据，判为弱关联。",
+          "category_tag": "互连芯片"
+        }
+      ]
+    },
+    {
+      "id": "semiconductor_material",
+      "name": "半导体材料",
+      "order": 10,
+      "stocks": [
+        {
+          "code": "SH:688019",
+          "name": "安集科技",
+          "name_en": "",
+          "percentage": 42,
+          "description": "高端半导体材料的研发和产业化，包括化学机械抛光液等。；被列为存储芯片板块概念股，材料可能用于存储芯片制造。；弱关联，仅行业相关，无明确证据。",
+          "category_tag": "半导体材料"
+        }
+      ]
+    }
+  ],
+  "rejected_stocks": [
+    {
+      "code": "SZ:002236",
+      "name": "大华股份",
+      "relation_score": 20,
+      "relation_type": "rejected",
+      "reason": "公司业务主营智慧物联产品，与存储/HBM产业不直接相关，且搜索结果未显示任何关联证据。",
+      "evidence_url": ""
+    },
+    {
+      "code": "SH:688535",
+      "name": "华海诚科",
+      "relation_score": 30,
+      "relation_type": "rejected",
+      "reason": "被列为HBM概念股，但补充搜索结果完全无关，未找到与存储/HBM产业的任何具体关系。",
+      "evidence_url": "https://tradingdanny.com/hbm-concept-stocks-investment-guide"
+    }
+  ]
+}
