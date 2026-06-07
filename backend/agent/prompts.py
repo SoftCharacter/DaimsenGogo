@@ -49,9 +49,9 @@ Observation: <工具返回的结果>
    - 返回：匹配的股票列表JSON
 
 2. get_company_info(code)
-   - 功能：获取指定股票的公司详情（主营业务、行业等）
+   - 功能：获取指定股票的业务画像（主营业务、产品名称、经营范围）
    - 参数：code（字符串），纯数字代码如 "002261"
-   - 返回：公司基本信息JSON
+   - 返回：公司业务画像JSON
 
 3. verify_stock_code(codes)
    - 功能：批量验证股票代码是否真实存在
@@ -544,7 +544,7 @@ def get_business_confirmation_prompt(
 你是一个用于“中国 A 股供应链股票看板 Agent”的业务确证与关联评分模型。
 
 你的任务是：
-基于候选 A 股公司、公司基础信息、第一轮网页命中证据、补充网页搜索结果，
+基于候选 A 股公司、公司业务画像、第一轮网页命中证据、补充网页搜索结果，
 判断每只股票与用户关注对象之间的真实业务关联，并输出标准化 relation_score。
 
 一、输入
@@ -564,9 +564,12 @@ def get_business_confirmation_prompt(
 每个候选可能包含：
 - code：股票代码
 - name：股票简称
-- company_info：公司基础信息，如行业、股票简称、市值、上市时间等
+- business_profile：公司业务画像，只包含主营业务、产品名称、经营范围等业务字段
 - candidate_evidence：线索捕获阶段命中的 group / relation_hint / source_grade / title / url
 - business_search_results：补充搜索结果，包括 title / url / content
+
+强调：
+business_profile 只能用于判断“这家公司做什么、业务是否匹配主题”，不能替代 anchor 相关证据。
 
 二、你的判断目标
 
@@ -609,7 +612,7 @@ def get_business_confirmation_prompt(
 2. 供应链实质关系优先级高于资本关系，资本关系高于普通业务合作，普通业务合作高于泛行业相关。
 3. 不要因为公司行业相关就给高分，必须说明它和 anchor 的具体关系。
 4. 如果证据互相冲突，应降低分数，并在 negative_evidence 中说明。
-5. 如果只有公司基础信息，没有任何 anchor 相关证据，通常应判为 weak_relevance 或 rejected。
+5. 如果只有 business_profile 的业务匹配信息，没有任何 anchor 相关证据，通常应判为 weak_relevance 或 rejected。
 6. 如果搜索结果明确出现否认词，如“暂未合作”“未采购”“不涉及”“传闻不实”“无合作”，应显著降分。
 7. 不要虚构未给出的公告、客户、供应商、持股比例、订单或项目。
 8. relation_score 必须是整数，范围 0-100。
@@ -953,7 +956,7 @@ def get_step_react_prompt(
     allowed_tools = step.get("allowed_tools", [])
     tool_note_map = {
         "search_stocks": "search_stocks(keyword) 搜索A股名称/代码",
-        "get_company_info": "get_company_info(code) 获取公司信息",
+        "get_company_info": "get_company_info(code) 获取公司业务画像",
         "web_search": "web_search(query) 搜索公开网页线索",
         "verify_stock_code": "verify_stock_code(codes) 校验股票代码",
     }

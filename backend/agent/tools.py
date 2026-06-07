@@ -2,7 +2,7 @@
 Agent工具集
 提供供应链分析所需的同步工具函数：
 - search_stocks: 按关键词搜索A股股票
-- get_company_info: 获取上市公司详情
+- get_company_info: 获取上市公司业务画像
 - web_search: 搜索公开网页证据
 - verify_stock_code: 批量验证股票代码有效性
 
@@ -193,7 +193,7 @@ def search_stocks(keyword: str, task_id: str | None = None) -> str:
 
 def get_company_info(code: str, task_id: str | None = None) -> str:
     """
-    获取上市公司基本信息（主营业务、行业等）
+    获取上市公司业务画像（主营业务、产品名称、经营范围）
     自动清理LLM输出的各种非标准格式（带引号、多代码、非标准前缀等）。
     """
     pure_code = code.strip().strip('"').strip("'").strip()
@@ -208,7 +208,7 @@ def get_company_info(code: str, task_id: str | None = None) -> str:
     try:
         info = fetch_company_info(pure_code, task_id=task_id)
         return json.dumps(
-            {"code": pure_code, "info": info},
+            {"code": pure_code, "business_profile": info, "info": info},
             ensure_ascii=False,
         )
     except Exception as e:

@@ -219,7 +219,7 @@ def _fixed_steps(planner_data: dict[str, Any], web_search_enabled: bool = False)
             id=2,
             key="business_confirmation",
             name="业务确证",
-            objective="对核心候选调用公司信息工具，确认主营业务和供应链角色。",
+            objective="对核心候选调用公司业务画像工具，确认主营业务和供应链角色。",
             allowed_tools=business_confirmation_tools,
             max_actions=12,
             required_outputs=["confirmed_stocks"],
@@ -1546,7 +1546,7 @@ async def _run_business_confirmation(
     anchor = _business_confirmation_anchor(query, state)
     yield _make_event(
         "thinking",
-        content=f"业务确证开始：将为{len(candidates)}只候选批量补充公司信息，并逐只搜索与「{anchor}」的业务关联证据。",
+        content=f"业务确证开始：将为{len(candidates)}只候选批量补充公司业务画像，并逐只搜索与「{anchor}」的业务关联证据。",
         step=step.id,
         task_id=task_id,
         plan_step=step.name,
@@ -1557,7 +1557,7 @@ async def _run_business_confirmation(
     for index, candidate in enumerate(candidates, start=1):
         code = candidate["code"]
         name = candidate["name"]
-        info_action = ParsedAction(thought="批量补充候选公司基础信息。", action="get_company_info", action_input=code)
+        info_action = ParsedAction(thought="批量补充候选公司业务画像。", action="get_company_info", action_input=code)
         yield _make_event("tool_call", tool=info_action.action, input=info_action.action_input, step=step.id, task_id=task_id, plan_step=step.name)
         info_result = await _execute_tool(info_action, task_id=task_id)
         yield _make_event("tool_result", tool=info_action.action, output=info_result, step=step.id, task_id=task_id, plan_step=step.name)
@@ -1592,7 +1592,11 @@ async def _run_business_confirmation(
             "code": code,
             "name": name,
             "source_phase": str(candidate.get("source_phase") or "business_confirmation"),
-            "company_info": info_payload.get("info") if isinstance(info_payload, dict) else {},
+            "business_profile": (
+                info_payload.get("business_profile") or info_payload.get("info") or {}
+                if isinstance(info_payload, dict)
+                else {}
+            ),
             "candidate_evidence": {
                 "group": str(candidate.get("group") or ""),
                 "relation_hint": str(candidate.get("relation_hint") or ""),
@@ -1829,7 +1833,7 @@ async def _run_candidate_expansion(
     for index, candidate in enumerate(expanded_candidates, start=1):
         code = candidate["code"]
         name = candidate["name"]
-        info_action = ParsedAction(thought="补全候选公司基础信息。", action="get_company_info", action_input=code)
+        info_action = ParsedAction(thought="补全候选公司业务画像。", action="get_company_info", action_input=code)
         yield _make_event("tool_call", tool=info_action.action, input=code, step=step.id, task_id=task_id, plan_step=step.name)
         info_result = await _execute_tool(info_action, task_id=task_id)
         yield _make_event("tool_result", tool=info_action.action, output=info_result, step=step.id, task_id=task_id, plan_step=step.name)
@@ -1861,7 +1865,11 @@ async def _run_candidate_expansion(
             "code": code,
             "name": name,
             "source_phase": "candidate_expansion",
-            "company_info": info_payload.get("info") if isinstance(info_payload, dict) else {},
+            "business_profile": (
+                info_payload.get("business_profile") or info_payload.get("info") or {}
+                if isinstance(info_payload, dict)
+                else {}
+            ),
             "candidate_evidence": {
                 "group": str(candidate.get("group") or ""),
                 "relation_hint": str(candidate.get("relation_hint") or ""),

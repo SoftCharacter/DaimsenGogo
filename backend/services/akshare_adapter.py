@@ -142,6 +142,11 @@ def _company_cache_path(task_id: str | None) -> Path | None:
     return _task_data_cache_path(task_id, "akshare_company_cache.json")
 
 
+def _company_business_cache_path(task_id: str | None) -> Path | None:
+    """返回任务级公司业务画像缓存路径。"""
+    return _task_data_cache_path(task_id, "akshare_company_business_cache.json")
+
+
 def _read_json_cache(path: Path | None, default):
     """读取本地JSON缓存，失败时返回默认值"""
     if path is None:
@@ -1001,3 +1006,74 @@ def fetch_company_info_sync(pure_code: str, task_id: str | None = None) -> dict:
     cached_companies[num] = info
     _write_json_cache(company_cache, cached_companies)
     return info
+
+
+def _first_non_empty(*values) -> str:
+    """返回第一个非空字段值，统一清理空白。"""
+    for value in values:
+        text = str(value or "").strip()
+        if text and text.lower() != "none":
+            return re.sub(r"\s+", " ", text)
+    return ""
+
+
+def _df_first_row(df) -> dict:
+    """把AkShare单行DataFrame转为普通dict，空值保留为空字符串。"""
+    if df is None or getattr(df, "empty", True):
+        return {}
+    row = df.where(df.notna(), "").to_dict(orient="records")[0]
+    return {str(key): "" if value is None else value for key, value in row.items()}
+
+
+def fetch_company_business_info_sync(pure_code: str, task_id: str | None = None) -> dict:
+    """
+    使用AkShare获取并清洗上市公司业务画像。
+
+    仅保留评分模型需要的业务字段：主营业务、产品名称、经营范围。
+    数据源优先来自 stock_zyjs_ths，同时用 stock_profile_cninfo 补齐缺失字段。
+    """
+    import akshare as ak
+
+    num = extract_numeric_code(pure_code)
+    formatted_code = format_stock_code(num)
+    cached_business = _read_json_cache(_company_business_cache_path(task_id), {})
+    cached = cached_business.get(formatted_code) or cached_business.get(num)
+    if cached:
+        return cached
+
+    errors: list[str] = []
+    sources: list[str] = []
+    ths_row: dict = {}
+    cninfo_row: dict = {}
+
+    try:
+        ths_df = _run_without_proxy(lambda: _run_quietly(lambda: ak.stock_zyjs_ths(symbol=num)))
+        ths_row = _df_first_row(ths_df)
+        if ths_row:
+            sources.append("akshare.stock_zyjs_ths")
+    except Exception as exc:
+        errors.append(f"stock_zyjs_ths: {exc}")
+
+    try:
+        cninfo_df = _run_without_proxy(lambda: _run_quietly(lambda: ak.stock_profile_cninfo(symbol=num)))
+        cninfo_row = _df_first_row(cninfo_df)
+        if cninfo_row:
+            sources.append("akshare.stock_profile_cninfo")
+    except Exception as exc:
+        errors.append(f"stock_profile_cninfo: {exc}")
+
+    business_profile = {
+        "数据源": sources or ["akshare"],
+        "股票代码": num,
+        "主营业务": _first_non_empty(ths_row.get("主营业务"), cninfo_row.get("主营业务")),
+        "产品名称": _first_non_empty(ths_row.get("产品名称")),
+        "经营范围": _first_non_empty(ths_row.get("经营范围"), cninfo_row.get("经营范围")),
+        "errors": errors,
+    }
+
+    if sources:
+        cached_business[formatted_code] = business_profile
+        cached_business[num] = business_profile
+        _write_json_cache(_company_business_cache_path(task_id), cached_business)
+
+    return business_profile
