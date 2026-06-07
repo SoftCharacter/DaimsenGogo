@@ -273,14 +273,36 @@ export default function AnalysisPage() {
   }
 
   const historyPanel = (
-    <aside className="analysis-history-panel">
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-        <span style={{ fontSize: 13, fontWeight: 700, letterSpacing: '0.16em', color: 'var(--text-faint)' }}>历史任务</span>
-        <span className="mono" style={{ fontSize: 11.5, color: 'var(--text-faint)' }}>{tasks.length} 条记录</span>
+    <aside
+      style={{
+        width: 'var(--sidebar-w)',
+        flex: 'none',
+        borderRight: '1px solid var(--border)',
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100%',
+        background: 'color-mix(in oklab, var(--surface) 40%, transparent)',
+      }}
+    >
+      <div style={{ padding: '18px 18px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.18em', color: 'var(--text-faint)', textTransform: 'uppercase' }}>
+          历史任务
+        </span>
+        <span
+          className="mono"
+          style={{ fontSize: 11, color: 'var(--text-faint)', background: 'var(--surface-2)', padding: '2px 8px', borderRadius: 99 }}
+        >
+          {tasks.length}
+        </span>
       </div>
-      {loadingTasks && tasks.length === 0 && <p style={{ fontSize: 12.5, color: 'var(--text-faint)' }}>加载中...</p>}
-      {!loadingTasks && tasks.length === 0 && <p style={{ fontSize: 12.5, color: 'var(--text-faint)' }}>暂无历史任务</p>}
-      <div className="analysis-history-list">
+
+      <div style={{ flex: 1, overflowY: 'auto', padding: '0 12px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {loadingTasks && tasks.length === 0 && (
+          <p style={{ fontSize: 11.5, color: 'var(--text-faint)', padding: '8px 4px' }}>加载中...</p>
+        )}
+        {!loadingTasks && tasks.length === 0 && (
+          <p style={{ fontSize: 11.5, color: 'var(--text-faint)', padding: '8px 4px' }}>暂无历史任务</p>
+        )}
         {tasks.map((task, i) => {
           const stale = isStaleRunning(task)
           const status = stale ? STALE_META : statusMeta(task.status, task.pause_requested)
@@ -292,21 +314,38 @@ export default function AnalysisPage() {
             <div
               key={task.id}
               className="card fade-in"
-              style={{ animationDelay: `${i * 60}ms`, background: 'var(--surface)', padding: '14px 15px', cursor: 'pointer' }}
+              style={{
+                animationDelay: `${i * 60}ms`,
+                background: currentTask?.id === task.id ? 'var(--accent-soft)' : 'var(--surface)',
+                borderColor: currentTask?.id === task.id ? 'var(--accent-line)' : 'var(--border)',
+                padding: '13px 14px',
+                cursor: 'pointer',
+              }}
               onClick={() => void loadTask(task.id)}
             >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10 }}>
-                <span style={{ fontWeight: 600, fontSize: 14, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {task.result_name || task.query}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'space-between' }}>
+                <span style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+                  <span
+                    style={{
+                      width: 6,
+                      height: 6,
+                      borderRadius: 99,
+                      flex: 'none',
+                      background: currentTask?.id === task.id ? 'var(--accent-bright)' : 'var(--text-faint)',
+                    }}
+                  />
+                  <span style={{ fontWeight: 600, fontSize: 13.5, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {task.result_name || task.query}
+                  </span>
                 </span>
                 <span
                   style={{
                     flex: 'none',
-                    fontSize: 10.5,
+                    fontSize: 10,
                     fontWeight: 700,
                     color: status.color,
                     background: status.bg,
-                    padding: '3px 8px',
+                    padding: '2px 7px',
                     borderRadius: 99,
                     whiteSpace: 'nowrap',
                   }}
@@ -314,12 +353,12 @@ export default function AnalysisPage() {
                   ● {status.label}
                 </span>
               </div>
-              <div style={{ display: 'flex', gap: 12, margin: '11px 0 13px', color: 'var(--text-faint)', fontSize: 11.5 }}>
+              <div style={{ display: 'flex', gap: 10, margin: '9px 0 11px 14px', color: 'var(--text-faint)', fontSize: 10.5 }}>
                 <span className="mono">{task.current_step}/{task.max_steps} 步</span>
                 <span>·</span>
                 <span className="mono">{task.updated_at?.slice(0, 10)}</span>
               </div>
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', gap: 7, flexWrap: 'wrap', marginLeft: 14 }}>
                 {canPause && (
                   <button
                     onClick={(e) => {
@@ -330,10 +369,10 @@ export default function AnalysisPage() {
                       cursor: 'pointer',
                       border: 'none',
                       borderRadius: 'var(--r-sm)',
-                      padding: '8px 14px',
+                      padding: '7px 12px',
                       fontFamily: 'var(--font-cjk)',
                       fontWeight: 600,
-                      fontSize: 12.5,
+                      fontSize: 12,
                       color: '#fff',
                       background: 'var(--up)',
                     }}
@@ -351,10 +390,10 @@ export default function AnalysisPage() {
                     cursor: canContinue ? 'pointer' : 'not-allowed',
                     border: 'none',
                     borderRadius: 'var(--r-sm)',
-                    padding: '8px 15px',
+                    padding: '7px 13px',
                     fontFamily: 'var(--font-cjk)',
                     fontWeight: 600,
-                    fontSize: 12.5,
+                    fontSize: 12,
                     color: '#fff',
                     background: 'var(--accent)',
                     opacity: canContinue ? 1 : 0.4,
@@ -372,10 +411,10 @@ export default function AnalysisPage() {
                   style={{
                     cursor: canDelete ? 'pointer' : 'not-allowed',
                     borderRadius: 'var(--r-sm)',
-                    padding: '8px 14px',
+                    padding: '7px 12px',
                     fontFamily: 'var(--font-cjk)',
                     fontWeight: 600,
-                    fontSize: 12.5,
+                    fontSize: 12,
                     color: 'var(--text-dim)',
                     background: 'transparent',
                     opacity: canDelete ? 1 : 0.4,
@@ -392,10 +431,10 @@ export default function AnalysisPage() {
   )
 
   return (
-    <div style={{ flex: 1, overflowY: 'auto', padding: '32px 0 40px' }}>
-      <div className="analysis-shell">
-        {historyPanel}
-        <main className="analysis-main">
+    <div style={{ flex: 1, display: 'flex', minHeight: 0, width: '100%' }}>
+      {historyPanel}
+      <div style={{ flex: 1, minWidth: 0, overflowY: 'auto', padding: '32px 28px 40px' }}>
+        <main style={{ maxWidth: 960, margin: '0 auto' }}>
         {/* Hero */}
         <div className="fade-in" style={{ textAlign: 'center', marginBottom: 14 }}>
           <span style={{ fontSize: 11.5, fontWeight: 700, letterSpacing: '0.22em', color: 'var(--accent-bright)' }}>
