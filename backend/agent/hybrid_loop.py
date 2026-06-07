@@ -506,7 +506,8 @@ def _extract_web_stock_terms(entries: list[dict[str, Any]], task_id: str | None)
         return group or "web_match"
 
     def add_hit(code: str, name: str, source: str, entry: dict[str, Any] | None = None) -> None:
-        if not code or code in seen_codes:
+        catalog_name = code_map.get(code, "")
+        if not code or code in seen_codes or not catalog_name:
             return
         seen_codes.add(code)
         entry = entry or {}
@@ -517,7 +518,7 @@ def _extract_web_stock_terms(entries: list[dict[str, Any]], task_id: str | None)
         ])
         hits.append({
             "code": code,
-            "name": name or code_map.get(code, "") or code,
+            "name": name or catalog_name,
             "source": source,
             "group": str(entry.get("group", "")),
             "relation_hint": relation_hint(entry_text, str(entry.get("group", ""))),
@@ -1281,6 +1282,15 @@ def _candidate_stock_from_planning_candidate(item: dict[str, Any]) -> dict[str, 
     }
 
 
+def _stock_catalog_by_code(task_id: str | None) -> dict[str, str]:
+    """返回本地A股股票库映射，仅保留代码和名称都存在的记录。"""
+    return {
+        str(item.get("code")): str(item.get("name"))
+        for item in _load_stock_list_for_planning(task_id=task_id)
+        if isinstance(item, dict) and item.get("code") and item.get("name")
+    }
+
+
 def _planning_candidate_stocks(state: HybridExecutionState) -> list[dict[str, Any]]:
     seen_codes: set[str] = set()
     candidate_stocks: list[dict[str, Any]] = []
@@ -1789,6 +1799,7 @@ async def _run_candidate_expansion(
                 })
 
     stock_terms = _extract_web_stock_terms(entries, task_id=task_id)
+    stock_catalog = _stock_catalog_by_code(task_id=task_id)
     existing_codes = {
         code
         for record in [*confirmed_stocks, *rejected_stocks]
@@ -1802,6 +1813,10 @@ async def _run_candidate_expansion(
         stock = _candidate_stock_from_planning_candidate(item) if isinstance(item, dict) else None
         if not stock or stock["code"] in existing_codes or stock["code"] in seen_codes:
             continue
+        catalog_name = stock_catalog.get(stock["code"], "")
+        if not catalog_name:
+            continue
+        stock["name"] = catalog_name
         seen_codes.add(stock["code"])
         expanded_candidates.append({**stock, "source_phase": "candidate_expansion"})
         if len(expanded_candidates) >= missing_count:

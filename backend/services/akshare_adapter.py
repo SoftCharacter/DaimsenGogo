@@ -33,6 +33,7 @@ _XQ_KLINE_URL = "https://stock.xueqiu.com/v5/stock/chart/kline.json"
 _XQ_FINANCE_INDICATOR_URL = "https://stock.xueqiu.com/v5/stock/finance/cn/indicator.json"
 _XQ_HOLDERS_URL = "https://stock.xueqiu.com/v5/stock/f10/cn/holders.json"
 _XQ_EVENT_URL = "https://stock.xueqiu.com/v5/stock/screener/event/list.json"
+_XQ_COMPANY_URL = "https://stock.xueqiu.com/v5/stock/f10/cn/company.json"
 _XQ_HEADERS = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 "
     "(KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1",
@@ -1017,6 +1018,14 @@ def _first_non_empty(*values) -> str:
     return ""
 
 
+def _has_business_profile_fields(profile: dict) -> bool:
+    """判断业务画像是否包含可供评分使用的核心业务字段。"""
+    return any(
+        _first_non_empty(profile.get(field))
+        for field in ("主营业务", "产品名称", "经营范围")
+    )
+
+
 def _df_first_row(df) -> dict:
     """把AkShare单行DataFrame转为普通dict，空值保留为空字符串。"""
     if df is None or getattr(df, "empty", True):
@@ -1025,12 +1034,41 @@ def _df_first_row(df) -> dict:
     return {str(key): "" if value is None else value for key, value in row.items()}
 
 
+def _fetch_xq_company_business_info_sync(num: str, akshare_errors: list[str] | None = None) -> dict:
+    """使用雪球F10公司资料接口兜底获取公司业务画像。"""
+    symbol = _to_xq_symbol(num)
+    payload = _fetch_xq_json_sync(symbol, _XQ_COMPANY_URL, {"symbol": symbol}, timeout=20)
+    company = (payload.get("data") or {}).get("company") or {}
+    if not isinstance(company, dict) or not company:
+        raise RuntimeError(f"雪球公司资料响应为空: {str(payload)[:300]}")
+
+    industry = company.get("affiliate_industry")
+    industry_name = ""
+    if isinstance(industry, dict):
+        industry_name = _first_non_empty(industry.get("ind_name"))
+
+    business_profile = {
+        "数据源": ["xueqiu.company"],
+        "股票代码": num,
+        "主营业务": _first_non_empty(company.get("main_operation_business")),
+        "产品名称": "",
+        "经营范围": _first_non_empty(company.get("operating_scope")),
+        "公司简介": _first_non_empty(company.get("org_cn_introduction")),
+        "所属行业": industry_name,
+        "errors": akshare_errors or [],
+    }
+    if not _has_business_profile_fields(business_profile):
+        raise RuntimeError(f"雪球公司业务字段为空: {str(payload)[:300]}")
+    return business_profile
+
+
 def fetch_company_business_info_sync(pure_code: str, task_id: str | None = None) -> dict:
     """
-    使用AkShare获取并清洗上市公司业务画像。
+    获取并清洗上市公司业务画像。
 
     仅保留评分模型需要的业务字段：主营业务、产品名称、经营范围。
-    数据源优先来自 stock_zyjs_ths，同时用 stock_profile_cninfo 补齐缺失字段。
+    优先使用 AkShare 的 stock_zyjs_ths / stock_profile_cninfo；
+    若 AkShare 没有返回可用业务字段，则使用雪球 company.json 兜底。
     """
     import akshare as ak
 
@@ -1071,7 +1109,15 @@ def fetch_company_business_info_sync(pure_code: str, task_id: str | None = None)
         "errors": errors,
     }
 
-    if sources:
+    if not _has_business_profile_fields(business_profile):
+        try:
+            business_profile = _fetch_xq_company_business_info_sync(num, errors)
+            sources = list(business_profile.get("数据源") or [])
+        except Exception as exc:
+            errors.append(f"xueqiu.company: {exc}")
+            business_profile["errors"] = errors
+
+    if _has_business_profile_fields(business_profile):
         cached_business[formatted_code] = business_profile
         cached_business[num] = business_profile
         _write_json_cache(_company_business_cache_path(task_id), cached_business)

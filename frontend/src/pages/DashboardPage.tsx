@@ -12,9 +12,31 @@ import type { StockDiagnosis } from '../types/stock'
 import type { StockItem } from '../types/theme'
 
 const ALL = '全部'
+const DIAGNOSIS_CACHE_TTL_MS = 24 * 60 * 60 * 1000
+
+type DiagnosisCacheEntry = {
+  savedAt: number
+  data: StockDiagnosis
+}
 
 const sortByRelevance = (a: StockItem, b: StockItem) =>
   b.percentage - a.percentage || a.name.localeCompare(b.name, 'zh-Hans-CN') || a.code.localeCompare(b.code)
+
+const diagnosisCacheKey = (stock: Pick<StockItem, 'code' | 'name'>) => `${stock.code}|${stock.name}`
+
+function readDiagnosisCache(cache: Map<string, DiagnosisCacheEntry>, key: string): StockDiagnosis | null {
+  const entry = cache.get(key)
+  if (!entry) return null
+  if (Date.now() - entry.savedAt >= DIAGNOSIS_CACHE_TTL_MS) {
+    cache.delete(key)
+    return null
+  }
+  return entry.data
+}
+
+function writeDiagnosisCache(cache: Map<string, DiagnosisCacheEntry>, key: string, data: StockDiagnosis) {
+  cache.set(key, { savedAt: Date.now(), data })
+}
 
 /**
  * 供应链看板页面（高保真重构）
@@ -43,6 +65,8 @@ export default function DashboardPage() {
   const [diagnosisError, setDiagnosisError] = useState('')
   const diagnosisRequestId = useRef(0)
   const enhanceRequestId = useRef(0)
+  const diagnosisCacheRef = useRef<Map<string, DiagnosisCacheEntry>>(new Map())
+  const enhancedDiagnosisCacheRef = useRef<Map<string, DiagnosisCacheEntry>>(new Map())
 
   /** 路由ID变化时加载对应主题 */
   useEffect(() => {
@@ -103,18 +127,24 @@ export default function DashboardPage() {
     const requestId = diagnosisRequestId.current + 1
     diagnosisRequestId.current = requestId
     enhanceRequestId.current += 1
+    const cacheKey = diagnosisCacheKey(stock)
+    const cachedBase = readDiagnosisCache(diagnosisCacheRef.current, cacheKey)
+    const cachedEnhanced = readDiagnosisCache(enhancedDiagnosisCacheRef.current, cacheKey)
     setDiagnosisStock(stock)
-    setDiagnosis(null)
-    setBaseDiagnosis(null)
-    setEnhancedDiagnosis(null)
+    setDiagnosis(cachedBase)
+    setBaseDiagnosis(cachedBase)
+    setEnhancedDiagnosis(cachedEnhanced)
     setDiagnosisError('')
-    setDiagnosisLoading(true)
+    setDiagnosisLoading(!cachedBase)
     setDiagnosisEnhancing(false)
     setDiagnosisEnhanced(false)
+
+    if (cachedBase) return
 
     fetchStockDiagnosis(stock.code, stock.name)
       .then((result) => {
         if (diagnosisRequestId.current !== requestId) return
+        writeDiagnosisCache(diagnosisCacheRef.current, cacheKey, result)
         setDiagnosis(result)
         setBaseDiagnosis(result)
       })
@@ -156,6 +186,15 @@ export default function DashboardPage() {
         setDiagnosisEnhancing(false)
         return
       }
+      const cacheKey = diagnosisCacheKey(stock)
+      const cachedEnhanced = readDiagnosisCache(enhancedDiagnosisCacheRef.current, cacheKey)
+      if (cachedEnhanced) {
+        setDiagnosis(cachedEnhanced)
+        setEnhancedDiagnosis(cachedEnhanced)
+        setDiagnosisEnhanced(true)
+        setDiagnosisEnhancing(false)
+        return
+      }
       const requestId = enhanceRequestId.current + 1
       enhanceRequestId.current = requestId
       setBaseDiagnosis((current) => current || diagnosis)
@@ -164,6 +203,9 @@ export default function DashboardPage() {
       fetchEnhancedStockDiagnosis(stock.code, stock.name)
         .then((result) => {
           if (enhanceRequestId.current !== requestId) return
+          if (result.llm_status === 'ok') {
+            writeDiagnosisCache(enhancedDiagnosisCacheRef.current, cacheKey, result)
+          }
           setDiagnosis(result)
           setEnhancedDiagnosis(result)
           setDiagnosisEnhanced(true)

@@ -3,11 +3,14 @@
 点击股票后按需拉取历史行情、股东人数、财报和公司大事，并生成诊断结果。
 """
 import asyncio
+import hashlib
 import json
 import logging
 import re
 import time
 from datetime import datetime, timedelta
+from pathlib import Path
+import threading
 
 from backend.models.diagnosis_models import (
     ChipDistributionResponse,
@@ -37,6 +40,11 @@ MACD_SLOW = 26
 MACD_SIGNAL = 9
 ONE_YEAR_TRADING_DAYS = 250
 MACD_WARMUP_DAYS = 500
+DIAGNOSIS_CACHE_TTL_SECONDS = 24 * 60 * 60
+_DATA_DIR = Path(__file__).resolve().parents[2] / "data"
+_DIAGNOSIS_CACHE_DIR = _DATA_DIR / "diagnosis_cache"
+_diagnosis_cache_lock = threading.Lock()
+_last_cache_cleanup = 0.0
 STOCK_DIAGNOSIS_PROMPT = """
 你是一名专业但表达易懂的 A 股股票诊断分析师。你的任务是根据后端传入的股票数据，对股票进行结构化诊断分析，并以 Markdown 格式返回给前端展示。
 你的输出应当专业、克制、清晰、有解释力，让普通股民能看懂，但不能显得像营销荐股话术。
@@ -930,9 +938,120 @@ async def _try_llm_summaries(
         return event_summary, diagnosis_report, "error"
 
 
+def _diagnosis_cache_path(code: str, name: str, include_llm: bool) -> Path:
+    kind = "enhanced" if include_llm else "base"
+    name_hash = hashlib.sha256(name.strip().encode("utf-8")).hexdigest()[:10]
+    safe_code = re.sub(r"[^A-Za-z0-9_.-]", "_", code)
+    return _DIAGNOSIS_CACHE_DIR / f"{safe_code}_{name_hash}_{kind}.json"
+
+
+def _cleanup_expired_diagnosis_cache() -> None:
+    """按24小时TTL清理个股诊断缓存，最多每小时扫描一次。"""
+    global _last_cache_cleanup
+    now = time.time()
+    if now - _last_cache_cleanup < 3600:
+        return
+    with _diagnosis_cache_lock:
+        if now - _last_cache_cleanup < 3600:
+            return
+        _last_cache_cleanup = now
+        if not _DIAGNOSIS_CACHE_DIR.exists():
+            return
+        for path in _DIAGNOSIS_CACHE_DIR.glob("*.json"):
+            try:
+                payload = json.loads(path.read_text(encoding="utf-8"))
+                created_at = float(payload.get("created_at") or 0)
+                if now - created_at >= DIAGNOSIS_CACHE_TTL_SECONDS:
+                    path.unlink(missing_ok=True)
+            except Exception:
+                path.unlink(missing_ok=True)
+
+
+def _read_diagnosis_cache(code: str, name: str, include_llm: bool) -> StockDiagnosisResponse | None:
+    _cleanup_expired_diagnosis_cache()
+    path = _diagnosis_cache_path(code, name, include_llm)
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        created_at = float(payload.get("created_at") or 0)
+        if time.time() - created_at >= DIAGNOSIS_CACHE_TTL_SECONDS:
+            path.unlink(missing_ok=True)
+            return None
+        data = payload.get("data")
+        if not isinstance(data, dict):
+            return None
+        return StockDiagnosisResponse.model_validate(data)
+    except FileNotFoundError:
+        return None
+    except Exception as exc:
+        logger.warning("个股诊断缓存读取失败 [%s]: %s", code, exc)
+        return None
+
+
+def _write_diagnosis_cache(response: StockDiagnosisResponse, include_llm: bool) -> None:
+    if include_llm and response.llm_status != "ok":
+        return
+    path = _diagnosis_cache_path(response.code, response.name, include_llm)
+    try:
+        with _diagnosis_cache_lock:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(
+                json.dumps(
+                    {
+                        "created_at": time.time(),
+                        "data": response.model_dump(),
+                    },
+                    ensure_ascii=False,
+                    indent=2,
+                ),
+                encoding="utf-8",
+            )
+    except Exception as exc:
+        logger.warning("个股诊断缓存写入失败 [%s]: %s", response.code, exc)
+
+
+async def _enhance_cached_base_diagnosis(
+    base: StockDiagnosisResponse,
+    name: str,
+) -> StockDiagnosisResponse:
+    """复用24小时内的基础盘面数据，只补一次智能解盘。"""
+    llm_start = time.perf_counter()
+    event_summary, diagnosis_report, llm_status = await _try_llm_summaries(
+        name or base.name,
+        base.code,
+        base.macd,
+        base.shareholders,
+        base.net_profit,
+        base.events,
+        base.chip_distribution,
+    )
+    timings = dict(base.timings_ms)
+    timings["llm"] = round((time.perf_counter() - llm_start) * 1000, 2)
+    return base.model_copy(
+        update={
+            "name": name or base.name,
+            "generated_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "timings_ms": timings,
+            "event_summary": event_summary,
+            "diagnosis_report": diagnosis_report,
+            "llm_status": llm_status,
+        }
+    )
+
+
 async def build_stock_diagnosis(code: str, name: str = "", include_llm: bool = False) -> StockDiagnosisResponse:
     """按需构建个股诊断结果。"""
     formatted_code = format_stock_code(extract_numeric_code(code))
+    cached = _read_diagnosis_cache(formatted_code, name, include_llm)
+    if cached:
+        return cached
+
+    if include_llm:
+        base_cached = _read_diagnosis_cache(formatted_code, name, False)
+        if base_cached:
+            enhanced_from_cache = await _enhance_cached_base_diagnosis(base_cached, name)
+            _write_diagnosis_cache(enhanced_from_cache, include_llm=True)
+            return enhanced_from_cache
+
     timings: dict[str, float] = {}
     data_errors: dict[str, str] = {}
 
@@ -994,7 +1113,7 @@ async def build_stock_diagnosis(code: str, name: str = "", include_llm: bool = F
         )
         llm_status = "not_requested"
 
-    return StockDiagnosisResponse(
+    response = StockDiagnosisResponse(
         code=formatted_code,
         name=name,
         generated_at=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
@@ -1011,6 +1130,8 @@ async def build_stock_diagnosis(code: str, name: str = "", include_llm: bool = F
         llm_status=llm_status,
         data_errors=data_errors,
     )
+    _write_diagnosis_cache(response, include_llm=include_llm)
+    return response
 
 
 async def build_enhanced_stock_diagnosis(code: str, name: str = "") -> StockDiagnosisResponse:

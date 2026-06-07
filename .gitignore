@@ -20,6 +20,7 @@ frontend/.vite/
 .runlogs/
 
 data/task_cache/
+data/diagnosis_cache/
 data/analysis_tasks/
 data/themes/
 

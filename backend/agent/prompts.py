@@ -49,7 +49,7 @@ Observation: <工具返回的结果>
    - 返回：匹配的股票列表JSON
 
 2. get_company_info(code)
-   - 功能：获取指定股票的业务画像（主营业务、产品名称、经营范围）
+   - 功能：获取指定股票的业务画像（主营业务、产品名称、经营范围，雪球兜底时可能包含公司简介、所属行业）
    - 参数：code（字符串），纯数字代码如 "002261"
    - 返回：公司业务画像JSON
 
@@ -564,7 +564,7 @@ def get_business_confirmation_prompt(
 每个候选可能包含：
 - code：股票代码
 - name：股票简称
-- business_profile：公司业务画像，只包含主营业务、产品名称、经营范围等业务字段
+- business_profile：公司业务画像，包含主营业务、产品名称、经营范围等业务字段；雪球兜底时可能包含公司简介、所属行业
 - candidate_evidence：线索捕获阶段命中的 group / relation_hint / source_grade / title / url
 - business_search_results：补充搜索结果，包括 title / url / content
 
