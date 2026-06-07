@@ -176,6 +176,53 @@ body {
 @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
 @keyframes modalIn { from { opacity: 0; transform: translateY(18px) scale(0.985); } to { opacity: 1; transform: none; } }
 
+.analysis-shell {
+  width: min(1280px, calc(100vw - 48px));
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: minmax(280px, 320px) minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+
+.analysis-history-panel {
+  position: sticky;
+  top: 24px;
+  max-height: calc(100vh - var(--nav-h) - 72px);
+  overflow: hidden;
+}
+
+.analysis-history-list {
+  display: grid;
+  gap: 12px;
+  max-height: calc(100vh - var(--nav-h) - 126px);
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+.analysis-main {
+  min-width: 0;
+}
+
+@media (max-width: 980px) {
+  .analysis-shell {
+    width: min(100%, calc(100vw - 32px));
+    grid-template-columns: 1fr;
+    gap: 22px;
+  }
+
+  .analysis-history-panel {
+    position: static;
+    max-height: none;
+    order: 2;
+  }
+
+  .analysis-history-list {
+    max-height: none;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  }
+}
+
 /* ============================================================
    COSMOS background (night earth + ice) with motion layers
    ============================================================ */

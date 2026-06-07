@@ -1,0 +1,120 @@
+{
+  "source": "xueqiu",
+  "generated_at": "2026-06-07T05:23:58.372254+00:00",
+  "records": [
+    {
+      "name": "贵研铂业",
+      "code": "600459",
+      "xq_symbol": "SH600459",
+      "em_symbol": "SH600459",
+      "endpoint": "https://stock.xueqiu.com/v5/stock/f10/cn/company.json",
+      "business_fields": {},
+      "response": {
+        "ok": false,
+        "status_code": 400,
+        "url": "https://stock.xueqiu.com/v5/stock/f10/cn/company.json?symbol=SH600459",
+        "payload": {
+          "error_description": "遇到错误，请刷新页面或者重新登录帐号后再试",
+          "error_uri": "/v5/stock/f10/cn/company.json",
+          "error_data": null,
+          "error_code": "400016"
+        }
+      }
+    },
+    {
+      "name": "宝钛股份",
+      "code": "600456",
+      "xq_symbol": "SH600456",
+      "em_symbol": "SH600456",
+      "endpoint": "https://stock.xueqiu.com/v5/stock/f10/cn/company.json",
+      "business_fields": {},
+      "response": {
+        "ok": false,
+        "status_code": 400,
+        "url": "https://stock.xueqiu.com/v5/stock/f10/cn/company.json?symbol=SH600456",
+        "payload": {
+          "error_description": "遇到错误，请刷新页面或者重新登录帐号后再试",
+          "error_uri": "/v5/stock/f10/cn/company.json",
+          "error_data": null,
+          "error_code": "400016"
+        }
+      }
+    },
+    {
+      "name": "京东方A",
+      "code": "000725",
+      "xq_symbol": "SZ000725",
+      "em_symbol": "SZ000725",
+      "endpoint": "https://stock.xueqiu.com/v5/stock/f10/cn/company.json",
+      "business_fields": {},
+      "response": {
+        "ok": false,
+        "status_code": 400,
+        "url": "https://stock.xueqiu.com/v5/stock/f10/cn/company.json?symbol=SZ000725",
+        "payload": {
+          "error_description": "遇到错误，请刷新页面或者重新登录帐号后再试",
+          "error_uri": "/v5/stock/f10/cn/company.json",
+          "error_data": null,
+          "error_code": "400016"
+        }
+      }
+    },
+    {
+      "name": "德赛电池",
+      "code": "000049",
+      "xq_symbol": "SZ000049",
+      "em_symbol": "SZ000049",
+      "endpoint": "https://stock.xueqiu.com/v5/stock/f10/cn/company.json",
+      "business_fields": {},
+      "response": {
+        "ok": false,
+        "status_code": 400,
+        "url": "https://stock.xueqiu.com/v5/stock/f10/cn/company.json?symbol=SZ000049",
+        "payload": {
+          "error_description": "遇到错误，请刷新页面或者重新登录帐号后再试",
+          "error_uri": "/v5/stock/f10/cn/company.json",
+          "error_data": null,
+          "error_code": "400016"
+        }
+      }
+    },
+    {
+      "name": "征和工业",
+      "code": "003033",
+      "xq_symbol": "SZ003033",
+      "em_symbol": "SZ003033",
+      "endpoint": "https://stock.xueqiu.com/v5/stock/f10/cn/company.json",
+      "business_fields": {},
+      "response": {
+        "ok": false,
+        "status_code": 400,
+        "url": "https://stock.xueqiu.com/v5/stock/f10/cn/company.json?symbol=SZ003033",
+        "payload": {
+          "error_description": "遇到错误，请刷新页面或者重新登录帐号后再试",
+          "error_uri": "/v5/stock/f10/cn/company.json",
+          "error_data": null,
+          "error_code": "400016"
+        }
+      }
+    },
+    {
+      "name": "今飞凯达",
+      "code": "002863",
+      "xq_symbol": "SZ002863",
+      "em_symbol": "SZ002863",
+      "endpoint": "https://stock.xueqiu.com/v5/stock/f10/cn/company.json",
+      "business_fields": {},
+      "response": {
+        "ok": false,
+        "status_code": 400,
+        "url": "https://stock.xueqiu.com/v5/stock/f10/cn/company.json?symbol=SZ002863",
+        "payload": {
+          "error_description": "遇到错误，请刷新页面或者重新登录帐号后再试",
+          "error_uri": "/v5/stock/f10/cn/company.json",
+          "error_data": null,
+          "error_code": "400016"
+        }
+      }
+    }
+  ]
+}

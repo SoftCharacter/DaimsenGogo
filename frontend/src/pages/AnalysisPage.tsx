@@ -272,9 +272,130 @@ export default function AnalysisPage() {
     )
   }
 
+  const historyPanel = (
+    <aside className="analysis-history-panel">
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+        <span style={{ fontSize: 13, fontWeight: 700, letterSpacing: '0.16em', color: 'var(--text-faint)' }}>历史任务</span>
+        <span className="mono" style={{ fontSize: 11.5, color: 'var(--text-faint)' }}>{tasks.length} 条记录</span>
+      </div>
+      {loadingTasks && tasks.length === 0 && <p style={{ fontSize: 12.5, color: 'var(--text-faint)' }}>加载中...</p>}
+      {!loadingTasks && tasks.length === 0 && <p style={{ fontSize: 12.5, color: 'var(--text-faint)' }}>暂无历史任务</p>}
+      <div className="analysis-history-list">
+        {tasks.map((task, i) => {
+          const stale = isStaleRunning(task)
+          const status = stale ? STALE_META : statusMeta(task.status, task.pause_requested)
+          // 双保险：已停滞（长时间无更新）的 running 任务也放开「继续/删除」
+          const canContinue = ['paused', 'failed'].includes(task.status) || stale
+          const canPause = task.status === 'running' && !stale && !task.pause_requested
+          const canDelete = task.status !== 'running' || stale
+          return (
+            <div
+              key={task.id}
+              className="card fade-in"
+              style={{ animationDelay: `${i * 60}ms`, background: 'var(--surface)', padding: '14px 15px', cursor: 'pointer' }}
+              onClick={() => void loadTask(task.id)}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10 }}>
+                <span style={{ fontWeight: 600, fontSize: 14, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {task.result_name || task.query}
+                </span>
+                <span
+                  style={{
+                    flex: 'none',
+                    fontSize: 10.5,
+                    fontWeight: 700,
+                    color: status.color,
+                    background: status.bg,
+                    padding: '3px 8px',
+                    borderRadius: 99,
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  ● {status.label}
+                </span>
+              </div>
+              <div style={{ display: 'flex', gap: 12, margin: '11px 0 13px', color: 'var(--text-faint)', fontSize: 11.5 }}>
+                <span className="mono">{task.current_step}/{task.max_steps} 步</span>
+                <span>·</span>
+                <span className="mono">{task.updated_at?.slice(0, 10)}</span>
+              </div>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                {canPause && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      void handlePauseTask(task.id)
+                    }}
+                    style={{
+                      cursor: 'pointer',
+                      border: 'none',
+                      borderRadius: 'var(--r-sm)',
+                      padding: '8px 14px',
+                      fontFamily: 'var(--font-cjk)',
+                      fontWeight: 600,
+                      fontSize: 12.5,
+                      color: '#fff',
+                      background: 'var(--up)',
+                    }}
+                  >
+                    暂停
+                  </button>
+                )}
+                <button
+                  disabled={!canContinue}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    void handleContinueTask(task.id)
+                  }}
+                  style={{
+                    cursor: canContinue ? 'pointer' : 'not-allowed',
+                    border: 'none',
+                    borderRadius: 'var(--r-sm)',
+                    padding: '8px 15px',
+                    fontFamily: 'var(--font-cjk)',
+                    fontWeight: 600,
+                    fontSize: 12.5,
+                    color: '#fff',
+                    background: 'var(--accent)',
+                    opacity: canContinue ? 1 : 0.4,
+                  }}
+                >
+                  继续
+                </button>
+                <button
+                  disabled={!canDelete}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    void handleDeleteTask(task.id)
+                  }}
+                  className="card"
+                  style={{
+                    cursor: canDelete ? 'pointer' : 'not-allowed',
+                    borderRadius: 'var(--r-sm)',
+                    padding: '8px 14px',
+                    fontFamily: 'var(--font-cjk)',
+                    fontWeight: 600,
+                    fontSize: 12.5,
+                    color: 'var(--text-dim)',
+                    background: 'transparent',
+                    opacity: canDelete ? 1 : 0.4,
+                  }}
+                >
+                  删除
+                </button>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    </aside>
+  )
+
   return (
-    <div style={{ flex: 1, overflowY: 'auto', padding: '40px 0' }}>
-      <div style={{ maxWidth: 1080, margin: '0 auto', padding: '0 32px' }}>
+    <div style={{ flex: 1, overflowY: 'auto', padding: '32px 0 40px' }}>
+      <div className="analysis-shell">
+        {historyPanel}
+        <main className="analysis-main">
         {/* Hero */}
         <div className="fade-in" style={{ textAlign: 'center', marginBottom: 14 }}>
           <span style={{ fontSize: 11.5, fontWeight: 700, letterSpacing: '0.22em', color: 'var(--accent-bright)' }}>
@@ -350,123 +471,7 @@ export default function AnalysisPage() {
           </div>
         )}
 
-        {/* 历史任务 */}
-        <div style={{ marginTop: 46 }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-            <span style={{ fontSize: 13, fontWeight: 700, letterSpacing: '0.16em', color: 'var(--text-faint)' }}>历史任务</span>
-            <span className="mono" style={{ fontSize: 11.5, color: 'var(--text-faint)' }}>{tasks.length} 条记录</span>
-          </div>
-          {loadingTasks && tasks.length === 0 && <p style={{ fontSize: 12.5, color: 'var(--text-faint)' }}>加载中...</p>}
-          {!loadingTasks && tasks.length === 0 && <p style={{ fontSize: 12.5, color: 'var(--text-faint)' }}>暂无历史任务</p>}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: 14 }}>
-            {tasks.map((task, i) => {
-              const stale = isStaleRunning(task)
-              const status = stale ? STALE_META : statusMeta(task.status, task.pause_requested)
-              // 双保险：已停滞（长时间无更新）的 running 任务也放开「继续/删除」
-              const canContinue = ['paused', 'failed'].includes(task.status) || stale
-              const canPause = task.status === 'running' && !stale && !task.pause_requested
-              const canDelete = task.status !== 'running' || stale
-              return (
-                <div
-                  key={task.id}
-                  className="card fade-in"
-                  style={{ animationDelay: `${i * 60}ms`, background: 'var(--surface)', padding: '16px 18px', cursor: 'pointer' }}
-                  onClick={() => void loadTask(task.id)}
-                >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10 }}>
-                    <span style={{ fontWeight: 600, fontSize: 15, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {task.result_name || task.query}
-                    </span>
-                    <span
-                      style={{
-                        flex: 'none',
-                        fontSize: 10.5,
-                        fontWeight: 700,
-                        color: status.color,
-                        background: status.bg,
-                        padding: '3px 9px',
-                        borderRadius: 99,
-                        whiteSpace: 'nowrap',
-                      }}
-                    >
-                      ● {status.label}
-                    </span>
-                  </div>
-                  <div style={{ display: 'flex', gap: 14, margin: '12px 0 14px', color: 'var(--text-faint)', fontSize: 11.5 }}>
-                    <span className="mono">{task.current_step}/{task.max_steps} 步</span>
-                    <span>·</span>
-                    <span className="mono">{task.updated_at?.slice(0, 10)}</span>
-                  </div>
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    {canPause && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          void handlePauseTask(task.id)
-                        }}
-                        style={{
-                          cursor: 'pointer',
-                          border: 'none',
-                          borderRadius: 'var(--r-sm)',
-                          padding: '8px 16px',
-                          fontFamily: 'var(--font-cjk)',
-                          fontWeight: 600,
-                          fontSize: 12.5,
-                          color: '#fff',
-                          background: 'var(--up)',
-                        }}
-                      >
-                        暂停
-                      </button>
-                    )}
-                    <button
-                      disabled={!canContinue}
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        void handleContinueTask(task.id)
-                      }}
-                      style={{
-                        cursor: canContinue ? 'pointer' : 'not-allowed',
-                        border: 'none',
-                        borderRadius: 'var(--r-sm)',
-                        padding: '8px 18px',
-                        fontFamily: 'var(--font-cjk)',
-                        fontWeight: 600,
-                        fontSize: 12.5,
-                        color: '#fff',
-                        background: 'var(--accent)',
-                        opacity: canContinue ? 1 : 0.4,
-                      }}
-                    >
-                      继续
-                    </button>
-                    <button
-                      disabled={!canDelete}
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        void handleDeleteTask(task.id)
-                      }}
-                      className="card"
-                      style={{
-                        cursor: canDelete ? 'pointer' : 'not-allowed',
-                        borderRadius: 'var(--r-sm)',
-                        padding: '8px 16px',
-                        fontFamily: 'var(--font-cjk)',
-                        fontWeight: 600,
-                        fontSize: 12.5,
-                        color: 'var(--text-dim)',
-                        background: 'transparent',
-                        opacity: canDelete ? 1 : 0.4,
-                      }}
-                    >
-                      删除
-                    </button>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        </div>
+        </main>
       </div>
     </div>
   )
