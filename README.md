@@ -325,7 +325,8 @@ DaimsenGogo/
 ├── scripts/                    # 启动脚本与测试脚本
 │   ├── launcher.py             # 单窗口启动前后端
 │   ├── start.bat               # Windows 一键启动脚本
-│   └── start.sh                # Unix / macOS / Linux 启动脚本
+│   ├── start.command           # macOS 双击启动脚本
+│   └── start.sh                # Unix / macOS / Linux 终端启动脚本
 ├── data/                       # 本地数据目录，运行后生成或更新
 │   ├── themes/                 # 供应链主题数据（运行生成，不提交）
 │   ├── analysis_tasks/         # AI 分析历史任务（运行生成，不提交）
@@ -345,13 +346,14 @@ DaimsenGogo/
 推荐使用项目自带的一键脚本：
 
 - Windows：`scripts/start.bat`
-- Unix / macOS / Linux：`bash scripts/start.sh`
+- macOS：双击 `scripts/start.command`
+- Unix / Linux / macOS 终端：`bash scripts/start.sh`
 
 脚本会自动：
 
 1. 检查或创建 Python 环境
-2. 安装后端依赖
-3. 安装前端依赖
+2. 根据 `backend/requirements.txt` 指纹检测并安装后端依赖
+3. 根据 `frontend/package.json` 和存在时的 `package-lock.json` 指纹检测并安装前端依赖
 4. 启动统一入口 `scripts/launcher.py`
 
 如果需要手动安装，也可以使用本地虚拟环境 `.venv`：
@@ -402,7 +404,15 @@ TAVILY_API_KEY=
 scripts/start.bat
 ```
 
-#### Unix / macOS / Linux
+#### macOS 双击启动
+
+在 Finder 中双击：
+
+```text
+scripts/start.command
+```
+
+#### Unix / macOS / Linux 终端
 
 ```bash
 bash scripts/start.sh
@@ -509,7 +519,7 @@ npm run build
 
 ## 运行与配置建议
 
-- 首次运行建议直接使用 `scripts/start.bat` 或 `scripts/start.sh`。
+- 首次运行建议 Windows 直接双击 `scripts/start.bat`，macOS 直接双击 `scripts/start.command`；终端场景可使用 `bash scripts/start.sh`。
 - 如果需要更稳定的环境，建议固定使用 conda 环境 `env_reactAgent`。
 - `.env` 中的密钥只适合本地使用，不要提交到版本库。
 - DG 分析依赖 Tavily 网页搜索，建议使用稳定的网络环境和有效 API Key 后再发起任务。
