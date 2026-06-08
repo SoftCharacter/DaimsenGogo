@@ -1,0 +1,260 @@
+{
+  "id": "6d9f01845a19",
+  "name": "华为昇腾芯片供应链",
+  "description": "围绕华为昇腾系列AI处理器及配套计算产品形成的产业生态链，涵盖芯片设计、封装基板、PCB制造、整机集成等环节。",
+  "source_task_id": "analysis_5c1532c368ee",
+  "created_at": "2026-06-07T15:13:40.487707+00:00",
+  "updated_at": "2026-06-07T15:13:40.487707+00:00",
+  "categories": [
+    {
+      "id": "system_integrator",
+      "name": "整机集成商",
+      "order": 1,
+      "stocks": [
+        {
+          "code": "SH:600100",
+          "name": "同方股份",
+          "name_en": "",
+          "percentage": 92,
+          "description": "主营核技术应用、数字信息业务、智慧能源业务等，提供全系列AI服务器及智能计算解决方案。；被权威财经报道明确列为“昇腾+鲲鹏双OEM伙伴”，深度参与昇腾AI服务器制造和集成，拥有全系列产品线。；作为整机OEM伙伴，直接集成昇腾芯片，供应链关系明确，证据来自多个财经来源。",
+          "category_tag": "整机集成商"
+        }
+      ]
+    },
+    {
+      "id": "ic_packaging_substrate",
+      "name": "IC封装基板",
+      "order": 2,
+      "stocks": [
+        {
+          "code": "SZ:002436",
+          "name": "兴森科技",
+          "name_en": "",
+          "percentage": 90,
+          "description": "主营PCB、IC封装基板和半导体测试板，尤其在半导体封装领域有优势。；研究报告指出华为PCB链共享成长，兴森科技提供IC封装基板，直接关联芯片封装供应链。；IC封装基板是芯片制造的关键环节，证据明确，关系强度更高。",
+          "category_tag": "IC封装基板"
+        },
+        {
+          "code": "SZ:002916",
+          "name": "深南电路",
+          "name_en": "",
+          "percentage": 90,
+          "description": "主营印制电路板、封装基板及电子装联产品的研发、生产及销售。；在公开报道中被列为华为昇腾产业链概念股，作为PCB/载板供应商，是昇腾产业链重要一环，为AI服务器等产品提供关键部件。；业务画像与PCB供应匹配，补充搜索结果明确将其列为昇腾产业链供应商，证据直接且无冲突。",
+          "category_tag": "IC封装基板"
+        }
+      ]
+    },
+    {
+      "id": "communication_optical_module",
+      "name": "通信光模块",
+      "order": 3,
+      "stocks": [
+        {
+          "code": "SH:600498",
+          "name": "烽火通信",
+          "name_en": "",
+          "percentage": 88,
+          "description": "主营通信系统设备、光纤及线缆、数据网络等产品的生产与销售，提供智能计算平台和光模块。；是华为首批昇腾硬件合作伙伴和优选级合作伙伴，子公司长江计算为昇腾整机伙伴，800G硅光模块规模配套昇腾服务器。；业务涵盖通信设备和光模块，与昇腾算力网络高度相关，搜索结果明确其核心供应角色。",
+          "category_tag": "通信光模块"
+        }
+      ]
+    },
+    {
+      "id": "pcb_manufacturing",
+      "name": "PCB制造",
+      "order": 4,
+      "stocks": [
+        {
+          "code": "SH:603228",
+          "name": "景旺电子",
+          "name_en": "",
+          "percentage": 85,
+          "description": "主营PCB研发、生产和销售，产品包括多层板、HDI、FPC等。；研究报告指出华为PCB链共享成长，景旺电子作为PCB制造商，可能为华为昇腾芯片供应链提供PCB组件。；华为PCB链证据直接，景旺电子是PCB供应商，属于强供应链关系。",
+          "category_tag": "PCB制造"
+        },
+        {
+          "code": "SZ:002463",
+          "name": "沪电股份",
+          "name_en": "",
+          "percentage": 85,
+          "description": "主营印制电路板（PCB）生产、销售和相关服务。；研究报告指出华为PCB链共享成长，沪电股份作为PCB制造商，可能为华为昇腾芯片供应链提供PCB。；PCB供应链证据明确，华为全系产品依赖PCB，关系强。",
+          "category_tag": "PCB制造"
+        }
+      ]
+    },
+    {
+      "id": "pcb_material",
+      "name": "PCB材料",
+      "order": 5,
+      "stocks": [
+        {
+          "code": "SH:600183",
+          "name": "生益科技",
+          "name_en": "",
+          "percentage": 85,
+          "description": "主营覆铜板和粘结片、印制线路板（PCB），是电子元器件材料供应商。；研究报告指出华为PCB链共享成长，生益科技作为PCB材料供应商，可能为华为昇腾芯片供应链提供基础材料。；PCB是芯片封装和电路板的关键组件，研究报告直接关联华为供应链，证据明确。",
+          "category_tag": "PCB材料"
+        }
+      ]
+    },
+    {
+      "id": "capital_relation",
+      "name": "资本关联",
+      "order": 6,
+      "stocks": [
+        {
+          "code": "SZ:002152",
+          "name": "广电运通",
+          "name_en": "",
+          "percentage": 75,
+          "description": "提供智能终端、运营服务及大数据解决方案，通过控股广电五舟布局算力领域。；广电运通公告收购广电五舟股份并实现控股，广电五舟是服务器厂商，可能集成华为昇腾芯片，市场将其列为华为昇腾芯片概念股。；证据显示广电运通通过资本操作控股服务器厂商，间接与华为昇腾芯片供应链关联，但非直接供应链关系。",
+          "category_tag": "资本关联"
+        }
+      ]
+    },
+    {
+      "id": "business_cooperation",
+      "name": "业务合作",
+      "order": 7,
+      "stocks": [
+        {
+          "code": "SZ:301236",
+          "name": "软通动力",
+          "name_en": "",
+          "percentage": 60,
+          "description": "主营数字化创新业务服务，涉及AI基础设施、计算产品和智能解决方案。；在华为昇腾芯片概念股列表中被提及，业务涉及AI和数字化，可能与华为昇腾生态有合作。；业务与AI相关，概念股列表暗示合作可能性，但无具体公告或供应链证据，属于弱业务合作。",
+          "category_tag": "业务合作"
+        }
+      ]
+    },
+    {
+      "id": "weak_relevance_observation",
+      "name": "弱关联观察",
+      "order": 8,
+      "stocks": [
+        {
+          "code": "SZ:300634",
+          "name": "彩讯股份",
+          "name_en": "",
+          "percentage": 50,
+          "description": "主营软件产品开发、技术服务和系统集成，涉及物联网、人工智能等。；在华为昇腾芯片概念股列表中被提及，表明市场概念关联，但无具体供应链或投资证据。；概念股关联提供弱相关，但缺少实质业务或资本关系证据。",
+          "category_tag": "弱关联观察"
+        },
+        {
+          "code": "SZ:002261",
+          "name": "拓维信息",
+          "name_en": "",
+          "percentage": 50,
+          "description": "AI、开源鸿蒙、软件云服务、国产智能计算等业务。；业务涉及AI和智能计算，可能使用华为昇腾芯片，但补充搜索未找到投资、合作或供应链证据。；业务高度相关，但无具体公开证据，属于弱关联。",
+          "category_tag": "弱关联观察"
+        },
+        {
+          "code": "SZ:300531",
+          "name": "优博讯",
+          "name_en": "",
+          "percentage": 45,
+          "description": "主营智能数据终端、支付终端等AIDC终端产品，涉及物联网和智能移动终端。；业务与智能终端相关，可能涉及AI芯片应用，但无具体证据显示与华为昇腾芯片的供应链、投资或合作。；行业相近，但缺乏公开证据证明直接关联，属于泛行业弱关联。",
+          "category_tag": "弱关联观察"
+        },
+        {
+          "code": "SZ:002396",
+          "name": "星网锐捷",
+          "name_en": "",
+          "percentage": 45,
+          "description": "ICT基础设施与AI应用方案的研发、生产和销售。；业务涉及AI应用方案，可能适配华为昇腾芯片，但补充搜索未找到具体关系证据。；行业相关，但缺乏供应链或合作证据，属于弱关联。",
+          "category_tag": "弱关联观察"
+        },
+        {
+          "code": "SZ:000034",
+          "name": "神州数码",
+          "name_en": "",
+          "percentage": 45,
+          "description": "IT分销及增值服务、数云服务及软件，可能涉及华为产品分销。；业务匹配IT分销，可能分销华为昇腾芯片，但补充搜索未找到具体投资、入股或供应链证据。；业务相关性强，但缺乏公开证据确认具体关联，属于行业概念弱关联。",
+          "category_tag": "弱关联观察"
+        }
+      ]
+    }
+  ],
+  "rejected_stocks": [
+    {
+      "code": "SH:603186",
+      "name": "华正新材",
+      "relation_score": 20,
+      "relation_type": "rejected",
+      "reason": "业务画像涉及覆铜板，可能与PCB相关，但补充搜索结果未找到与华为昇腾芯片的直接供应链、投资或合作证据。",
+      "evidence_url": ""
+    },
+    {
+      "code": "SH:688595",
+      "name": "芯海科技",
+      "relation_score": 20,
+      "relation_type": "rejected",
+      "reason": "补充搜索无相关证据，业务为芯片设计但产品非AI芯片，与华为昇腾无直接供应链关系。",
+      "evidence_url": ""
+    },
+    {
+      "code": "SZ:300598",
+      "name": "诚迈科技",
+      "relation_score": 20,
+      "relation_type": "rejected",
+      "reason": "搜索结果未显示与华为昇腾芯片的供应链、投资或合作证据；补充搜索结果完全无关。",
+      "evidence_url": ""
+    },
+    {
+      "code": "SH:600536",
+      "name": "中国软件",
+      "relation_score": 30,
+      "relation_type": "rejected",
+      "reason": "补充搜索未找到与华为昇腾芯片的投资、供应链或合作证据，仅业务画像显示软件相关。",
+      "evidence_url": ""
+    },
+    {
+      "code": "SH:688191",
+      "name": "智洋创新",
+      "relation_score": 30,
+      "relation_type": "rejected",
+      "reason": "补充搜索未找到与华为昇腾芯片的具体关系证据，业务为AI解决方案但未直接关联。",
+      "evidence_url": ""
+    },
+    {
+      "code": "SZ:300339",
+      "name": "润和软件",
+      "relation_score": 30,
+      "relation_type": "rejected",
+      "reason": "补充搜索结果为空，业务画像未显示与华为昇腾芯片的具体关联。",
+      "evidence_url": ""
+    },
+    {
+      "code": "SH:688120",
+      "name": "华海清科",
+      "relation_score": 20,
+      "relation_type": "rejected",
+      "reason": "候选证据仅提及华为昇腾芯片路线图，但未涉及华海清科；补充搜索结果无华海清科与华为昇腾芯片的投资、供应链或合作关系证据。",
+      "evidence_url": "https://pdf.dfcfw.com/pdf/H3_AP202509221748428871_1.pdf?1758549745000.pdf="
+    },
+    {
+      "code": "SH:688173",
+      "name": "希荻微",
+      "relation_score": 20,
+      "relation_type": "rejected",
+      "reason": "候选证据仅提及华为昇腾芯片路线图，但未涉及希荻微；补充搜索结果无希荻微与华为昇腾芯片的投资、供应链或合作关系证据。",
+      "evidence_url": "https://pdf.dfcfw.com/pdf/H3_AP202509221748428871_1.pdf?1758549745000.pdf="
+    },
+    {
+      "code": "SH:688362",
+      "name": "甬矽电子",
+      "relation_score": 20,
+      "relation_type": "rejected",
+      "reason": "候选证据仅提及华为昇腾芯片路线图，但未涉及甬矽电子；补充搜索结果无甬矽电子与华为昇腾芯片的投资、供应链或合作关系证据。",
+      "evidence_url": "https://pdf.dfcfw.com/pdf/H3_AP202509221748428871_1.pdf?1758549745000.pdf="
+    },
+    {
+      "code": "SH:688123",
+      "name": "聚辰股份",
+      "relation_score": 20,
+      "relation_type": "rejected",
+      "reason": "候选证据仅提及华为昇腾芯片路线图，但未涉及聚辰股份；补充搜索结果无聚辰股份与华为昇腾芯片的投资、供应链或合作关系证据。",
+      "evidence_url": "https://pdf.dfcfw.com/pdf/H3_AP202509221748428871_1.pdf?1758549745000.pdf="
+    }
+  ]
+}

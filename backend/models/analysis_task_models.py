@@ -67,6 +67,7 @@ class AnalysisTask(BaseModel):
     result: Theme | None = None
     error: str = ""
     saved_theme_id: str = ""
+    pause_requested: bool = False
     checkpoint: AnalysisCheckpoint | None = None
 
 
@@ -83,3 +84,4 @@ class AnalysisTaskSummary(BaseModel):
     result_name: str = ""
     error: str = ""
     saved_theme_id: str = ""
+    pause_requested: bool = False

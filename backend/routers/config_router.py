@@ -86,7 +86,7 @@ async def update_config(body: AppConfig) -> PublicAppConfig:
     if body.provider.api_key:
         current.provider.api_key = body.provider.api_key
     current.settings = body.settings
-    current.web_search.enabled = body.web_search.enabled
+    current.web_search.enabled = True
     if body.web_search.tavily_api_key:
         current.web_search.tavily_api_key = body.web_search.tavily_api_key
     # 持久化到文件

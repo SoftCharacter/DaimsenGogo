@@ -8,7 +8,7 @@ import { useAnalysisStore } from '../stores/analysisStore'
 import { useThemeStore } from '../stores/themeStore'
 import type { Theme } from '../types/theme'
 import type { SSEEvent } from '../types/stock'
-import { deleteAnalysisTask, getAnalysisTask, listAnalysisTasks } from '../api/analysisTaskApi'
+import { deleteAnalysisTask, getAnalysisTask, listAnalysisTasks, pauseAnalysisTask } from '../api/analysisTaskApi'
 import type { AnalysisTask, AnalysisTaskEvent, AnalysisTaskSummary } from '../types/analysisTask'
 
 type DisplaySSEEvent = SSEEvent & { seq?: number; task_id?: string }
@@ -69,6 +69,7 @@ function taskToSummary(task: AnalysisTask): AnalysisTaskSummary {
     result_name: task.result?.name ?? '',
     error: task.error,
     saved_theme_id: task.saved_theme_id,
+    pause_requested: task.pause_requested,
   }
 }
 
@@ -133,6 +134,14 @@ export default function AnalysisPage() {
   }, [refreshTasks])
 
   useEffect(() => {
+    if (!tasks.some((task) => task.status === 'pending' || task.status === 'running')) return
+    const timer = window.setInterval(() => {
+      void refreshTasks()
+    }, 2500)
+    return () => window.clearInterval(timer)
+  }, [refreshTasks, tasks])
+
+  useEffect(() => {
     if (!taskId || refreshedTaskIdRef.current === taskId) return
     refreshedTaskIdRef.current = taskId
     void refreshTasks()
@@ -181,6 +190,17 @@ export default function AnalysisPage() {
     })()
   }, [startAnalysis, refreshTasks])
 
+  const handlePauseTask = useCallback(async (nextTaskId: string) => {
+    try {
+      await pauseAnalysisTask(nextTaskId)
+      await refreshTasks()
+      if (currentTask?.id === nextTaskId) await loadTask(nextTaskId)
+      toast.success('已请求暂停，当前环节完成后会停下')
+    } catch {
+      toast.error('暂停任务失败')
+    }
+  }, [currentTask, loadTask, refreshTasks])
+
   const handleConfirmResult = useCallback(() => {
     if (!displayResult) return
     setConfirmedTheme(displayResult)
@@ -204,7 +224,7 @@ export default function AnalysisPage() {
     } finally {
       setThemeSaving(false)
     }
-  }, [confirmedTheme, currentTask?.id, displayResult, createTheme, taskId])
+  }, [confirmedTheme, currentTask, displayResult, createTheme, taskId])
 
   const handleDeleteTask = useCallback(async (nextTaskId: string) => {
     try {
@@ -218,7 +238,7 @@ export default function AnalysisPage() {
     } catch {
       toast.error('删除任务失败')
     }
-  }, [currentTask?.id])
+  }, [currentTask])
 
   const handleContinueTask = useCallback(async (nextTaskId: string) => {
     setSavedThemeId(null)
@@ -232,7 +252,7 @@ export default function AnalysisPage() {
     } catch {
       toast.error('继续任务失败')
     }
-  }, [continueAnalysis, currentTask?.id, loadTask, refreshTasks])
+  }, [continueAnalysis, currentTask, loadTask, refreshTasks])
 
   if (isEditMode) {
     return (
@@ -252,9 +272,169 @@ export default function AnalysisPage() {
     )
   }
 
+  const historyPanel = (
+    <aside
+      style={{
+        width: 'var(--sidebar-w)',
+        flex: 'none',
+        borderRight: '1px solid var(--border)',
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100%',
+        background: 'color-mix(in oklab, var(--surface) 40%, transparent)',
+      }}
+    >
+      <div style={{ padding: '18px 18px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.18em', color: 'var(--text-faint)', textTransform: 'uppercase' }}>
+          历史任务
+        </span>
+        <span
+          className="mono"
+          style={{ fontSize: 11, color: 'var(--text-faint)', background: 'var(--surface-2)', padding: '2px 8px', borderRadius: 99 }}
+        >
+          {tasks.length}
+        </span>
+      </div>
+
+      <div style={{ flex: 1, overflowY: 'auto', padding: '0 12px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {loadingTasks && tasks.length === 0 && (
+          <p style={{ fontSize: 11.5, color: 'var(--text-faint)', padding: '8px 4px' }}>加载中...</p>
+        )}
+        {!loadingTasks && tasks.length === 0 && (
+          <p style={{ fontSize: 11.5, color: 'var(--text-faint)', padding: '8px 4px' }}>暂无历史任务</p>
+        )}
+        {tasks.map((task, i) => {
+          const stale = isStaleRunning(task)
+          const status = stale ? STALE_META : statusMeta(task.status, task.pause_requested)
+          // 双保险：已停滞（长时间无更新）的 running 任务也放开「继续/删除」
+          const canContinue = ['paused', 'failed'].includes(task.status) || stale
+          const canPause = task.status === 'running' && !stale && !task.pause_requested
+          const canDelete = task.status !== 'running' || stale
+          return (
+            <div
+              key={task.id}
+              className="card fade-in"
+              style={{
+                animationDelay: `${i * 60}ms`,
+                background: currentTask?.id === task.id ? 'var(--accent-soft)' : 'var(--surface)',
+                borderColor: currentTask?.id === task.id ? 'var(--accent-line)' : 'var(--border)',
+                padding: '13px 14px',
+                cursor: 'pointer',
+              }}
+              onClick={() => void loadTask(task.id)}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'space-between' }}>
+                <span style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+                  <span
+                    style={{
+                      width: 6,
+                      height: 6,
+                      borderRadius: 99,
+                      flex: 'none',
+                      background: currentTask?.id === task.id ? 'var(--accent-bright)' : 'var(--text-faint)',
+                    }}
+                  />
+                  <span style={{ fontWeight: 600, fontSize: 13.5, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {task.result_name || task.query}
+                  </span>
+                </span>
+                <span
+                  style={{
+                    flex: 'none',
+                    fontSize: 10,
+                    fontWeight: 700,
+                    color: status.color,
+                    background: status.bg,
+                    padding: '2px 7px',
+                    borderRadius: 99,
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  ● {status.label}
+                </span>
+              </div>
+              <div style={{ display: 'flex', gap: 10, margin: '9px 0 11px 14px', color: 'var(--text-faint)', fontSize: 10.5 }}>
+                <span className="mono">{task.current_step}/{task.max_steps} 步</span>
+                <span>·</span>
+                <span className="mono">{task.updated_at?.slice(0, 10)}</span>
+              </div>
+              <div style={{ display: 'flex', gap: 7, flexWrap: 'wrap', marginLeft: 14 }}>
+                {canPause && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      void handlePauseTask(task.id)
+                    }}
+                    style={{
+                      cursor: 'pointer',
+                      border: 'none',
+                      borderRadius: 'var(--r-sm)',
+                      padding: '7px 12px',
+                      fontFamily: 'var(--font-cjk)',
+                      fontWeight: 600,
+                      fontSize: 12,
+                      color: '#fff',
+                      background: 'var(--up)',
+                    }}
+                  >
+                    暂停
+                  </button>
+                )}
+                <button
+                  disabled={!canContinue}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    void handleContinueTask(task.id)
+                  }}
+                  style={{
+                    cursor: canContinue ? 'pointer' : 'not-allowed',
+                    border: 'none',
+                    borderRadius: 'var(--r-sm)',
+                    padding: '7px 13px',
+                    fontFamily: 'var(--font-cjk)',
+                    fontWeight: 600,
+                    fontSize: 12,
+                    color: '#fff',
+                    background: 'var(--accent)',
+                    opacity: canContinue ? 1 : 0.4,
+                  }}
+                >
+                  继续
+                </button>
+                <button
+                  disabled={!canDelete}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    void handleDeleteTask(task.id)
+                  }}
+                  className="card"
+                  style={{
+                    cursor: canDelete ? 'pointer' : 'not-allowed',
+                    borderRadius: 'var(--r-sm)',
+                    padding: '7px 12px',
+                    fontFamily: 'var(--font-cjk)',
+                    fontWeight: 600,
+                    fontSize: 12,
+                    color: 'var(--text-dim)',
+                    background: 'transparent',
+                    opacity: canDelete ? 1 : 0.4,
+                  }}
+                >
+                  删除
+                </button>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    </aside>
+  )
+
   return (
-    <div style={{ flex: 1, overflowY: 'auto', padding: '40px 0' }}>
-      <div style={{ maxWidth: 1080, margin: '0 auto', padding: '0 32px' }}>
+    <div style={{ flex: 1, display: 'flex', minHeight: 0, width: '100%' }}>
+      {historyPanel}
+      <div style={{ flex: 1, minWidth: 0, overflowY: 'auto', padding: '32px 28px 40px' }}>
+        <main style={{ maxWidth: 960, margin: '0 auto' }}>
         {/* Hero */}
         <div className="fade-in" style={{ textAlign: 'center', marginBottom: 14 }}>
           <span style={{ fontSize: 11.5, fontWeight: 700, letterSpacing: '0.22em', color: 'var(--accent-bright)' }}>
@@ -272,7 +452,7 @@ export default function AnalysisPage() {
 
         {/* 输入条 */}
         <div style={{ marginTop: 26 }}>
-          <AnalysisInput onSubmit={handleStartAnalysis} isRunning={isRunning} />
+          <AnalysisInput onSubmit={handleStartAnalysis} />
         </div>
 
         {/* 执行流 / 结果 */}
@@ -330,100 +510,7 @@ export default function AnalysisPage() {
           </div>
         )}
 
-        {/* 历史任务 */}
-        <div style={{ marginTop: 46 }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-            <span style={{ fontSize: 13, fontWeight: 700, letterSpacing: '0.16em', color: 'var(--text-faint)' }}>历史任务</span>
-            <span className="mono" style={{ fontSize: 11.5, color: 'var(--text-faint)' }}>{tasks.length} 条记录</span>
-          </div>
-          {loadingTasks && tasks.length === 0 && <p style={{ fontSize: 12.5, color: 'var(--text-faint)' }}>加载中...</p>}
-          {!loadingTasks && tasks.length === 0 && <p style={{ fontSize: 12.5, color: 'var(--text-faint)' }}>暂无历史任务</p>}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: 14 }}>
-            {tasks.map((task, i) => {
-              const stale = isStaleRunning(task)
-              const status = stale ? STALE_META : statusMeta(task.status)
-              // 双保险：已停滞（长时间无更新）的 running 任务也放开「继续/删除」
-              const canContinue = !isRunning && (['paused', 'failed'].includes(task.status) || stale)
-              return (
-                <div
-                  key={task.id}
-                  className="card fade-in"
-                  style={{ animationDelay: `${i * 60}ms`, background: 'var(--surface)', padding: '16px 18px', cursor: 'pointer' }}
-                  onClick={() => void loadTask(task.id)}
-                >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10 }}>
-                    <span style={{ fontWeight: 600, fontSize: 15, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {task.result_name || task.query}
-                    </span>
-                    <span
-                      style={{
-                        flex: 'none',
-                        fontSize: 10.5,
-                        fontWeight: 700,
-                        color: status.color,
-                        background: status.bg,
-                        padding: '3px 9px',
-                        borderRadius: 99,
-                        whiteSpace: 'nowrap',
-                      }}
-                    >
-                      ● {status.label}
-                    </span>
-                  </div>
-                  <div style={{ display: 'flex', gap: 14, margin: '12px 0 14px', color: 'var(--text-faint)', fontSize: 11.5 }}>
-                    <span className="mono">{task.current_step}/{task.max_steps} 步</span>
-                    <span>·</span>
-                    <span className="mono">{task.updated_at?.slice(0, 10)}</span>
-                  </div>
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    <button
-                      disabled={!canContinue}
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        void handleContinueTask(task.id)
-                      }}
-                      style={{
-                        cursor: canContinue ? 'pointer' : 'not-allowed',
-                        border: 'none',
-                        borderRadius: 'var(--r-sm)',
-                        padding: '8px 18px',
-                        fontFamily: 'var(--font-cjk)',
-                        fontWeight: 600,
-                        fontSize: 12.5,
-                        color: '#fff',
-                        background: 'var(--accent)',
-                        opacity: canContinue ? 1 : 0.4,
-                      }}
-                    >
-                      继续
-                    </button>
-                    <button
-                      disabled={isRunning}
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        void handleDeleteTask(task.id)
-                      }}
-                      className="card"
-                      style={{
-                        cursor: isRunning ? 'not-allowed' : 'pointer',
-                        borderRadius: 'var(--r-sm)',
-                        padding: '8px 16px',
-                        fontFamily: 'var(--font-cjk)',
-                        fontWeight: 600,
-                        fontSize: 12.5,
-                        color: 'var(--text-dim)',
-                        background: 'transparent',
-                        opacity: isRunning ? 0.4 : 1,
-                      }}
-                    >
-                      删除
-                    </button>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        </div>
+        </main>
       </div>
     </div>
   )
@@ -444,11 +531,12 @@ function isStaleRunning(task: AnalysisTaskSummary): boolean {
 }
 
 /** 任务状态 → 徽标文案与配色 */
-function statusMeta(status: string): { label: string; color: string; bg: string } {
+function statusMeta(status: string, pauseRequested = false): { label: string; color: string; bg: string } {
   switch (status) {
     case 'completed':
       return { label: '已完成', color: 'var(--down)', bg: 'var(--down-soft)' }
     case 'running':
+      if (pauseRequested) return { label: '暂停中', color: 'var(--up)', bg: 'var(--up-soft)' }
       return { label: '执行中', color: 'var(--accent-bright)', bg: 'var(--accent-soft)' }
     case 'failed':
       return { label: '失败', color: 'var(--up)', bg: 'var(--up-soft)' }

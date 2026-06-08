@@ -15,6 +15,16 @@ class StockItem(BaseModel):
     category_tag: str = ""   # 所属供应链分类名
 
 
+class RejectedStock(BaseModel):
+    """业务确证阶段判定为不进入看板的股票"""
+    code: str
+    name: str
+    relation_score: int = 0
+    relation_type: str = "rejected"
+    reason: str = ""
+    evidence_url: str = ""
+
+
 class Category(BaseModel):
     """供应链分类"""
     id: str                          # 分类ID，如 "chip_design"
@@ -32,6 +42,7 @@ class Theme(BaseModel):
     created_at: str = ""             # 创建时间 ISO格式
     updated_at: str = ""             # 更新时间 ISO格式
     categories: list[Category] = []  # 供应链分类列表
+    rejected_stocks: list[RejectedStock] = []  # 业务确证排除的候选，供前端审查
 
 
 class ThemeSummary(BaseModel):

@@ -144,6 +144,37 @@ export default function ResultEditor({ theme, onSave, saving = false }: ResultEd
         ))}
       </div>
 
+      {(draft.rejected_stocks ?? []).length > 0 && (
+        <div className="rounded-lg border p-4 bg-[#151c2c] border-[#1e293b]">
+          <div className="text-sm font-semibold text-[#e2e8f0] mb-3">
+            未收录名单：{draft.rejected_stocks.length} 只候选未进入看板
+          </div>
+          <div className="space-y-2">
+            {draft.rejected_stocks.map((stock) => (
+              <div
+                key={stock.code}
+                className="grid gap-2 text-xs text-[#94a3b8]"
+                style={{ gridTemplateColumns: 'minmax(150px, 220px) 70px 1fr' }}
+              >
+                <span className="font-medium text-[#e2e8f0]">{stock.name} {stock.code}</span>
+                <span>评分 {stock.relation_score}</span>
+                <span>
+                  {stock.reason}
+                  {stock.evidence_url && (
+                    <>
+                      {' '}
+                      <a href={stock.evidence_url} target="_blank" rel="noreferrer" className="text-[#818cf8] hover:text-[#a5b4fc]">
+                        线索
+                      </a>
+                    </>
+                  )}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* 添加分类按钮 */}
       <button
         onClick={handleAddCategory}

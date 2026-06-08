@@ -11,6 +11,18 @@ export interface StockItem {
 }
 
 /**
+ * 业务确证阶段排除的候选股票
+ */
+export interface RejectedStock {
+  code: string;
+  name: string;
+  relation_score: number;
+  relation_type: string;
+  reason: string;
+  evidence_url: string;
+}
+
+/**
  * 供应链分类
  */
 export interface Category {
@@ -31,6 +43,7 @@ export interface Theme {
   created_at: string;
   updated_at: string;
   categories: Category[];
+  rejected_stocks: RejectedStock[];
 }
 
 /**

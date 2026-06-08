@@ -76,8 +76,8 @@ def _apply_env_config(config: AppConfig) -> AppConfig:
     config.provider.base_url = normalized_base_url
     config.provider.api_key = api_key
     config.selected_model = model
-    config.web_search.enabled = _env_bool(ENV_WEB_SEARCH_ENABLED_KEY, config.web_search.enabled)
     config.web_search.tavily_api_key = _env_value(ENV_TAVILY_API_KEY)
+    config.web_search.enabled = True
     if model:
         if "xiaomimimo.com" in normalized_base_url:
             model = model.lower()
@@ -104,7 +104,7 @@ def sync_config_to_env(
     if update_api_key and config.provider.api_key:
         _write_env_value("LLM_API_KEY", config.provider.api_key.strip())
     _write_env_value("LLM_MODEL", config.selected_model.strip())
-    _write_env_value(ENV_WEB_SEARCH_ENABLED_KEY, "true" if config.web_search.enabled else "false")
+    _write_env_value(ENV_WEB_SEARCH_ENABLED_KEY, "true")
     if update_tavily_api_key and config.web_search.tavily_api_key:
         _write_env_value(ENV_TAVILY_API_KEY, config.web_search.tavily_api_key.strip())
 
