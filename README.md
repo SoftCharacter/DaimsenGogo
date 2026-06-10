@@ -1,8 +1,5 @@
 # DaimsenGogo 股票供应链大屏
 
-  ## 项目演示视频
-
-  <video src="./Demo_Video.mp4" controls width="100%"></video>
 
 ## 项目简介
 
