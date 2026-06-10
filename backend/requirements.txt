@@ -1,0 +1,10 @@
+fastapi>=0.115,<1.0
+uvicorn[standard]>=0.32
+httpx>=0.28
+openai>=1.60
+sse-starlette>=2.1
+pydantic>=2.10
+akshare>=1.14
+baostock>=0.9.2
+python-multipart>=0.0.9
+python-dotenv>=1.0

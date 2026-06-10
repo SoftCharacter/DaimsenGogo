@@ -1,0 +1,21 @@
+{
+  "provider": {
+    "name": "",
+    "base_url": "",
+    "api_key": ""
+  },
+  "selected_model": "",
+  "available_models": [
+    "deepseek-v4-flash",
+    "deepseek-v4-pro"
+  ],
+  "settings": {
+    "temperature": 0.3,
+    "max_tokens": 4096,
+    "stock_refresh_interval_seconds": 30
+  },
+  "web_search": {
+    "enabled": true,
+    "tavily_api_key": ""
+  }
+}
