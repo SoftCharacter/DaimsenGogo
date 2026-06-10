@@ -27,58 +27,112 @@ from backend.services.file_service import load_config
 
 logger = logging.getLogger(__name__)
 
-_queue: asyncio.Queue[str] | None = None
-_queued_ids: set[str] = set()
-_worker_task: asyncio.Task | None = None
-_active_task_id: str | None = None
-_state_lock = asyncio.Lock()
+
+class AnalysisTaskRunner:
+    """集中管理分析任务队列、活动任务和串行 worker。"""
+
+    def __init__(self) -> None:
+        self.queue: asyncio.Queue[str] | None = None
+        self.queued_ids: set[str] = set()
+        self.worker_task: asyncio.Task | None = None
+        self.active_task_id: str | None = None
+        self.state_lock = asyncio.Lock()
+        self.watchers: dict[str, set[asyncio.Queue[None]]] = {}
+
+    def get_queue(self) -> asyncio.Queue[str]:
+        if self.queue is None:
+            self.queue = asyncio.Queue()
+        return self.queue
+
+    async def ensure_started(self) -> None:
+        if self.worker_task and not self.worker_task.done():
+            return
+        self.worker_task = asyncio.create_task(self.worker_loop(), name="analysis-task-worker")
+
+    async def enqueue(self, task_id: str) -> None:
+        await self.ensure_started()
+        async with self.state_lock:
+            if task_id == self.active_task_id or task_id in self.queued_ids:
+                return
+            task = load_task(task_id)
+            if not task:
+                return
+            if task.status in {
+                AnalysisTaskStatus.COMPLETED,
+                AnalysisTaskStatus.CANCELLED,
+                AnalysisTaskStatus.RUNNING,
+            }:
+                return
+            mark_task_pending(task)
+            self.queued_ids.add(task_id)
+            self.get_queue().put_nowait(task_id)
+        await self.notify(task_id)
+
+    async def enqueue_pending(self) -> None:
+        await self.ensure_started()
+        for task in reversed(list_tasks()):
+            if task.status == AnalysisTaskStatus.PENDING:
+                await self.enqueue(task.id)
+
+    async def subscribe(self, task_id: str) -> asyncio.Queue[None]:
+        queue: asyncio.Queue[None] = asyncio.Queue(maxsize=1)
+        async with self.state_lock:
+            self.watchers.setdefault(task_id, set()).add(queue)
+        return queue
+
+    async def unsubscribe(self, task_id: str, queue: asyncio.Queue[None]) -> None:
+        async with self.state_lock:
+            watchers = self.watchers.get(task_id)
+            if not watchers:
+                return
+            watchers.discard(queue)
+            if not watchers:
+                self.watchers.pop(task_id, None)
+
+    async def notify(self, task_id: str) -> None:
+        async with self.state_lock:
+            watchers = list(self.watchers.get(task_id, set()))
+        for queue in watchers:
+            if queue.full():
+                continue
+            queue.put_nowait(None)
+
+    async def worker_loop(self) -> None:
+        queue = self.get_queue()
+        while True:
+            task_id = await queue.get()
+            async with self.state_lock:
+                self.queued_ids.discard(task_id)
+                self.active_task_id = task_id
+            try:
+                await _run_task(task_id)
+            finally:
+                async with self.state_lock:
+                    if self.active_task_id == task_id:
+                        self.active_task_id = None
+                queue.task_done()
 
 
-def _get_queue() -> asyncio.Queue[str]:
-    global _queue
-    if _queue is None:
-        _queue = asyncio.Queue()
-    return _queue
+_runner = AnalysisTaskRunner()
 
 
 def active_task_id() -> str | None:
-    return _active_task_id
+    return _runner.active_task_id
 
 
 async def ensure_runner_started() -> None:
     """确保单 worker 已启动。"""
-    global _worker_task
-    if _worker_task and not _worker_task.done():
-        return
-    _worker_task = asyncio.create_task(_worker_loop(), name="analysis-task-worker")
+    await _runner.ensure_started()
 
 
 async def enqueue_task(task_id: str) -> None:
     """把任务加入串行执行队列；重复入队会被忽略。"""
-    await ensure_runner_started()
-    async with _state_lock:
-        if task_id == _active_task_id or task_id in _queued_ids:
-            return
-        task = load_task(task_id)
-        if not task:
-            return
-        if task.status in {
-            AnalysisTaskStatus.COMPLETED,
-            AnalysisTaskStatus.CANCELLED,
-            AnalysisTaskStatus.RUNNING,
-        }:
-            return
-        mark_task_pending(task)
-        _queued_ids.add(task_id)
-        _get_queue().put_nowait(task_id)
+    await _runner.enqueue(task_id)
 
 
 async def enqueue_pending_tasks() -> None:
     """服务启动时恢复等待中的任务队列。"""
-    await ensure_runner_started()
-    for task in reversed(list_tasks()):
-        if task.status == AnalysisTaskStatus.PENDING:
-            await enqueue_task(task.id)
+    await _runner.enqueue_pending()
 
 
 async def _save_checkpoint(task_id: str, payload: dict[str, Any]) -> None:
@@ -133,6 +187,7 @@ async def _run_task(task_id: str) -> None:
             if not current:
                 return
             append_task_event(current, event_type, event_data, len(current.events) + 1)
+            await _runner.notify(task.id)
 
             if event_type == "result":
                 loaded = load_task(task.id)
@@ -171,59 +226,48 @@ async def _run_task(task_id: str) -> None:
             mark_task_failed(loaded, f"分析过程发生异常: {exc}")
 
 
-async def _worker_loop() -> None:
-    global _active_task_id
-    queue = _get_queue()
-    while True:
-        task_id = await queue.get()
-        async with _state_lock:
-            _queued_ids.discard(task_id)
-            _active_task_id = task_id
-        try:
-            await _run_task(task_id)
-        finally:
-            async with _state_lock:
-                if _active_task_id == task_id:
-                    _active_task_id = None
-            queue.task_done()
-
-
 async def watch_task_events(task_id: str, start_seq: int = 0):
-    """轮询任务事件并输出 SSE，用于观察已入队/运行中的任务。"""
+    """输出任务 SSE 事件；先补文件历史事件，再订阅运行时新事件。"""
     last_seq = start_seq
     yielded_done = False
-    yield {
-        "event": "queued",
-        "data": json.dumps({"task_id": task_id}, ensure_ascii=False),
-    }
-    while True:
-        task = load_task(task_id)
-        if not task:
-            yield {
-                "event": "error",
-                "data": json.dumps({"message": "分析任务不存在", "task_id": task_id}, ensure_ascii=False),
-            }
-            yield {"event": "done", "data": json.dumps({"task_id": task_id}, ensure_ascii=False)}
-            return
-
-        for event in task.events:
-            if event.seq <= last_seq:
-                continue
-            last_seq = event.seq
-            yielded_done = yielded_done or event.type == "done"
-            yield {
-                "event": event.type,
-                "data": json.dumps(event.data, ensure_ascii=False),
-            }
-
-        if task.status in {
-            AnalysisTaskStatus.COMPLETED,
-            AnalysisTaskStatus.FAILED,
-            AnalysisTaskStatus.PAUSED,
-            AnalysisTaskStatus.CANCELLED,
-        }:
-            if not yielded_done:
+    queue = await _runner.subscribe(task_id)
+    try:
+        yield {
+            "event": "queued",
+            "data": json.dumps({"task_id": task_id}, ensure_ascii=False),
+        }
+        while True:
+            task = load_task(task_id)
+            if not task:
+                yield {
+                    "event": "error",
+                    "data": json.dumps({"message": "分析任务不存在", "task_id": task_id}, ensure_ascii=False),
+                }
                 yield {"event": "done", "data": json.dumps({"task_id": task_id}, ensure_ascii=False)}
-            return
+                return
 
-        await asyncio.sleep(0.5)
+            for event in task.events:
+                if event.seq <= last_seq:
+                    continue
+                last_seq = event.seq
+                yielded_done = yielded_done or event.type == "done"
+                payload = dict(event.data)
+                payload["seq"] = event.seq
+                yield {
+                    "event": event.type,
+                    "data": json.dumps(payload, ensure_ascii=False),
+                }
+
+            if task.status in {
+                AnalysisTaskStatus.COMPLETED,
+                AnalysisTaskStatus.FAILED,
+                AnalysisTaskStatus.PAUSED,
+                AnalysisTaskStatus.CANCELLED,
+            }:
+                if not yielded_done:
+                    yield {"event": "done", "data": json.dumps({"task_id": task_id}, ensure_ascii=False)}
+                return
+
+            await queue.get()
+    finally:
+        await _runner.unsubscribe(task_id, queue)

@@ -6,9 +6,6 @@ set -e
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 BACKEND_DIR="$ROOT/backend"
 FRONTEND_DIR="$ROOT/frontend"
-VENV_DIR="$ROOT/.venv"
-PYTHON_BIN=""
-USE_CONDA="0"
 CONDA_ENV_NAME="env_reactAgent"
 DEPS_DIR="$ROOT/.runlogs/deps"
 BACKEND_DEPS_MARKER="$DEPS_DIR/backend.requirements.sha"
@@ -40,36 +37,15 @@ read_marker() {
 }
 
 ensure_python() {
-    if command -v conda >/dev/null 2>&1; then
-        if ! conda run --no-capture-output -n "$CONDA_ENV_NAME" python -V >/dev/null 2>&1; then
-            echo "[环境] 未找到 conda 环境 $CONDA_ENV_NAME，正在创建..."
-            conda create -n "$CONDA_ENV_NAME" python=3.11 -y
-        fi
-        USE_CONDA="1"
-        return 0
+    if ! command -v conda >/dev/null 2>&1; then
+        echo "[错误] 找不到 conda，请先安装 Anaconda。"
+        return 1
     fi
 
-    if [ -x "$VENV_DIR/bin/python" ]; then
-        PYTHON_BIN="$VENV_DIR/bin/python"
-        return 0
+    if ! conda run --no-capture-output -n "$CONDA_ENV_NAME" python -V >/dev/null 2>&1; then
+        echo "[环境] 未找到 conda 环境 $CONDA_ENV_NAME，正在创建..."
+        conda create -n "$CONDA_ENV_NAME" python=3.11 -y
     fi
-
-    if command -v python3 >/dev/null 2>&1; then
-        echo "[环境] 正在创建本地 Python 虚拟环境 .venv ..."
-        python3 -m venv "$VENV_DIR"
-        PYTHON_BIN="$VENV_DIR/bin/python"
-        return 0
-    fi
-
-    if command -v python >/dev/null 2>&1; then
-        echo "[环境] 正在创建本地 Python 虚拟环境 .venv ..."
-        python -m venv "$VENV_DIR"
-        PYTHON_BIN="$VENV_DIR/bin/python"
-        return 0
-    fi
-
-    echo "[错误] 找不到 conda、python3 或 python，请先安装 Python 或 Anaconda。"
-    return 1
 }
 
 install_backend_deps() {
@@ -81,11 +57,7 @@ install_backend_deps() {
     fi
 
     echo "[依赖] 检测到后端依赖需要安装或更新..."
-    if [ "$USE_CONDA" = "1" ]; then
-        conda run --no-capture-output -n "$CONDA_ENV_NAME" python -m pip install -r "$BACKEND_DIR/requirements.txt"
-    else
-        "$PYTHON_BIN" -m pip install -r "$BACKEND_DIR/requirements.txt"
-    fi
+    conda run --no-capture-output -n "$CONDA_ENV_NAME" python -m pip install -r "$BACKEND_DIR/requirements.txt"
     mkdir -p "$DEPS_DIR"
     printf "%s" "$current_hash" > "$BACKEND_DEPS_MARKER"
 }
@@ -131,8 +103,4 @@ echo ""
 echo "[启动] 正在启动后端和前端..."
 echo ""
 cd "$ROOT"
-if [ "$USE_CONDA" = "1" ]; then
-    conda run --no-capture-output -n "$CONDA_ENV_NAME" python scripts/launcher.py
-else
-    "$PYTHON_BIN" scripts/launcher.py
-fi
+conda run --no-capture-output -n "$CONDA_ENV_NAME" python scripts/launcher.py

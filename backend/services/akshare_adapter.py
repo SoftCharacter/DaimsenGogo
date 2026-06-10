@@ -4,11 +4,8 @@ AkShare数据源适配层
 避免业务层直接依赖新浪财经或东方财富接口字段。
 """
 from datetime import datetime
-import contextlib
-import io
 import json
 import logging
-import os
 import random
 import re
 import subprocess
@@ -17,9 +14,19 @@ import threading
 import time
 from pathlib import Path
 
-import requests
-
 from backend.models.stock_models import StockQuote, KLinePoint
+from backend.services import akshare_client, xueqiu_client
+from backend.utils.cache_keys import (
+    AKSHARE_COMPANY_BUSINESS_FILENAME,
+    AKSHARE_COMPANY_FILENAME,
+    AKSHARE_KLINE_FILENAME,
+    AKSHARE_QUOTES_FILENAME,
+    stock_list_cache_path,
+    task_cache_dir,
+    task_data_cache_path,
+)
+from backend.utils.file_cache import read_json_cache, write_json_cache
+from backend.utils.stock_code import extract_numeric_code, format_stock_code
 
 logger = logging.getLogger(__name__)
 
@@ -27,35 +34,6 @@ logger = logging.getLogger(__name__)
 _MONTH_TRADING_DAYS = 22
 _DATA_DIR = Path(__file__).resolve().parents[2] / "data"
 _TASK_CACHE_DIR = _DATA_DIR / "task_cache"
-_SHARED_TASK_ID = "_shared"
-_XQ_QUOTE_URL = "https://stock.xueqiu.com/v5/stock/quote.json"
-_XQ_KLINE_URL = "https://stock.xueqiu.com/v5/stock/chart/kline.json"
-_XQ_FINANCE_INDICATOR_URL = "https://stock.xueqiu.com/v5/stock/finance/cn/indicator.json"
-_XQ_HOLDERS_URL = "https://stock.xueqiu.com/v5/stock/f10/cn/holders.json"
-_XQ_EVENT_URL = "https://stock.xueqiu.com/v5/stock/screener/event/list.json"
-_XQ_COMPANY_URL = "https://stock.xueqiu.com/v5/stock/f10/cn/company.json"
-_XQ_HEADERS = {
-    "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 "
-    "(KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1",
-}
-
-
-def _warm_xq_cookie(session: requests.Session, headers: dict[str, str], symbol: str) -> None:
-    """通过雪球行情页预热 xq_a_token，失败或缺失时继续原请求流程。"""
-    try:
-        session.get("https://xueqiu.com/hq", headers=headers, timeout=10)
-    except Exception as exc:
-        logger.debug("雪球 hq 预热失败，继续原请求流程 [%s]: %s", symbol, exc)
-    if not session.cookies.get("xq_a_token"):
-        logger.debug("雪球 hq 预热未获取 xq_a_token，继续原请求流程 [%s]", symbol)
-
-
-def _xq_token_cookies(session: requests.Session) -> dict[str, str] | None:
-    """仅在已解析到 xq_a_token 时为后续雪球接口显式追加 Cookie。"""
-    token = session.cookies.get("xq_a_token")
-    return {"xq_a_token": token} if token else None
-
-
 _STOCK_LIST_REMOTE_ATTEMPTS = 2
 # Baostock 子进程整体超时（秒）。子进程需冷启动全新解释器并重新 import baostock
 # （连带 pandas/numpy），叠加 login 与 query_stock_basic 遍历全量股票的网络耗时，
@@ -68,107 +46,57 @@ _stock_list_lock = threading.Lock()
 _AKSHARE_SPOT_CACHE_TTL = 60
 _akshare_spot_cache: tuple[float, list[dict]] | None = None
 _akshare_spot_lock = threading.Lock()
-_PROXY_ENV_KEYS = (
-    "HTTP_PROXY",
-    "HTTPS_PROXY",
-    "ALL_PROXY",
-    "NO_PROXY",
-    "http_proxy",
-    "https_proxy",
-    "all_proxy",
-    "no_proxy",
-)
-
-
-def _run_without_proxy(func):
-    """临时清除代理环境变量，避免本机代理影响AkShare请求"""
-    old_values = {key: os.environ.get(key) for key in _PROXY_ENV_KEYS}
-    try:
-        for key in _PROXY_ENV_KEYS:
-            os.environ.pop(key, None)
-        os.environ["NO_PROXY"] = "*"
-        os.environ["no_proxy"] = "*"
-        return func()
-    finally:
-        for key, value in old_values.items():
-            if value is None:
-                os.environ.pop(key, None)
-            else:
-                os.environ[key] = value
-
-
-def _run_quietly(func):
-    """屏蔽第三方数据源的进度条输出，保留业务日志可读性。"""
-    with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
-        return func()
-
-
-def _safe_task_id(task_id: str | None) -> str:
-    """清理任务ID，确保缓存目录不会发生路径穿越。"""
-    if not task_id:
-        return _SHARED_TASK_ID
-    cleaned = re.sub(r"[^A-Za-z0-9_.-]", "_", str(task_id).strip())
-    return cleaned[:80] or _SHARED_TASK_ID
-
 
 def _task_cache_dir(task_id: str | None) -> Path:
     """返回任务级缓存目录。"""
-    return _TASK_CACHE_DIR / _safe_task_id(task_id)
+    return task_cache_dir(_TASK_CACHE_DIR, task_id)
 
 
 def _stock_list_cache_path(task_id: str | None = None) -> Path:
     """返回共享股票列表缓存路径。"""
-    return _task_cache_dir(_SHARED_TASK_ID) / "stock_list.json"
+    return stock_list_cache_path(_TASK_CACHE_DIR)
 
 
 def _task_data_cache_path(task_id: str | None, filename: str) -> Path | None:
     """返回任务级股票数据缓存路径；无任务ID时不落到共享目录。"""
-    if not task_id:
-        return None
-    return _task_cache_dir(task_id) / filename
+    return task_data_cache_path(_TASK_CACHE_DIR, task_id, filename)
 
 
 def _quote_cache_path(task_id: str | None) -> Path | None:
     """返回任务级实时行情缓存路径。"""
-    return _task_data_cache_path(task_id, "akshare_quotes_cache.json")
+    return _task_data_cache_path(task_id, AKSHARE_QUOTES_FILENAME)
 
 
 def _kline_cache_path(task_id: str | None) -> Path | None:
     """返回任务级K线缓存路径。"""
-    return _task_data_cache_path(task_id, "akshare_kline_cache.json")
+    return _task_data_cache_path(task_id, AKSHARE_KLINE_FILENAME)
 
 
 def _company_cache_path(task_id: str | None) -> Path | None:
     """返回任务级公司信息缓存路径。"""
-    return _task_data_cache_path(task_id, "akshare_company_cache.json")
+    return _task_data_cache_path(task_id, AKSHARE_COMPANY_FILENAME)
 
 
 def _company_business_cache_path(task_id: str | None) -> Path | None:
     """返回任务级公司业务画像缓存路径。"""
-    return _task_data_cache_path(task_id, "akshare_company_business_cache.json")
+    return _task_data_cache_path(task_id, AKSHARE_COMPANY_BUSINESS_FILENAME)
+
+
+def _cache_label(path: Path | None) -> str:
+    """按文件名标记缓存类型，方便 debug 日志定位命中的缓存。"""
+    if path is None:
+        return "akshare:none"
+    return f"akshare:{path.stem}"
 
 
 def _read_json_cache(path: Path | None, default):
-    """读取本地JSON缓存，失败时返回默认值"""
-    if path is None:
-        return default
-    try:
-        if path.exists():
-            return json.loads(path.read_text(encoding="utf-8"))
-    except Exception:
-        return default
-    return default
+    """读取本地JSON缓存，失败时返回默认值。"""
+    return read_json_cache(path, default, label=_cache_label(path))
 
 
 def _write_json_cache(path: Path | None, data) -> None:
-    """写入本地JSON缓存，失败时不影响主流程"""
-    if path is None:
-        return
-    try:
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
-    except Exception:
-        pass
+    """写入本地JSON缓存，失败时不影响主流程。"""
+    write_json_cache(path, data, source="akshare", label=_cache_label(path))
 
 
 def _is_valid_stock_list(stock_list) -> bool:
@@ -195,32 +123,6 @@ def _is_stock_list_cache_fresh(path: Path) -> bool:
         return modified_date == datetime.now().date()
     except OSError:
         return False
-
-
-def format_stock_code(raw_code: str) -> str:
-    """
-    将纯数字股票代码转换为项目统一格式
-    规则: 6开头为沪市，0/3开头为深市，4/8开头为北交所。
-    """
-    code = str(raw_code).zfill(6)
-    if code.startswith("6"):
-        return f"SH:{code}"
-    if code.startswith(("0", "3")):
-        return f"SZ:{code}"
-    if code.startswith(("4", "8")):
-        return f"BJ:{code}"
-    return f"SZ:{code}"
-
-
-def extract_numeric_code(code: str) -> str:
-    """
-    从统一代码或混合文本中提取6位数字代码
-    示例: SH:601138 -> 601138, SZ002261 -> 002261。
-    """
-    import re
-
-    match = re.search(r"\d{6}", code)
-    return match.group() if match else code.strip()
 
 
 def _safe_float(value) -> float:
@@ -270,11 +172,9 @@ def _company_name_from_info(info: dict) -> str:
 
 def _stock_list_from_akshare() -> list[dict]:
     """通过AkShare获取股票列表，带有限重试和退避。"""
-    import akshare as ak
-
     for attempt in range(_STOCK_LIST_REMOTE_ATTEMPTS):
         try:
-            df = _run_without_proxy(lambda: _run_quietly(ak.stock_zh_a_spot_em))
+            df = akshare_client.fetch_a_spot_em()
             result: list[dict] = []
             for _, row in df.iterrows():
                 code = str(row.get("代码", "")).zfill(6)
@@ -420,41 +320,13 @@ def get_stock_list(task_id: str | None = None) -> list[dict]:
 
 
 def _fetch_xq_quote(symbol: str) -> dict:
-    """直接请求雪球原始行情接口，返回 data.quote 字段。"""
-    def request_quote() -> dict:
-        session = requests.Session()
-        _warm_xq_cookie(session, _XQ_HEADERS, symbol)
-        resp = session.get(
-            _XQ_QUOTE_URL,
-            params={"symbol": symbol, "extend": "detail"},
-            headers=_XQ_HEADERS,
-            cookies=_xq_token_cookies(session),
-            timeout=10,
-        )
-        payload = resp.json()
-        quote = payload.get("data", {}).get("quote")
-        if not quote:
-            logger.warning("雪球原始响应缺少data.quote [%s]: %s", symbol, str(payload)[:500])
-            return {}
-        return quote
-
-    return _run_without_proxy(request_quote)
+    """兼容旧内部函数名，委托雪球 client 获取原始行情。"""
+    return akshare_client.run_without_proxy(lambda: xueqiu_client.fetch_quote(symbol))
 
 
 def _fetch_xq_json_sync(symbol: str, url: str, params: dict, timeout: int = 20) -> dict:
-    """请求雪球JSON接口，自动预热cookie。"""
-    def request_json() -> dict:
-        session = requests.Session()
-        headers = {**_XQ_HEADERS, "Referer": f"https://xueqiu.com/S/{symbol}"}
-        _warm_xq_cookie(session, headers, symbol)
-        resp = session.get(url, params=params, headers=headers, cookies=_xq_token_cookies(session), timeout=timeout)
-        resp.raise_for_status()
-        return resp.json()
-
-    payload = _run_without_proxy(request_json)
-    if isinstance(payload, dict) and payload.get("error_code", 0) not in (0, None):
-        raise RuntimeError(f"雪球接口返回错误: {str(payload)[:300]}")
-    return payload
+    """兼容旧内部函数名，委托雪球 client 获取 JSON。"""
+    return akshare_client.run_without_proxy(lambda: xueqiu_client.fetch_json(symbol, url, params, timeout=timeout))
 
 
 def fetch_close_history_xq_sync(code: str, count: int = 250) -> list[dict]:
@@ -465,28 +337,18 @@ def fetch_close_history_xq_sync(code: str, count: int = 250) -> list[dict]:
     """
     symbol = _to_xq_symbol(code)
 
-    def request_kline() -> dict:
-        session = requests.Session()
-        headers = {**_XQ_HEADERS, "Referer": f"https://xueqiu.com/S/{symbol}"}
-        _warm_xq_cookie(session, headers, symbol)
-        resp = session.get(
-            _XQ_KLINE_URL,
-            params={
-                "symbol": symbol,
-                "begin": int(time.time() * 1000),
-                "period": "day",
-                "type": "before",
-                "count": -abs(int(count)),
-                "indicator": "kline",
-            },
-            headers=headers,
-            cookies=_xq_token_cookies(session),
-            timeout=20,
-        )
-        resp.raise_for_status()
-        return resp.json()
-
-    payload = _run_without_proxy(request_kline)
+    payload = _fetch_xq_json_sync(
+        symbol,
+        xueqiu_client.XQ_KLINE_URL,
+        {
+            "symbol": symbol,
+            "begin": int(time.time() * 1000),
+            "period": "day",
+            "type": "before",
+            "count": -abs(int(count)),
+            "indicator": "kline",
+        },
+    )
     data = payload.get("data") or {}
     columns = data.get("column") or []
     items = data.get("item") or []
@@ -536,12 +398,8 @@ def _close_history_from_df(df, count: int) -> list[dict]:
 
 def _fetch_close_history_akshare_tx_sync(code: str, count: int = 250) -> list[dict]:
     """使用AkShare腾讯历史行情接口获取日线收盘价。"""
-    import akshare as ak
-
     num = extract_numeric_code(code)
-    df = _run_without_proxy(
-        lambda: _run_quietly(lambda: ak.stock_zh_a_hist_tx(symbol=_to_tx_symbol(num), adjust="qfq"))
-    )
+    df = akshare_client.fetch_hist_tx(_to_tx_symbol(num))
     points = _close_history_from_df(df, count)
     if not points:
         raise RuntimeError("AkShare stock_zh_a_hist_tx 响应为空")
@@ -550,12 +408,8 @@ def _fetch_close_history_akshare_tx_sync(code: str, count: int = 250) -> list[di
 
 def _fetch_close_history_akshare_sina_sync(code: str, count: int = 250) -> list[dict]:
     """使用AkShare新浪历史行情接口获取日线收盘价。"""
-    import akshare as ak
-
     num = extract_numeric_code(code)
-    df = _run_without_proxy(
-        lambda: _run_quietly(lambda: ak.stock_zh_a_daily(symbol=_to_tx_symbol(num), adjust="qfq"))
-    )
+    df = akshare_client.fetch_daily_sina(_to_tx_symbol(num))
     points = _close_history_from_df(df, count)
     if not points:
         raise RuntimeError("AkShare stock_zh_a_daily 响应为空")
@@ -564,22 +418,14 @@ def _fetch_close_history_akshare_sina_sync(code: str, count: int = 250) -> list[
 
 def _fetch_daily_kline_df_akshare_tx(code: str):
     """使用AkShare腾讯历史行情接口获取日K DataFrame。"""
-    import akshare as ak
-
     num = extract_numeric_code(code)
-    return _run_without_proxy(
-        lambda: _run_quietly(lambda: ak.stock_zh_a_hist_tx(symbol=_to_tx_symbol(num), adjust="qfq"))
-    )
+    return akshare_client.fetch_hist_tx(_to_tx_symbol(num))
 
 
 def _fetch_daily_kline_df_akshare_sina(code: str):
     """使用AkShare新浪历史行情接口获取日K DataFrame。"""
-    import akshare as ak
-
     num = extract_numeric_code(code)
-    return _run_without_proxy(
-        lambda: _run_quietly(lambda: ak.stock_zh_a_daily(symbol=_to_tx_symbol(num), adjust="qfq"))
-    )
+    return akshare_client.fetch_daily_sina(_to_tx_symbol(num))
 
 
 def fetch_close_history_sync(code: str, count: int = 250) -> list[dict]:
@@ -608,9 +454,7 @@ def fetch_close_history_sync(code: str, count: int = 250) -> list[dict]:
 
 def _spot_rows_from_sina() -> list[dict]:
     """使用AkShare新浪实时行情接口获取A股现价列表。"""
-    import akshare as ak
-
-    df = _run_without_proxy(lambda: _run_quietly(ak.stock_zh_a_spot))
+    df = akshare_client.fetch_a_spot_sina()
     rows: list[dict] = []
     for _, row in df.iterrows():
         formatted_code = format_stock_code(extract_numeric_code(str(row.get("代码", ""))))
@@ -645,9 +489,7 @@ def _spot_rows_from_sina() -> list[dict]:
 
 def _spot_rows_from_eastmoney() -> list[dict]:
     """使用AkShare东方财富实时行情接口获取A股现价列表。"""
-    import akshare as ak
-
-    df = _run_without_proxy(lambda: _run_quietly(ak.stock_zh_a_spot_em))
+    df = akshare_client.fetch_a_spot_em()
     rows: list[dict] = []
     for _, row in df.iterrows():
         formatted_code = format_stock_code(extract_numeric_code(str(row.get("代码", ""))))
@@ -785,7 +627,7 @@ def _fetch_quote_from_akshare_daily_sync(code: str, task_id: str | None = None) 
 def fetch_shareholders_xq_sync(code: str, count: int = 20) -> list[dict]:
     """获取雪球F10股东人数变化。"""
     symbol = _to_xq_symbol(code)
-    payload = _fetch_xq_json_sync(symbol, _XQ_HOLDERS_URL, {"symbol": symbol, "count": count})
+    payload = _fetch_xq_json_sync(symbol, xueqiu_client.XQ_HOLDERS_URL, {"symbol": symbol, "count": count})
     return payload.get("data", {}).get("items") or []
 
 
@@ -794,7 +636,7 @@ def fetch_finance_indicator_xq_sync(code: str, report_type: str = "Q4", count: i
     symbol = _to_xq_symbol(code)
     payload = _fetch_xq_json_sync(
         symbol,
-        _XQ_FINANCE_INDICATOR_URL,
+        xueqiu_client.XQ_FINANCE_INDICATOR_URL,
         {
             "symbol": symbol,
             "type": report_type,
@@ -810,7 +652,7 @@ def fetch_stock_events_xq_sync(code: str, size: int = 200) -> list[dict]:
     symbol = _to_xq_symbol(code)
     payload = _fetch_xq_json_sync(
         symbol,
-        _XQ_EVENT_URL,
+        xueqiu_client.XQ_EVENT_URL,
         {
             "symbol": symbol,
             "page": 1,
@@ -892,7 +734,7 @@ def fetch_recent_daily_kline_xq_sync(code: str, count: int = _MONTH_TRADING_DAYS
     symbol = _to_xq_symbol(code)
     payload = _fetch_xq_json_sync(
         symbol,
-        _XQ_KLINE_URL,
+        xueqiu_client.XQ_KLINE_URL,
         {
             "symbol": symbol,
             "begin": int(time.time() * 1000),
@@ -928,8 +770,6 @@ def fetch_recent_daily_kline_sync(code: str, task_id: str | None = None) -> list
     优先使用雪球获取近一个月日K，失败时使用AkShare腾讯日线兜底。
     固定返回最近22个交易日的日线数据。
     """
-    import akshare as ak
-
     num = extract_numeric_code(code)
     formatted_code = format_stock_code(num)
     try:
@@ -942,9 +782,7 @@ def fetch_recent_daily_kline_sync(code: str, task_id: str | None = None) -> list
         logger.warning("雪球日K获取失败，使用AkShare兜底 [%s]: %s", formatted_code, exc)
 
     try:
-        df = _run_without_proxy(
-            lambda: _run_quietly(lambda: ak.stock_zh_a_hist_tx(symbol=_to_tx_symbol(num), adjust="qfq"))
-        )
+        df = akshare_client.fetch_hist_tx(_to_tx_symbol(num))
     except Exception:
         cached_klines = _read_json_cache(_kline_cache_path(task_id), {})
         return [KLinePoint(**item) for item in cached_klines.get(formatted_code, [])]
@@ -972,11 +810,9 @@ def fetch_company_info_sync(pure_code: str, task_id: str | None = None) -> dict:
     使用akshare获取上市公司基础信息
     返回普通dict，字段名保持中文，便于LLM理解工具结果。
     """
-    import akshare as ak
-
     num = extract_numeric_code(pure_code)
     try:
-        df = _run_without_proxy(lambda: _run_quietly(lambda: ak.stock_individual_info_em(symbol=num)))
+        df = akshare_client.fetch_individual_info(num)
     except Exception:
         cached_companies = _read_json_cache(_company_cache_path(task_id), {})
         cached = cached_companies.get(format_stock_code(num)) or cached_companies.get(num)
@@ -1037,7 +873,7 @@ def _df_first_row(df) -> dict:
 def _fetch_xq_company_business_info_sync(num: str, akshare_errors: list[str] | None = None) -> dict:
     """使用雪球F10公司资料接口兜底获取公司业务画像。"""
     symbol = _to_xq_symbol(num)
-    payload = _fetch_xq_json_sync(symbol, _XQ_COMPANY_URL, {"symbol": symbol}, timeout=20)
+    payload = _fetch_xq_json_sync(symbol, xueqiu_client.XQ_COMPANY_URL, {"symbol": symbol}, timeout=20)
     company = (payload.get("data") or {}).get("company") or {}
     if not isinstance(company, dict) or not company:
         raise RuntimeError(f"雪球公司资料响应为空: {str(payload)[:300]}")
@@ -1070,8 +906,6 @@ def fetch_company_business_info_sync(pure_code: str, task_id: str | None = None)
     优先使用 AkShare 的 stock_zyjs_ths / stock_profile_cninfo；
     若 AkShare 没有返回可用业务字段，则使用雪球 company.json 兜底。
     """
-    import akshare as ak
-
     num = extract_numeric_code(pure_code)
     formatted_code = format_stock_code(num)
     cached_business = _read_json_cache(_company_business_cache_path(task_id), {})
@@ -1085,7 +919,7 @@ def fetch_company_business_info_sync(pure_code: str, task_id: str | None = None)
     cninfo_row: dict = {}
 
     try:
-        ths_df = _run_without_proxy(lambda: _run_quietly(lambda: ak.stock_zyjs_ths(symbol=num)))
+        ths_df = akshare_client.fetch_business_ths(num)
         ths_row = _df_first_row(ths_df)
         if ths_row:
             sources.append("akshare.stock_zyjs_ths")
@@ -1093,7 +927,7 @@ def fetch_company_business_info_sync(pure_code: str, task_id: str | None = None)
         errors.append(f"stock_zyjs_ths: {exc}")
 
     try:
-        cninfo_df = _run_without_proxy(lambda: _run_quietly(lambda: ak.stock_profile_cninfo(symbol=num)))
+        cninfo_df = akshare_client.fetch_profile_cninfo(num)
         cninfo_row = _df_first_row(cninfo_df)
         if cninfo_row:
             sources.append("akshare.stock_profile_cninfo")

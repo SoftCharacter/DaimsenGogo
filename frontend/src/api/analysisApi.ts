@@ -1,7 +1,7 @@
 /**
- * 分析API模块
- * 提供SSE流式分析接口，使用fetch + ReadableStream实现
- * 注意：由于是POST请求的SSE流，不能使用浏览器原生EventSource
+ * 旧版分析API模块
+ * 保留直接SSE流式分析接口兼容，当前主业务入口已迁移到 analysisTaskApi
+ * 新功能优先接入 /api/analysis-tasks/*
  */
 
 /**

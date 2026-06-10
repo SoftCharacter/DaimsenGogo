@@ -9,7 +9,6 @@ Agent工具集
 所有工具返回JSON字符串，因为部分数据源是同步库，
 在ReAct循环中通过 asyncio.to_thread 异步调用。
 """
-import hashlib
 import json
 import logging
 import os
@@ -21,6 +20,9 @@ import httpx
 
 from backend.agent.company_info import fetch_company_info
 from backend.services.akshare_adapter import get_stock_list
+from backend.utils.cache_keys import optional_safe_task_scope, web_search_cache_filename
+from backend.utils.file_cache import read_json_cache, write_json_cache
+from backend.utils.stock_code import format_stock_code, normalize_stock_code, split_stock_codes
 
 # 日志记录器
 logger = logging.getLogger(__name__)
@@ -53,46 +55,23 @@ def _claim_web_search_quota(task_id: str | None) -> tuple[bool, int]:
     return True, used
 
 
-def _safe_task_id(task_id: str | None) -> str | None:
-    """清理任务ID，确保网页搜索缓存目录不会越界。"""
-    if not task_id:
-        return None
-    cleaned = re.sub(r"[^A-Za-z0-9_.-]", "_", str(task_id).strip())[:80]
-    return cleaned or None
-
-
 def _web_search_cache_path(cache_key: str, task_id: str | None) -> Path | None:
     """按任务和检索参数生成网页搜索缓存路径。"""
-    safe_task_id = _safe_task_id(task_id)
+    safe_task_id = optional_safe_task_scope(task_id)
     if not safe_task_id:
         return None
-    query_hash = hashlib.sha256(cache_key.encode("utf-8")).hexdigest()[:16]
-    return _WEB_SEARCH_CACHE_ROOT / safe_task_id / f"web_search_{query_hash}.json"
+    return _WEB_SEARCH_CACHE_ROOT / safe_task_id / web_search_cache_filename(cache_key)
 
 
 def _read_web_search_cache(cache_key: str, task_id: str | None) -> str | None:
     """读取任务级网页搜索缓存，失败时回退为真实搜索。"""
-    path = _web_search_cache_path(cache_key, task_id)
-    if not path:
-        return None
-    try:
-        if path.exists():
-            return path.read_text(encoding="utf-8")
-    except Exception:
-        return None
-    return None
+    payload = read_json_cache(_web_search_cache_path(cache_key, task_id), None, label="web_search")
+    return payload if isinstance(payload, str) else None
 
 
 def _write_web_search_cache(cache_key: str, task_id: str | None, payload: str) -> None:
     """写入任务级网页搜索缓存，缓存失败不影响主流程。"""
-    path = _web_search_cache_path(cache_key, task_id)
-    if not path:
-        return
-    try:
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(payload, encoding="utf-8")
-    except Exception:
-        pass
+    write_json_cache(_web_search_cache_path(cache_key, task_id), payload, source="web_search", label="web_search")
 
 
 def _is_valid_stock_list(stock_list: Any) -> bool:
@@ -124,38 +103,18 @@ def _load_stock_list(task_id: str | None = None) -> list[dict]:
 
 
 def _format_stock_code(raw_code: str) -> str:
-    """
-    纯数字代码转带交易所前缀格式
-    规则: 6开头→SH, 0/3开头→SZ, 4/8开头→BJ
-    """
-    if raw_code.startswith("6"):
-        return f"SH:{raw_code}"
-    if raw_code.startswith(("0", "3")):
-        return f"SZ:{raw_code}"
-    if raw_code.startswith(("4", "8")):
-        return f"BJ:{raw_code}"
-    return f"SZ:{raw_code}"
+    """兼容旧工具内部函数名，委托统一股票代码工具。"""
+    return format_stock_code(raw_code)
 
 
 def _normalize_stock_code(raw_code: str) -> str:
-    """兼容LLM常见股票代码写法，并归一化为交易所前缀格式。"""
-    cleaned = raw_code.strip().strip('"').strip("'").strip().upper().replace("：", ":")
-    market_match = re.search(r"\b(SH|SZ|BJ)\s*:?\s*(\d{6})\b", cleaned)
-    if market_match:
-        return f"{market_match.group(1)}:{market_match.group(2)}"
-
-    digit_match = re.search(r"\d{6}", cleaned)
-    if digit_match:
-        return _format_stock_code(digit_match.group())
-    return cleaned
+    """兼容旧工具内部函数名，委托统一股票代码工具。"""
+    return normalize_stock_code(raw_code) or ""
 
 
 def _split_stock_codes(codes: str) -> list[str]:
-    """从逗号、空格、换行或JSON样式文本中提取股票代码片段。"""
-    matches = re.findall(r"(?:SH|SZ|BJ)?\s*[:：]?\s*\d{6}", codes, flags=re.IGNORECASE)
-    if matches:
-        return [item.strip() for item in matches]
-    return [item.strip() for item in re.split(r"[,，、;；\s]+", codes) if item.strip()]
+    """兼容旧工具内部函数名，委托统一股票代码工具。"""
+    return split_stock_codes(codes)
 
 
 def search_stocks(keyword: str, task_id: str | None = None) -> str:

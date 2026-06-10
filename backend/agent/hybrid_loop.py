@@ -40,8 +40,9 @@ from backend.agent.tools import web_search
 from backend.models.analysis_task_models import AnalysisCheckpoint
 from backend.models.config_models import AppConfig
 from backend.models.theme_models import RejectedStock, Theme
-from backend.services.akshare_adapter import format_stock_code, get_stock_list
+from backend.services.akshare_adapter import get_stock_list
 from backend.services.llm_client import LLMTruncationError, create_client
+from backend.utils.stock_code import normalize_stock_code
 
 logger = logging.getLogger(__name__)
 _ARCHITECTURE = "plan_execute_react_v1"
@@ -75,9 +76,7 @@ _BUSINESS_RELATION_TYPES = {
     "weak_relevance",
     "rejected",
 }
-_MARKET_CODE_PATTERN = re.compile(r"\b(?:SH|SZ|BJ)[:：]?\s*(\d{6})\b", re.IGNORECASE)
 _SUFFIX_CODE_PATTERN = re.compile(r"(?<!\d)(\d{6})\s*[.．]\s*(SH|SZ|BJ)(?![A-Za-z0-9])", re.IGNORECASE)
-_DIGIT_CODE_PATTERN = re.compile(r"(?<!\d)(\d{6})(?!\d)")
 _SEARCH_KEYWORD_SPLIT_PATTERN = re.compile(r"[,，、;；\n\r\t ]+")
 _SEARCH_QUERY_ANCHOR_TYPES = {
     "company",
@@ -329,15 +328,8 @@ def _validate_step_result(step: PlanStep, data: dict[str, Any]) -> None:
 
 
 def _normalize_stock_code(raw_code: str) -> str | None:
-    text = raw_code.strip().upper().replace("：", ":")
-    market_match = _MARKET_CODE_PATTERN.search(text)
-    if market_match:
-        prefix = text[:market_match.start(1)].replace(" ", "").replace(":", "")[-2:]
-        return f"{prefix}:{market_match.group(1)}"
-    digit_match = _DIGIT_CODE_PATTERN.search(text)
-    if digit_match:
-        return format_stock_code(digit_match.group(1))
-    return None
+    """兼容旧内部函数名，严格模式下无法识别时返回 None。"""
+    return normalize_stock_code(raw_code, strict=True)
 
 
 def _split_search_keywords(action_input: str) -> list[str]:

@@ -8,6 +8,7 @@ import time
 import logging
 
 from backend.models.stock_models import StockQuote, KLinePoint, ClosePricePoint
+from backend.utils.cache_keys import cache_scope, close_history_cache_key, kline_cache_key, quote_cache_key
 from backend.services.akshare_adapter import (
     format_stock_code,
     extract_numeric_code,
@@ -34,21 +35,10 @@ STOCK_LIST_TTL = 3600  # 股票列表缓存1小时
 CLOSE_HISTORY_TTL = 3600  # 历史收盘价缓存1小时
 QUOTE_CONCURRENCY = 5  # 雪球实时行情并发上限
 KLINE_CONCURRENCY = 3  # K线外部请求并发上限
+MONTH_KLINE_PERIOD = "daily"
+MONTH_KLINE_COUNT = 22
 _quote_semaphore = asyncio.Semaphore(QUOTE_CONCURRENCY)
 _kline_semaphore = asyncio.Semaphore(KLINE_CONCURRENCY)
-
-
-def _scope_key(task_id: str | None) -> str:
-    """返回进程内缓存的任务作用域。"""
-    return task_id or "_shared"
-
-
-def _cache_key(codes: list[str], task_id: str | None = None) -> str:
-    """
-    根据股票代码列表生成缓存键
-    排序后拼接，确保相同代码组合命中同一缓存。
-    """
-    return f"{_scope_key(task_id)}|{','.join(sorted(codes))}"
 
 
 async def _fetch_one_quote(code: str, task_id: str | None = None) -> StockQuote | None:
@@ -65,7 +55,7 @@ async def fetch_quotes(codes: list[str], task_id: str | None = None) -> list[Sto
     if not codes:
         return []
 
-    key = _cache_key(codes, task_id=task_id)
+    key = quote_cache_key(codes, task_id=task_id)
     cached = _quote_cache.get(key)
     if cached:
         ts, data = cached
@@ -93,8 +83,8 @@ async def fetch_quotes(codes: list[str], task_id: str | None = None) -> list[Sto
 
 async def fetch_kline(
     code: str,
-    period: str = "daily",
-    count: int = 22,
+    period: str = MONTH_KLINE_PERIOD,
+    count: int = MONTH_KLINE_COUNT,
     task_id: str | None = None,
 ) -> list[KLinePoint]:
     """
@@ -102,7 +92,7 @@ async def fetch_kline(
     为保证大屏展示一致性，忽略period/count差异，固定返回最近22个交易日日K。
     数据源优先使用雪球K线接口，失败时在适配层回退到AkShare腾讯日线。
     """
-    cache_key = f"{_scope_key(task_id)}|{code}|daily|month"
+    cache_key = kline_cache_key(code, task_id=task_id)
     cached = _kline_cache.get(cache_key)
     if cached:
         ts, data = cached
@@ -132,7 +122,7 @@ async def fetch_close_history(
     默认250个交易日，近似1年日线。
     """
     formatted_code = format_stock_code(extract_numeric_code(code))
-    cache_key = f"{formatted_code}|day|close|{count}"
+    cache_key = close_history_cache_key(formatted_code, count)
     cached = _close_history_cache.get(cache_key)
     if cached:
         ts, data, elapsed_ms = cached
@@ -153,7 +143,7 @@ async def search_stocks(keyword: str, task_id: str | None = None) -> list[dict]:
     使用AkShare全量A股列表进行名称/代码模糊匹配，不依赖行情缓存。
     """
     now = time.time()
-    scope = _scope_key(task_id)
+    scope = cache_scope(task_id)
     cached = _stock_search_cache.get(scope)
     if cached and now - cached[0] < STOCK_LIST_TTL:
         stock_list = cached[1]

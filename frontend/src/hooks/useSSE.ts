@@ -8,6 +8,7 @@ import { useState, useCallback, useRef, useEffect } from 'react'
 import type { SSEEvent } from '../types/stock'
 import type { Theme } from '../types/theme'
 import { runAnalysis } from '../api/analysisApi'
+import { parseSSEBuffer } from '../utils/sse'
 
 /** SSE Hook 内部状态接口，追踪分析流程的完整生命周期状态 */
 interface SSEState {
@@ -23,52 +24,6 @@ interface SSEState {
 const INITIAL_STATE: SSEState = {
   isRunning: false, events: [], currentStep: 0,
   maxSteps: 0, result: null, error: null,
-}
-
-/**
- * 解析SSE文本缓冲区，提取完整的SSE事件
- * SSE协议格式: `event: xxx\ndata: {...}\n\n`，每个事件由空行分隔。
- * 从buffer中提取所有完整事件，返回剩余不完整数据作为新buffer继续累积。
- * @param buffer - 当前累积的原始SSE文本
- * @returns [解析出的事件数组, 剩余未解析的buffer]
- */
-function parseSSEBuffer(buffer: string): [SSEEvent[], string] {
-  const events: SSEEvent[] = []
-  /** 按双换行分割，提取完整的SSE消息块 */
-  const parts = buffer.split('\n\n')
-  /** 最后一个元素可能是不完整的，保留作为下次解析的buffer */
-  const remaining = parts.pop() ?? ''
-
-  for (const part of parts) {
-    /** 跳过空白消息块 */
-    if (!part.trim()) continue
-
-    let eventType = '', dataStr = ''
-
-    /** 逐行解析事件字段 */
-    for (const line of part.split('\n')) {
-      if (line.startsWith('event:')) {
-        eventType = line.slice(6).trim()
-      } else if (line.startsWith('data:')) {
-        dataStr = line.slice(5).trim()
-      }
-    }
-
-    /** 必须同时具备event和data字段才是有效事件 */
-    if (!eventType || !dataStr) continue
-
-    try {
-      /** 将data字段解析为JSON，并注入type字段构造完整的SSEEvent */
-      const parsed = JSON.parse(dataStr) as Record<string, unknown>
-      const event = { type: eventType, ...parsed } as SSEEvent
-      events.push(event)
-    } catch {
-      /** JSON解析失败时静默跳过，避免中断整个流程 */
-      console.warn('[useSSE] JSON解析失败:', dataStr)
-    }
-  }
-
-  return [events, remaining]
 }
 
 /**

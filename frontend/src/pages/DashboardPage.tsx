@@ -1,42 +1,19 @@
-import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useThemeStore } from '../stores/themeStore'
 import { useStockStore } from '../stores/stockStore'
 import { useStockPolling } from '../hooks/useStockPolling'
+import { useStockDiagnosisController } from '../hooks/useStockDiagnosisController'
 import Sidebar from '../components/dashboard/Sidebar'
 import StockCard from '../components/dashboard/StockCard'
 import OverviewPanel from '../components/dashboard/OverviewPanel'
 import StockDiagnosisPanel from '../components/dashboard/StockDiagnosisPanel'
-import { fetchEnhancedStockDiagnosis, fetchStockDiagnosis } from '../api/stockApi'
-import type { StockDiagnosis } from '../types/stock'
 import type { StockItem } from '../types/theme'
 
 const ALL = '全部'
-const DIAGNOSIS_CACHE_TTL_MS = 24 * 60 * 60 * 1000
-
-type DiagnosisCacheEntry = {
-  savedAt: number
-  data: StockDiagnosis
-}
 
 const sortByRelevance = (a: StockItem, b: StockItem) =>
   b.percentage - a.percentage || a.name.localeCompare(b.name, 'zh-Hans-CN') || a.code.localeCompare(b.code)
-
-const diagnosisCacheKey = (stock: Pick<StockItem, 'code' | 'name'>) => `${stock.code}|${stock.name}`
-
-function readDiagnosisCache(cache: Map<string, DiagnosisCacheEntry>, key: string): StockDiagnosis | null {
-  const entry = cache.get(key)
-  if (!entry) return null
-  if (Date.now() - entry.savedAt >= DIAGNOSIS_CACHE_TTL_MS) {
-    cache.delete(key)
-    return null
-  }
-  return entry.data
-}
-
-function writeDiagnosisCache(cache: Map<string, DiagnosisCacheEntry>, key: string, data: StockDiagnosis) {
-  cache.set(key, { savedAt: Date.now(), data })
-}
 
 /**
  * 供应链看板页面（高保真重构）
@@ -55,18 +32,17 @@ export default function DashboardPage() {
 
   /* ---------- 筛选 / 诊断状态 ---------- */
   const [activeSeg, setActiveSeg] = useState<string>(ALL)
-  const [diagnosisStock, setDiagnosisStock] = useState<StockItem | null>(null)
-  const [diagnosis, setDiagnosis] = useState<StockDiagnosis | null>(null)
-  const [baseDiagnosis, setBaseDiagnosis] = useState<StockDiagnosis | null>(null)
-  const [enhancedDiagnosis, setEnhancedDiagnosis] = useState<StockDiagnosis | null>(null)
-  const [diagnosisLoading, setDiagnosisLoading] = useState(false)
-  const [diagnosisEnhancing, setDiagnosisEnhancing] = useState(false)
-  const [diagnosisEnhanced, setDiagnosisEnhanced] = useState(false)
-  const [diagnosisError, setDiagnosisError] = useState('')
-  const diagnosisRequestId = useRef(0)
-  const enhanceRequestId = useRef(0)
-  const diagnosisCacheRef = useRef<Map<string, DiagnosisCacheEntry>>(new Map())
-  const enhancedDiagnosisCacheRef = useRef<Map<string, DiagnosisCacheEntry>>(new Map())
+  const {
+    diagnosisStock,
+    diagnosis,
+    diagnosisLoading,
+    diagnosisEnhancing,
+    diagnosisEnhanced,
+    diagnosisError,
+    selectStock,
+    closeDiagnosis,
+    toggleEnhanced,
+  } = useStockDiagnosisController()
 
   /** 路由ID变化时加载对应主题 */
   useEffect(() => {
@@ -121,106 +97,6 @@ export default function DashboardPage() {
       navigate(`/dashboard/${themeId}`)
     },
     [navigate],
-  )
-
-  const handleStockClick = useCallback((stock: StockItem) => {
-    const requestId = diagnosisRequestId.current + 1
-    diagnosisRequestId.current = requestId
-    enhanceRequestId.current += 1
-    const cacheKey = diagnosisCacheKey(stock)
-    const cachedBase = readDiagnosisCache(diagnosisCacheRef.current, cacheKey)
-    const cachedEnhanced = readDiagnosisCache(enhancedDiagnosisCacheRef.current, cacheKey)
-    setDiagnosisStock(stock)
-    setDiagnosis(cachedBase)
-    setBaseDiagnosis(cachedBase)
-    setEnhancedDiagnosis(cachedEnhanced)
-    setDiagnosisError('')
-    setDiagnosisLoading(!cachedBase)
-    setDiagnosisEnhancing(false)
-    setDiagnosisEnhanced(false)
-
-    if (cachedBase) return
-
-    fetchStockDiagnosis(stock.code, stock.name)
-      .then((result) => {
-        if (diagnosisRequestId.current !== requestId) return
-        writeDiagnosisCache(diagnosisCacheRef.current, cacheKey, result)
-        setDiagnosis(result)
-        setBaseDiagnosis(result)
-      })
-      .catch((err) => {
-        if (diagnosisRequestId.current !== requestId) return
-        const message = err?.response?.data?.detail || err?.message || '个股诊断生成失败'
-        setDiagnosisError(message)
-      })
-      .finally(() => {
-        if (diagnosisRequestId.current !== requestId) return
-        setDiagnosisLoading(false)
-      })
-  }, [])
-
-  const handleCloseDiagnosis = useCallback(() => {
-    diagnosisRequestId.current += 1
-    enhanceRequestId.current += 1
-    setDiagnosisStock(null)
-    setDiagnosis(null)
-    setBaseDiagnosis(null)
-    setEnhancedDiagnosis(null)
-    setDiagnosisError('')
-    setDiagnosisLoading(false)
-    setDiagnosisEnhancing(false)
-    setDiagnosisEnhanced(false)
-  }, [])
-
-  const handleEnhanceDiagnosis = useCallback(
-    (stock: StockItem) => {
-      if (diagnosisEnhanced) {
-        if (baseDiagnosis) setDiagnosis(baseDiagnosis)
-        setDiagnosisEnhanced(false)
-        setDiagnosisEnhancing(false)
-        return
-      }
-      if (enhancedDiagnosis) {
-        setDiagnosis(enhancedDiagnosis)
-        setDiagnosisEnhanced(true)
-        setDiagnosisEnhancing(false)
-        return
-      }
-      const cacheKey = diagnosisCacheKey(stock)
-      const cachedEnhanced = readDiagnosisCache(enhancedDiagnosisCacheRef.current, cacheKey)
-      if (cachedEnhanced) {
-        setDiagnosis(cachedEnhanced)
-        setEnhancedDiagnosis(cachedEnhanced)
-        setDiagnosisEnhanced(true)
-        setDiagnosisEnhancing(false)
-        return
-      }
-      const requestId = enhanceRequestId.current + 1
-      enhanceRequestId.current = requestId
-      setBaseDiagnosis((current) => current || diagnosis)
-      setDiagnosisEnhancing(true)
-
-      fetchEnhancedStockDiagnosis(stock.code, stock.name)
-        .then((result) => {
-          if (enhanceRequestId.current !== requestId) return
-          if (result.llm_status === 'ok') {
-            writeDiagnosisCache(enhancedDiagnosisCacheRef.current, cacheKey, result)
-          }
-          setDiagnosis(result)
-          setEnhancedDiagnosis(result)
-          setDiagnosisEnhanced(true)
-        })
-        .catch(() => {
-          if (enhanceRequestId.current !== requestId) return
-          setDiagnosisEnhanced(false)
-          setDiagnosis((current) => (current ? { ...current, llm_status: 'error' } : current))
-        })
-        .finally(() => {
-          if (enhanceRequestId.current !== requestId) return
-          setDiagnosisEnhancing(false)
-        })
-    },
-    [baseDiagnosis, diagnosis, diagnosisEnhanced, enhancedDiagnosis],
   )
 
   return (
@@ -378,7 +254,7 @@ export default function DashboardPage() {
                     quote={quotes[s.code]}
                     taskId={displayTheme.source_task_id || undefined}
                     delay={i * 35}
-                    onClick={handleStockClick}
+                    onClick={selectStock}
                   />
                 ))}
               </div>
@@ -395,8 +271,8 @@ export default function DashboardPage() {
           enhancing={diagnosisEnhancing}
           enhanced={diagnosisEnhanced}
           error={diagnosisError}
-          onEnhance={handleEnhanceDiagnosis}
-          onClose={handleCloseDiagnosis}
+          onEnhance={toggleEnhanced}
+          onClose={closeDiagnosis}
         />
       )}
     </div>

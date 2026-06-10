@@ -1,8 +1,7 @@
 """
 AI分析路由
-提供ReAct Agent供应链分析的SSE流式接口。
-前端通过POST请求发起分析，后端以SSE（Server-Sent Events）
-方式实时推送分析进度、工具调用结果和最终Theme。
+保留旧版直接分析 SSE 流式接口，当前主业务入口已迁移到 analysis_task_router。
+前端历史兼容调用可继续使用本路由，新功能优先接入 /api/analysis-tasks。
 """
 import json
 import logging
@@ -18,7 +17,7 @@ from backend.agent.hybrid_loop import plan_execute_react_loop
 # 日志记录器
 logger = logging.getLogger(__name__)
 
-# 创建路由实例，所有接口挂载在 /analysis 前缀下
+# 创建旧版路由实例，所有接口挂载在 /analysis 前缀下
 router = APIRouter()
 _MAX_QUERY_LENGTH = 120
 
@@ -76,10 +75,10 @@ async def _event_generator(query: str):
 @router.post("/run")
 async def run_analysis(body: AnalysisRequest):
     """
-    启动ReAct供应链分析
+    启动旧版直接供应链分析
 
     接收用户的分析查询，验证配置完整性后，
-    返回SSE事件流。前端通过EventSource监听实时进度。
+    返回SSE事件流；当前主业务入口是 /api/analysis-tasks/run。
 
     请求体:
         query: 分析主题描述，如 "华为昇腾供应链"

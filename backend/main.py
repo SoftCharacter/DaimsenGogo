@@ -107,7 +107,7 @@ async def heartbeat():
 
 # 注册路由模块
 app.include_router(config_router.router, prefix="/api/config", tags=["配置管理"])
-app.include_router(analysis_router.router, prefix="/api/analysis", tags=["AI分析"])
+app.include_router(analysis_router.router, prefix="/api/analysis", tags=["旧版AI分析"])
 app.include_router(analysis_task_router.router, prefix="/api/analysis-tasks", tags=["分析任务"])
 app.include_router(theme_router.router, prefix="/api/themes", tags=["主题管理"])
 app.include_router(stock_router.router, prefix="/api/stocks", tags=["行情数据"])

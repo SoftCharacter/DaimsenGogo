@@ -6,6 +6,8 @@
 from fastapi import APIRouter, Query, HTTPException
 
 from backend.services.stock_service import (
+    MONTH_KLINE_COUNT,
+    MONTH_KLINE_PERIOD,
     fetch_quotes,
     fetch_kline,
     fetch_close_history,
@@ -55,14 +57,14 @@ async def get_kline(
         description="股票代码，如 SZ:002261",
     ),
     period: str = Query(
-        "daily",
-        description="K线周期: daily/60min/30min/15min/5min",
+        MONTH_KLINE_PERIOD,
+        description="兼容参数；当前固定返回 daily 日K",
     ),
     count: int = Query(
-        22,
+        MONTH_KLINE_COUNT,
         ge=1,
         le=500,
-        description="数据条数，默认22个交易日（近一个月日K）",
+        description="兼容参数；当前固定返回最近22个交易日日K",
     ),
     task_id: str | None = Query(
         None,
@@ -72,7 +74,7 @@ async def get_kline(
     """
     获取近一个月日K数据
     请求示例: GET /api/stocks/kline?code=SZ:002261&period=daily&count=22
-    返回: 指定股票近一个月的日K数据点列表
+    返回: 固定最近22个交易日的日K数据点列表
     """
     # 调用行情服务获取K线
     points = await fetch_kline(code, period, count, task_id=task_id)

@@ -7,6 +7,7 @@ import asyncio
 
 from backend.models.stock_models import KLinePoint
 from backend.services.akshare_adapter import fetch_recent_daily_kline_sync
+from backend.services.stock_service import MONTH_KLINE_COUNT
 
 # 兼容旧代码的周期映射常量；当前服务层不再依赖该值
 PERIOD_MAP = {
@@ -16,7 +17,7 @@ PERIOD_MAP = {
 
 async def fetch_kline_akshare(
     code: str,
-    count: int = 22,
+    count: int = MONTH_KLINE_COUNT,
 ) -> list[KLinePoint]:
     """
     使用AkShare获取近一个月日K

@@ -13,7 +13,7 @@ from backend.services.analysis_task_service import set_task_saved_theme
 from backend.services.file_service import (
     load_theme,
     save_theme,
-    delete_theme,
+    delete_theme_with_cache_result,
     list_themes,
 )
 
@@ -112,10 +112,14 @@ async def remove_theme(theme_id: str):
     异常:
       404 - 目标主题不存在
     """
-    success = delete_theme(theme_id)
-    if not success:
+    result = delete_theme_with_cache_result(theme_id)
+    if not result.deleted:
         raise HTTPException(
             status_code=404,
             detail=f"主题 {theme_id} 不存在",
         )
-    return {"message": f"主题 {theme_id} 已删除"}
+    return {
+        "message": f"主题 {theme_id} 已删除",
+        "source_task_id": result.source_task_id,
+        "task_cache_removed": result.task_cache_removed,
+    }

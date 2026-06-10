@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react'
+import { useCallback, useEffect, useMemo, useRef } from 'react'
 import type { SSEEvent } from '../../types/stock'
 import EventItem from './EventItem'
 import type { DisplayEvent } from './EventItem'
@@ -9,6 +9,8 @@ interface ReasoningStreamProps {
   maxSteps: number
   error: string | null
 }
+
+const MAX_RENDERED_EVENTS = 200
 
 function isDisplayEvent(event: SSEEvent): event is DisplayEvent {
   return ['thinking', 'tool_call', 'tool_result', 'error'].includes(event.type)
@@ -29,8 +31,14 @@ export default function ReasoningStream({
   maxSteps,
   error,
 }: ReasoningStreamProps) {
-  const bottomRef = useRef<HTMLDivElement>(null)
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const autoScrollRef = useRef(true)
   const displayEvents = useMemo(() => events.filter(isDisplayEvent), [events])
+  const hiddenCount = Math.max(0, displayEvents.length - MAX_RENDERED_EVENTS)
+  const visibleEvents = useMemo(
+    () => displayEvents.slice(hiddenCount),
+    [displayEvents, hiddenCount],
+  )
   const lastEventKey = displayEvents.length > 0
     ? getEventKey(displayEvents[displayEvents.length - 1] as SSEEvent & { seq?: number }, displayEvents.length - 1)
     : ''
@@ -41,8 +49,16 @@ export default function ReasoningStream({
     error && displayEvents.some((event) => event.type === 'error' && event.message === error),
   )
 
+  const handleScroll = useCallback(() => {
+    const el = scrollRef.current
+    if (!el) return
+    autoScrollRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < 96
+  }, [])
+
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+    const el = scrollRef.current
+    if (!el || !autoScrollRef.current) return
+    el.scrollTop = el.scrollHeight
   }, [lastEventKey, error])
 
   if (displayEvents.length === 0 && !error) return null
@@ -67,16 +83,25 @@ export default function ReasoningStream({
         </div>
       )}
 
-      <div className="space-y-3 max-h-[500px] overflow-y-auto pr-1">
-        {displayEvents.map((event, index) => (
-          <div
-            key={getEventKey(event as SSEEvent & { seq?: number }, index)}
-            className="pl-4 py-1"
-            style={{ borderLeft: '2px solid var(--border)' }}
-          >
-            <EventItem event={event} />
+      <div ref={scrollRef} onScroll={handleScroll} className="space-y-3 max-h-[500px] overflow-y-auto pr-1">
+        {hiddenCount > 0 && (
+          <div className="pl-4 py-1 text-xs" style={{ borderLeft: '2px solid var(--border)', color: 'var(--text-dim)' }}>
+            已折叠更早事件 {hiddenCount} 条
           </div>
-        ))}
+        )}
+
+        {visibleEvents.map((event, index) => {
+          const originalIndex = hiddenCount + index
+          return (
+            <div
+              key={getEventKey(event as SSEEvent & { seq?: number }, originalIndex)}
+              className="pl-4 py-1"
+              style={{ borderLeft: '2px solid var(--border)' }}
+            >
+              <EventItem event={event} />
+            </div>
+          )
+        })}
 
         {error && !repeatedError && (
           <div className="pl-4 py-1" style={{ borderLeft: '2px solid var(--up)' }}>
@@ -87,7 +112,6 @@ export default function ReasoningStream({
           </div>
         )}
 
-        <div ref={bottomRef} />
       </div>
     </div>
   )

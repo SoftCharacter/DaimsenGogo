@@ -10,7 +10,6 @@ set "ROOT=%CD%"
 popd
 set "BACKEND_DIR=%ROOT%\backend"
 set "FRONTEND_DIR=%ROOT%\frontend"
-set "VENV_DIR=%ROOT%\.venv"
 set "CONDA_ENV_NAME=env_reactAgent"
 set "DEPS_DIR=%ROOT%\.runlogs\deps"
 set "BACKEND_DEPS_MARKER=%DEPS_DIR%\backend.requirements.sha"
@@ -40,48 +39,25 @@ goto :end
 
 :ensure_python
 where conda >nul 2>nul
-if not errorlevel 1 (
-    for /f "delims=" %%I in ('call conda info --base') do set "CONDA_BASE=%%I"
-    if exist "%CONDA_BASE%\envs\%CONDA_ENV_NAME%\python.exe" (
-        set "PYTHON_BIN=%CONDA_BASE%\envs\%CONDA_ENV_NAME%\python.exe"
-        exit /b 0
-    )
-    echo [env] Creating conda env %CONDA_ENV_NAME%...
-    call conda create -n %CONDA_ENV_NAME% python=3.11 -y
-    if errorlevel 1 exit /b 1
-    if not defined CONDA_BASE (
-        for /f "delims=" %%I in ('call conda info --base') do set "CONDA_BASE=%%I"
-    )
-    set "PYTHON_BIN=!CONDA_BASE!\envs\!CONDA_ENV_NAME!\python.exe"
-    if not exist "!PYTHON_BIN!" exit /b 1
-    exit /b 0
+if errorlevel 1 (
+    echo [error] conda was not found. Please install Anaconda first.
+    exit /b 1
 )
 
-if exist "%VENV_DIR%\Scripts\python.exe" (
-    set "PYTHON_BIN=%VENV_DIR%\Scripts\python.exe"
-    exit /b 0
-)
+for /f "delims=" %%I in ('call conda info --base') do set "CONDA_BASE=%%I"
+set "PYTHON_BIN=%CONDA_BASE%\envs\%CONDA_ENV_NAME%\python.exe"
 
-where py >nul 2>nul
-if not errorlevel 1 (
-    echo [env] Creating local Python virtual environment .venv ...
-    py -3 -m venv "%VENV_DIR%"
-    if errorlevel 1 exit /b 1
-    set "PYTHON_BIN=%VENV_DIR%\Scripts\python.exe"
-    exit /b 0
-)
+if exist "%PYTHON_BIN%" exit /b 0
 
-where python >nul 2>nul
-if not errorlevel 1 (
-    echo [env] Creating local Python virtual environment .venv ...
-    python -m venv "%VENV_DIR%"
-    if errorlevel 1 exit /b 1
-    set "PYTHON_BIN=%VENV_DIR%\Scripts\python.exe"
-    exit /b 0
-)
+echo [env] Creating conda env %CONDA_ENV_NAME%...
+call conda create -n %CONDA_ENV_NAME% python=3.11 -y
+if errorlevel 1 exit /b 1
 
-echo [error] conda, py, or python was not found. Please install Python or Anaconda first.
-exit /b 1
+if not exist "%PYTHON_BIN%" (
+    echo [error] Failed to find Python in conda env %CONDA_ENV_NAME%.
+    exit /b 1
+)
+exit /b 0
 
 :install_backend_deps
 call :file_hash "%BACKEND_DIR%\requirements.txt" BACKEND_DEPS_HASH || exit /b 1
@@ -132,7 +108,7 @@ exit /b 0
 
 :file_hash
 set "%~2="
-for /f "tokens=1" %%H in ('certutil -hashfile "%~1" SHA256 ^| findstr /R /V "CertUtil hash"') do (
+for /f "skip=1 tokens=1" %%H in ('certutil -hashfile "%~1" SHA256') do (
     if not defined %~2 set "%~2=%%H"
 )
 if not defined %~2 (

@@ -49,3 +49,25 @@ export async function resumeAnalysisTask(taskId: string, signal?: AbortSignal): 
 
   return response
 }
+
+export async function watchAnalysisTaskEvents(
+  taskId: string,
+  startSeq: number = 0,
+  signal?: AbortSignal,
+): Promise<Response> {
+  const response = await fetch(
+    `/api/analysis-tasks/${encodeURIComponent(taskId)}/events?start_seq=${startSeq}`,
+    {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      signal,
+    },
+  )
+
+  if (!response.ok) {
+    const errorBody = await response.text()
+    throw new Error(errorBody || `观察分析任务失败: ${response.status}`)
+  }
+
+  return response
+}

@@ -201,8 +201,6 @@ TAVILY_API_KEY
 ### 7. 业务字段样本
 
 - `scripts/fetch_business_fields.py` 用于抽样抓取 AkShare、雪球、东方财富三类接口的公司业务字段，方便人工研判字段质量。
-- 样本结果保存在 `data/business_field_samples/`，包括 `akshare_business_fields.json`、`xueqiu_business_fields.json`、`eastmoney_business_fields.json`。
-- 当前正式评分链路使用 AkShare 业务画像优先；AkShare 无有效业务字段时，使用雪球 `company.json` 作为生产兜底。
 
 ## 主题与任务数据
 

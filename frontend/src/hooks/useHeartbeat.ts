@@ -7,7 +7,7 @@ import { useEffect } from 'react'
 
 /** 心跳发送间隔（毫秒） */
 const HEARTBEAT_INTERVAL = 10_000
-const HEARTBEAT_URL = 'http://127.0.0.1:8000/api/heartbeat'
+const HEARTBEAT_URL = '/api/heartbeat'
 
 /**
  * 发送心跳请求到后端

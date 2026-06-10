@@ -8,7 +8,7 @@ import { useAnalysisStore } from '../stores/analysisStore'
 import { useThemeStore } from '../stores/themeStore'
 import type { Theme } from '../types/theme'
 import type { SSEEvent } from '../types/stock'
-import { deleteAnalysisTask, getAnalysisTask, listAnalysisTasks, pauseAnalysisTask } from '../api/analysisTaskApi'
+import { getAnalysisTask, listAnalysisTasks } from '../api/analysisTaskApi'
 import type { AnalysisTask, AnalysisTaskEvent, AnalysisTaskSummary } from '../types/analysisTask'
 
 type DisplaySSEEvent = SSEEvent & { seq?: number; task_id?: string }
@@ -80,7 +80,7 @@ export default function AnalysisPage() {
 
   const {
     isRunning, taskId, events, currentStep, maxSteps,
-    result, error, startAnalysis, continueAnalysis,
+    result, error, startAnalysis, continueAnalysis, observeTask, pauseTask, deleteTask,
   } = useAnalysisStore()
 
   const createTheme = useThemeStore((s) => s.createTheme)
@@ -99,6 +99,7 @@ export default function AnalysisPage() {
   const [loadingTask, setLoadingTask] = useState(false)
   const loadSeqRef = useRef(0)
   const refreshedTaskIdRef = useRef<string | null>(null)
+  const finalizedTaskRefreshRef = useRef<string | null>(null)
 
   const historyEvents = useMemo(
     () => currentTask?.events.map(toSSEEvent).filter((item): item is DisplaySSEEvent => item !== null) ?? [],
@@ -106,13 +107,14 @@ export default function AnalysisPage() {
   )
 
   const taskEvents = useMemo(() => {
-    if (currentTask && isRunning && taskId === currentTask.id) return mergeEvents(historyEvents, events)
-    if (!currentTask || isRunning) return events
+    if (!currentTask) return events
+    if (taskId === currentTask.id) return mergeEvents(historyEvents, events)
     return historyEvents
-  }, [currentTask, events, historyEvents, isRunning, taskId])
+  }, [currentTask, events, historyEvents, taskId])
 
-  const displayResult = result ?? currentTask?.result ?? null
-  const displayError = isRunning ? error : (currentTask?.error || error)
+  const liveCurrentTask = Boolean(currentTask && taskId === currentTask.id)
+  const displayResult = liveCurrentTask ? result ?? currentTask?.result ?? null : currentTask?.result ?? result ?? null
+  const displayError = liveCurrentTask ? error ?? currentTask?.error ?? null : currentTask?.error || error
 
   useEffect(() => {
     if (isEditMode && id) fetchTheme(id)
@@ -147,23 +149,34 @@ export default function AnalysisPage() {
     void refreshTasks()
   }, [refreshTasks, taskId])
 
-  const loadTask = useCallback(async (nextTaskId: string) => {
+  const loadTask = useCallback(async (nextTaskId: string): Promise<AnalysisTask | null> => {
     const seq = loadSeqRef.current + 1
     loadSeqRef.current = seq
     setLoadingTask(true)
     try {
       const task = await getAnalysisTask(nextTaskId)
-      if (loadSeqRef.current !== seq) return
+      if (loadSeqRef.current !== seq) return null
       setCurrentTask(task)
       setConfirmedTheme(task.result)
       setSavedThemeId(task.saved_theme_id || null)
       setTasks((prev) => prev.map((item) => item.id === task.id ? taskToSummary(task) : item))
+      return task
     } catch {
       if (loadSeqRef.current === seq) toast.error('加载任务详情失败')
+      return null
     } finally {
       if (loadSeqRef.current === seq) setLoadingTask(false)
     }
   }, [])
+
+  useEffect(() => {
+    if (isRunning || !taskId || finalizedTaskRefreshRef.current === taskId) return
+    finalizedTaskRefreshRef.current = taskId
+    void (async () => {
+      await refreshTasks()
+      if (currentTask?.id === taskId) await loadTask(taskId)
+    })()
+  }, [currentTask, isRunning, loadTask, refreshTasks, taskId])
 
   const handleEditSave = useCallback(async (updated: Theme) => {
     if (!id) return
@@ -184,22 +197,29 @@ export default function AnalysisPage() {
     setConfirmedTheme(null)
     setCurrentTask(null)
     refreshedTaskIdRef.current = null
+    finalizedTaskRefreshRef.current = null
     void (async () => {
       await startAnalysis(query)
       await refreshTasks()
     })()
   }, [startAnalysis, refreshTasks])
 
+  const handleSelectTask = useCallback(async (nextTaskId: string) => {
+    const task = await loadTask(nextTaskId)
+    if (!task || !['pending', 'running'].includes(task.status)) return
+    void observeTask(task.id, task.events.length)
+  }, [loadTask, observeTask])
+
   const handlePauseTask = useCallback(async (nextTaskId: string) => {
     try {
-      await pauseAnalysisTask(nextTaskId)
+      await pauseTask(nextTaskId)
       await refreshTasks()
       if (currentTask?.id === nextTaskId) await loadTask(nextTaskId)
       toast.success('已请求暂停，当前环节完成后会停下')
     } catch {
       toast.error('暂停任务失败')
     }
-  }, [currentTask, loadTask, refreshTasks])
+  }, [currentTask, loadTask, pauseTask, refreshTasks])
 
   const handleConfirmResult = useCallback(() => {
     if (!displayResult) return
@@ -228,7 +248,7 @@ export default function AnalysisPage() {
 
   const handleDeleteTask = useCallback(async (nextTaskId: string) => {
     try {
-      await deleteAnalysisTask(nextTaskId)
+      await deleteTask(nextTaskId)
       setTasks((prev) => prev.filter((task) => task.id !== nextTaskId))
       if (currentTask?.id === nextTaskId) {
         loadSeqRef.current += 1
@@ -238,11 +258,12 @@ export default function AnalysisPage() {
     } catch {
       toast.error('删除任务失败')
     }
-  }, [currentTask])
+  }, [currentTask, deleteTask])
 
   const handleContinueTask = useCallback(async (nextTaskId: string) => {
     setSavedThemeId(null)
     setConfirmedTheme(null)
+    finalizedTaskRefreshRef.current = null
     try {
       if (currentTask?.id !== nextTaskId) await loadTask(nextTaskId)
       await continueAnalysis(nextTaskId)
@@ -321,7 +342,7 @@ export default function AnalysisPage() {
                 padding: '13px 14px',
                 cursor: 'pointer',
               }}
-              onClick={() => void loadTask(task.id)}
+              onClick={() => void handleSelectTask(task.id)}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'space-between' }}>
                 <span style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
@@ -461,8 +482,8 @@ export default function AnalysisPage() {
             {loadingTask && <p style={{ fontSize: 13.5, color: 'var(--text-dim)' }}>任务加载中...</p>}
             <ReasoningStream
               events={taskEvents}
-              currentStep={isRunning ? currentStep : currentTask?.current_step ?? currentStep}
-              maxSteps={isRunning ? maxSteps : currentTask?.max_steps ?? maxSteps}
+              currentStep={liveCurrentTask && currentStep > 0 ? currentStep : currentTask?.current_step ?? currentStep}
+              maxSteps={liveCurrentTask && maxSteps > 0 ? maxSteps : currentTask?.max_steps ?? maxSteps}
               error={displayError}
             />
             {displayResult &&

@@ -11,6 +11,7 @@ import WebSearchForm from '../components/config/WebSearchForm'
  */
 export default function ConfigPage() {
   const { loadConfig, loading, error } = useConfigStore()
+  const config = useConfigStore((s) => s.config)
 
   useEffect(() => {
     void loadConfig()
@@ -46,7 +47,7 @@ export default function ConfigPage() {
           </div>
         )}
 
-        {loading && !useConfigStore.getState().config ? (
+        {loading && !config ? (
           <div style={{ padding: 48, textAlign: 'center', color: 'var(--text-faint)' }}>加载配置中...</div>
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18, alignItems: 'start' }}>

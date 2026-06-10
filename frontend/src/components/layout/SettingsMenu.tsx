@@ -4,7 +4,7 @@ import {
   ACCENTS,
   CARD_DENSITIES,
   type Direction,
-  type ThemeMode,
+  type AppearanceMode,
   type AccentKey,
 } from '../../stores/uiSettingsStore'
 
@@ -80,7 +80,7 @@ function SegMenu<T extends string | number>({
 }
 
 export default function SettingsMenu() {
-  const { dir, theme, accent, cardMin, scene, setDir, setTheme, setAccent, setCardMin, setScene } =
+  const { dir, mode, accent, cardMin, scene, setDir, setMode, setAccent, setCardMin, setScene } =
     useUISettings()
 
   return (
@@ -139,13 +139,13 @@ export default function SettingsMenu() {
         />
 
         <SectionLabel>主题</SectionLabel>
-        <SegMenu<ThemeMode>
-          value={theme}
+        <SegMenu<AppearanceMode>
+          value={mode}
           options={[
             { label: '深色', value: 'dark' },
             { label: '浅色', value: 'light' },
           ]}
-          onChange={setTheme}
+          onChange={setMode}
         />
 
         <SectionLabel>强调色</SectionLabel>

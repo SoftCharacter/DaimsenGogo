@@ -6,7 +6,7 @@ import logging
 import uuid
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 from sse_starlette.sse import EventSourceResponse
 
@@ -78,6 +78,14 @@ def remove_analysis_task(task_id: str):
     if not deleted:
         raise HTTPException(status_code=404, detail="分析任务不存在")
     return {"status": "ok"}
+
+
+@router.get("/{task_id}/events")
+async def watch_analysis_task_events(task_id: str, start_seq: int = Query(0, ge=0)):
+    task = load_task(task_id)
+    if not task:
+        raise HTTPException(status_code=404, detail="分析任务不存在")
+    return EventSourceResponse(watch_task_events(task_id, start_seq=start_seq))
 
 
 @router.post("/run")

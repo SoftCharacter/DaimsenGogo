@@ -12,7 +12,7 @@ import { create } from 'zustand'
  */
 
 export type Direction = 'aurora' | 'terminal'
-export type ThemeMode = 'dark' | 'light'
+export type AppearanceMode = 'dark' | 'light'
 export type AccentKey = '靛蓝' | '科技蓝' | '青碧' | '琥珀' | '品红'
 
 /** 强调色预设（oklch 色相/彩度，hex 仅用于设置面板色块预览） */
@@ -33,15 +33,19 @@ export const CARD_DENSITIES = [
 
 interface UISettings {
   dir: Direction
-  theme: ThemeMode
+  mode: AppearanceMode
   accent: AccentKey
   cardMin: number
   scene: boolean // 场景背景总开关（深色→星空，浅色→沙丘）
 }
 
+interface PersistedUISettings extends Partial<UISettings> {
+  theme?: AppearanceMode
+}
+
 interface UISettingsState extends UISettings {
   setDir: (dir: Direction) => void
-  setTheme: (theme: ThemeMode) => void
+  setMode: (mode: AppearanceMode) => void
   setAccent: (accent: AccentKey) => void
   setCardMin: (cardMin: number) => void
   setScene: (scene: boolean) => void
@@ -51,7 +55,7 @@ const STORAGE_KEY = 'dg.ui-settings'
 
 const DEFAULTS: UISettings = {
   dir: 'aurora',
-  theme: 'dark',
+  mode: 'dark',
   accent: '靛蓝',
   cardMin: 330,
   scene: true,
@@ -63,9 +67,11 @@ function loadSettings(): UISettings {
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY)
     if (!raw) return DEFAULTS
-    const parsed = JSON.parse(raw) as Partial<UISettings>
+    const parsed = JSON.parse(raw) as PersistedUISettings
     const accent = parsed.accent && parsed.accent in ACCENTS ? parsed.accent : DEFAULTS.accent
-    return { ...DEFAULTS, ...parsed, accent }
+    const mode = parsed.mode ?? parsed.theme ?? DEFAULTS.mode
+    const { theme: _legacyTheme, ...settings } = parsed
+    return { ...DEFAULTS, ...settings, accent, mode }
   } catch {
     return DEFAULTS
   }
@@ -75,14 +81,14 @@ function loadSettings(): UISettings {
 function applySettings(s: UISettings): void {
   if (typeof document === 'undefined') return
   const root = document.documentElement
-  root.setAttribute('data-theme', s.theme)
+  root.setAttribute('data-theme', s.mode)
   root.setAttribute('data-dir', s.dir)
   const a = ACCENTS[s.accent] ?? ACCENTS['靛蓝']
   root.style.setProperty('--accent-h', String(a.h))
   root.style.setProperty('--accent-c', String(a.c))
   root.style.setProperty('--card-min', `${s.cardMin}px`)
-  document.body.classList.toggle('cosmos-on', s.scene && s.theme === 'dark')
-  document.body.classList.toggle('day-on', s.scene && s.theme === 'light')
+  document.body.classList.toggle('cosmos-on', s.scene && s.mode === 'dark')
+  document.body.classList.toggle('day-on', s.scene && s.mode === 'light')
   try {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(s))
   } catch {
@@ -103,7 +109,7 @@ export const useUISettings = create<UISettingsState>((set, get) => {
   return {
     ...initial,
     setDir: (dir) => update({ dir }),
-    setTheme: (theme) => update({ theme }),
+    setMode: (mode) => update({ mode }),
     setAccent: (accent) => update({ accent }),
     setCardMin: (cardMin) => update({ cardMin }),
     setScene: (scene) => update({ scene }),
@@ -111,6 +117,6 @@ export const useUISettings = create<UISettingsState>((set, get) => {
 })
 
 /** 当前是否展示深色星空背景 */
-export const selectCosmosOn = (s: UISettingsState) => s.scene && s.theme === 'dark'
+export const selectCosmosOn = (s: UISettingsState) => s.scene && s.mode === 'dark'
 /** 当前是否展示浅色沙丘背景 */
-export const selectDayOn = (s: UISettingsState) => s.scene && s.theme === 'light'
+export const selectDayOn = (s: UISettingsState) => s.scene && s.mode === 'light'
