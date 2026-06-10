@@ -1,8 +1,8 @@
 # DaimsenGogo 股票供应链大屏
 
-## 项目演示视频
+  ## 项目演示视频
 
-本地录制的项目介绍视频已随仓库提交，可直接下载或在 GitHub 页面中查看：[`6月10日.mp4`](./6月10日.mp4)。
+  <video src="./Demo_Video.mp4" controls width="100%"></video>
 
 ## 项目简介
 
