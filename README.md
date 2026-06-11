@@ -321,11 +321,11 @@ DaimsenGogo/
 │       ├── pages/              # 页面入口
 │       ├── stores/             # Zustand 状态（含 uiSettingsStore 外观设置）
 │       └── index.css           # 设计 token / 主题 / 场景背景（唯一视觉来源）
-├── scripts/                    # 启动脚本与测试脚本
+├── scripts/                    # 启动脚本与辅助脚本
 │   ├── launcher.py             # 单窗口启动前后端
-│   ├── start.bat               # Windows 一键启动脚本
-│   ├── start.command           # macOS 双击启动脚本
-│   └── start.sh                # Unix / macOS / Linux 终端启动脚本
+│   ├── start.bat               # Windows 启动脚本
+│   ├── start.sh                # Unix / macOS / Linux 终端启动脚本
+│   └── Mac 安装说明.md          # macOS 首次安装与启动说明
 ├── data/                       # 本地数据目录，运行后生成或更新
 │   ├── themes/                 # 内置5个示例主题；运行后也会保存新主题
 │   ├── analysis_tasks/         # AI 分析历史任务（运行生成，不提交）
@@ -334,116 +334,6 @@ DaimsenGogo/
 │   └── config.json             # 模型配置兼容文件
 ├── .env.example                # 大模型配置示例
 └── README.md
-```
-
-## 使用方式
-
-### 1. 环境准备
-
-后端依赖 Python 3.9+ 环境，前端依赖 Node.js 18+ 与 npm。
-
-推荐使用项目自带的一键脚本：
-
-- Windows：`scripts/start.bat`
-- macOS：双击 `scripts/start.command`
-- Unix / Linux / macOS 终端：`bash scripts/start.sh`
-
-脚本会自动：
-
-1. 检查或创建 Python 环境
-2. 根据 `backend/requirements.txt` 指纹检测并安装后端依赖
-3. 根据 `frontend/package.json` 和存在时的 `package-lock.json` 指纹检测并安装前端依赖
-4. 启动统一入口 `scripts/launcher.py`
-
-如果需要手动安装，也可以使用本地虚拟环境 `.venv`：
-
-```bash
-python3 -m venv .venv
-source .venv/bin/activate          # Windows: .venv\Scripts\activate
-pip install -r backend/requirements.txt
-```
-
-也可以使用 conda 环境（如沿用项目约定的 `env_reactAgent`）：
-
-```bash
-conda run -n env_reactAgent pip install -r backend/requirements.txt
-```
-
-安装前端依赖：
-
-```bash
-cd frontend
-npm install
-```
-
-复制大模型配置示例：
-
-```bash
-cp .env.example .env
-```
-
-按需填写：
-
-```bash
-LLM_PROVIDER_NAME=
-LLM_BASE_URL=
-LLM_API_KEY=
-LLM_MODEL=
-WEB_SEARCH_ENABLED=true
-TAVILY_API_KEY=
-```
-
-也可以在前端“模型配置”页填写并保存，后端会同步更新 `.env`。`.env` 中的 API Key 不应提交到 Git。
-
-### 2. 一键启动
-
-#### Windows
-
-```bash
-scripts/start.bat
-```
-
-#### macOS 双击启动
-
-在 Finder 中双击：
-
-```text
-scripts/start.command
-```
-
-#### Unix / macOS / Linux 终端
-
-```bash
-bash scripts/start.sh
-```
-
-统一启动器会拉起：
-
-- 后端：`http://localhost:8000`
-- 前端：`http://localhost:5173`
-- API 文档：`http://localhost:8000/docs`
-
-### 3. 手动启动后端
-
-```bash
-# .venv（已激活）
-python -m uvicorn backend.main:app --port 8000 --host 0.0.0.0
-# 或 conda
-conda run -n env_reactAgent python -m uvicorn backend.main:app --port 8000 --host 0.0.0.0
-```
-
-### 4. 手动启动前端
-
-```bash
-cd frontend
-npm run dev
-```
-
-### 5. 前端构建
-
-```bash
-cd frontend
-npm run build
 ```
 
 ## 基本操作流程
@@ -516,10 +406,8 @@ npm run build
 - DG 分析缺少 Tavily API Key 时会拒绝创建或继续任务，避免在证据不足的状态下生成主题。
 - 个股洞察的“智能解盘”失败后，前端仍保留本地规则摘要。
 
-## 运行与配置建议
+## 配置建议
 
-- 首次运行建议 Windows 直接双击 `scripts/start.bat`，macOS 直接双击 `scripts/start.command`；终端场景可使用 `bash scripts/start.sh`。
-- 如果需要更稳定的环境，建议固定使用 conda 环境 `env_reactAgent`。
 - `.env` 中的密钥只适合本地使用，不要提交到版本库。
 - DG 分析依赖 Tavily 网页搜索，建议使用稳定的网络环境和有效 API Key 后再发起任务。
 
